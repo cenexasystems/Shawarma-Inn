@@ -125,14 +125,4 @@ h1, h2, h3, h4 {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-@keyframes roll-across {
-  0%   { left: -20%; transform: rotate(0deg); }
-  100% { left: 120%; transform: rotate(720deg); }
-}
-
-.animate-roll {
-  position: absolute;
-  bottom: 20%;
-  animation: roll-across 2.5s linear infinite;
-}
 

@@ -152,26 +152,26 @@ export default function Checkout({ cartData }: CheckoutProps) {
   }
 
   return (
-    <main className="pt-28 pb-16 px-4 sm:px-6 max-w-3xl mx-auto bg-[var(--black)] text-[var(--white)] min-h-screen">
-      <div className="text-center mb-16">
-        <h1 className="font-bebas text-6xl md:text-7xl tracking-[4px] uppercase leading-none mb-4">
+    <main className="pt-24 pb-12 px-4 sm:px-5 max-w-2xl mx-auto bg-[var(--black)] text-[var(--white)] min-h-screen">
+      <div className="text-center mb-10">
+        <h1 className="font-bebas text-5xl md:text-6xl tracking-[3px] uppercase leading-none mb-3">
           CHECKOUT
         </h1>
         <div className="flex items-center justify-center gap-4">
           <div className="h-[1px] w-12 bg-white/10" />
-          <p className="text-[var(--white)]/40 font-body uppercase tracking-[4px] text-[10px]">
+          <p className="text-[var(--white)]/40 font-body uppercase tracking-[3px] text-[10px]">
             Enterprise Fulfillment System
           </p>
           <div className="h-[1px] w-12 bg-white/10" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-12">
+      <div className="grid grid-cols-1 gap-7">
         {/* Step 1: Authentication (Inline) */}
         {!isCustomerLoggedIn && (
-          <div className="bg-[#111111] border border-white/5 rounded-[28px] p-6 md:p-8 shadow-2xl">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="font-bebas text-3xl uppercase tracking-[2px] text-[var(--red)]">
+          <div className="bg-[#111111] border border-white/5 rounded-[24px] p-5 md:p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)]">
                 AUTHENTICATION
               </h2>
               <div className="flex bg-black p-1 rounded-full border border-white/5">
@@ -210,14 +210,14 @@ export default function Checkout({ cartData }: CheckoutProps) {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {authMode === 'signup' && (
                 <input
                   type="text"
                   value={authName}
                   onChange={(event) => setAuthName(event.target.value)}
                   placeholder="Full Name"
-                  className="w-full bg-black/50 border border-white/5 rounded-2xl p-5 text-sm outline-none focus:border-[var(--red)] transition-all font-body md:col-span-2"
+                  className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body md:col-span-2"
                 />
               )}
               <input
@@ -225,14 +225,14 @@ export default function Checkout({ cartData }: CheckoutProps) {
                 value={authEmail}
                 onChange={(event) => setAuthEmail(event.target.value)}
                 placeholder="Email Address"
-                className="w-full bg-black/50 border border-white/5 rounded-2xl p-5 text-sm outline-none focus:border-[var(--red)] transition-all font-body"
+                className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body"
               />
               <input
                 type="password"
                 value={authPassword}
                 onChange={(event) => setAuthPassword(event.target.value)}
                 placeholder="Password"
-                className="w-full bg-black/50 border border-white/5 rounded-2xl p-5 text-sm outline-none focus:border-[var(--red)] transition-all font-body"
+                className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body"
               />
             </div>
 
@@ -243,7 +243,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
             <button
               onClick={handleCheckoutAuth}
               disabled={authSaving}
-              className="w-full mt-6 bg-[var(--red)] text-white font-bebas text-xl py-4 rounded-2xl tracking-[3px] uppercase disabled:opacity-40"
+              className="w-full mt-5 bg-[var(--red)] text-white font-bebas text-lg py-3.5 rounded-2xl tracking-[2px] uppercase disabled:opacity-40"
             >
               {authSaving ? 'Please wait...' : authMode === 'signup' ? 'Create account' : 'Sign in'}
             </button>
@@ -260,9 +260,9 @@ export default function Checkout({ cartData }: CheckoutProps) {
         )}
 
         {/* Step 2: Delivery Details */}
-        <div className="bg-[#111111] border border-white/5 rounded-[28px] p-6 md:p-8 shadow-2xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-white/5">
-            <h2 className="font-bebas text-3xl uppercase tracking-[2px] text-[var(--red)]">
+        <div className="bg-[#111111] border border-white/5 rounded-[24px] p-5 md:p-6 shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-white/5">
+            <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)]">
               DESTINATION & LOGISTICS
             </h2>
             <div className="flex bg-black p-1 rounded-full border border-white/5 self-start">
@@ -283,8 +283,8 @@ export default function Checkout({ cartData }: CheckoutProps) {
             </div>
           </div>
 
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-[4px] mb-3 text-white/40 font-body">Full Name</label>
                 <input
@@ -292,20 +292,20 @@ export default function Checkout({ cartData }: CheckoutProps) {
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="John Doe"
-                  className="w-full bg-black/40 border border-white/5 rounded-2xl p-5 text-sm focus:border-[var(--red)] outline-none transition-all font-body"
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-sm focus:border-[var(--red)] outline-none transition-all font-body"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-[4px] mb-3 text-white/40 font-body">Phone (Required)</label>
                 <div className="flex gap-3">
-                  <div className="bg-black/60 p-5 rounded-2xl border border-white/5 text-sm font-bold text-white">+91</div>
+                  <div className="bg-black/60 p-4 rounded-2xl border border-white/5 text-sm font-bold text-white">+91</div>
                   <input
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     placeholder="9000000000"
                     required
-                    className="flex-1 bg-black/40 border border-white/5 rounded-2xl p-5 text-sm focus:border-[var(--red)] outline-none transition-all font-body ring-1 ring-white/5 focus:ring-[var(--red)]/20"
+                    className="flex-1 bg-black/40 border border-white/5 rounded-2xl p-4 text-sm focus:border-[var(--red)] outline-none transition-all font-body ring-1 ring-white/5 focus:ring-[var(--red)]/20"
                   />
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
                   onChange={e => setAddress(e.target.value)}
                   rows={3}
                   placeholder="Enter your full street address, landmark, and area..."
-                  className="w-full bg-black/40 border border-white/5 rounded-2xl p-5 text-sm focus:border-[var(--red)] outline-none transition-all resize-none font-body"
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-sm focus:border-[var(--red)] outline-none transition-all resize-none font-body"
                 />
               </div>
             )}
@@ -335,40 +335,40 @@ export default function Checkout({ cartData }: CheckoutProps) {
         </div>
 
         {/* Step 3: Order Review & Payment */}
-        <div className="bg-[#111111] border border-white/5 rounded-[28px] p-6 md:p-8 shadow-2xl">
-          <h2 className="font-bebas text-3xl uppercase tracking-[2px] text-[var(--red)] mb-10 pb-6 border-b border-white/5">
+        <div className="bg-[#111111] border border-white/5 rounded-[24px] p-5 md:p-6 shadow-2xl">
+          <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6 pb-4 border-b border-white/5">
             ORDER SUMMARY
           </h2>
           
-          <div className="space-y-4 mb-10">
+          <div className="space-y-3 mb-6">
             {cart.map((ci: any) => (
-              <div key={ci.id} className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+              <div key={ci.id} className="flex items-center justify-between p-3.5 bg-black/20 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-4">
-                  <span className="text-[var(--red)] font-bebas text-xl">×{ci.qty}</span>
-                  <span className="font-bebas text-lg tracking-wider text-white/80">{ci.name}</span>
+                  <span className="text-[var(--red)] font-bebas text-lg">×{ci.qty}</span>
+                  <span className="font-bebas text-base md:text-lg tracking-wide text-white/80">{ci.name}</span>
                 </div>
-                <span className="font-bebas text-lg tracking-widest text-white">₹{ci.price * ci.qty}</span>
+                <span className="font-bebas text-base md:text-lg tracking-wider text-white">₹{ci.price * ci.qty}</span>
               </div>
             ))}
           </div>
 
-          <div className="bg-black/60 rounded-3xl p-8 border border-white/5 space-y-4">
+          <div className="bg-black/60 rounded-3xl p-6 border border-white/5 space-y-3">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-white/40">
               <span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-white/40">
               <span>GST (5%)</span><span>₹{gst.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between items-end pt-6 border-t border-white/5 mt-4">
-              <span className="font-bebas text-xl text-white/60">GRAND TOTAL</span>
-              <span className="font-bebas text-5xl md:text-6xl text-[var(--red)] tracking-widest">₹{total.toFixed(0)}</span>
+            <div className="flex justify-between items-end pt-5 border-t border-white/5 mt-3">
+              <span className="font-bebas text-lg text-white/60">GRAND TOTAL</span>
+              <span className="font-bebas text-4xl md:text-5xl text-[var(--red)] tracking-wider">₹{total.toFixed(0)}</span>
             </div>
           </div>
 
           <button
             onClick={handlePlaceOrder}
             disabled={!isCustomerLoggedIn || !name || !phone || saving}
-            className="w-full mt-8 bg-gradient-to-r from-[var(--red)] to-[#ff4d4d] text-white font-bebas text-2xl md:text-3xl py-5 rounded-3xl flex items-center justify-center gap-4 tracking-[3px] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_20px_60px_rgba(214,43,43,0.3)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase"
+            className="w-full mt-6 bg-gradient-to-r from-[var(--red)] to-[#ff4d4d] text-white font-bebas text-xl md:text-2xl py-4 rounded-2xl flex items-center justify-center gap-3 tracking-[2px] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_20px_60px_rgba(214,43,43,0.3)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase"
           >
             {saving ? (
               <span className="animate-pulse">PROCESSING...</span>
