@@ -12,6 +12,7 @@ export const useAuth = () => {
     signup: auth.signup,
     login: auth.login,
     adminLogin: auth.adminLogin,
+    signInWithGoogle: auth.signInWithGoogle,
     logout: auth.logout,
     refreshUser: auth.refreshUser,
     updateProfile: auth.updateProfile,

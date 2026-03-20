@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { canUseAdminApi } from '../lib/runtime';
 
 interface NavbarProps {
   onCartClick: () => void;
@@ -41,7 +42,7 @@ export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarPr
 
       {/* Links CENTER: HOME · MENU · BRANCHES · CHECKOUT — Sora 600, 11px, uppercase, letter-spacing 0.14em */}
       <div className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
-        {navLinks.map(link => {
+        {navLinks.filter((link) => canUseAdminApi || link.to !== '/admin/login').map(link => {
           const active = link.to === '/' ? location.pathname === '/' : location.pathname.startsWith(link.to);
           return (
             <Link

@@ -65,7 +65,11 @@ export default function Home() {
               Pop Out Offer
             </div>
             <p className="text-[11px] uppercase tracking-[3px] text-white/40">Fast Delivery Partner</p>
-            <h3 className="font-bebas text-5xl text-[#f97316] tracking-[3px] mt-2">Swiggy</h3>
+            <img
+              src="/swiggy-logo.svg"
+              alt="Swiggy"
+              className="mt-3 h-20 w-auto rounded-xl border border-white/10 shadow-lg transition-transform duration-300 group-hover:scale-105"
+            />
             <p className="text-white/70 font-body mt-4 leading-relaxed">
               Very fresh Shawarma Inn store, grilled hot every batch, wrapped clean, and delivered fast to your door.
             </p>
@@ -85,7 +89,11 @@ export default function Home() {
               Pop Out Offer
             </div>
             <p className="text-[11px] uppercase tracking-[3px] text-white/40">Customer Favorite</p>
-            <h3 className="font-bebas text-5xl text-[#ef4444] tracking-[3px] mt-2">Zomato</h3>
+            <img
+              src="/zomato-logo.svg"
+              alt="Zomato"
+              className="mt-3 h-20 w-auto rounded-xl border border-white/10 shadow-lg transition-transform duration-300 group-hover:scale-105"
+            />
             <p className="text-white/70 font-body mt-4 leading-relaxed">
               Freshly sliced shawarma, juicy wraps, and signature sauces from the Shawarma Inn Madhavaram kitchen.
             </p>

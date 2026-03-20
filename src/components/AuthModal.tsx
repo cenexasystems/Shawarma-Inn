@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 
 interface AuthModalProps {
@@ -7,7 +8,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { login, signup } = useAuth();
+  const { login, signup, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,6 +46,24 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
+  const submitGoogle = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setError('Google sign-in did not return a credential.');
+      return;
+    }
+
+    setError('');
+    try {
+      setSaving(true);
+      await signInWithGoogle(credentialResponse.credential);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google authentication failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/98 backdrop-blur-md transition-all duration-300">
       <div className="relative w-full max-w-md bg-[#111111] rounded-[32px] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,1)] border border-white/5 p-10">
@@ -74,6 +93,28 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           event.preventDefault();
           void submit();
         }}>
+          <div className="space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-[3px] text-center text-white/30">Quick Sign-In</p>
+            <div className="w-full flex justify-center">
+              <GoogleLogin
+                onSuccess={(response) => {
+                  void submitGoogle(response);
+                }}
+                onError={() => setError('Google sign-in popup was closed or blocked.')}
+                shape="pill"
+                text="continue_with"
+                theme="filled_black"
+                size="large"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-[10px] uppercase tracking-[2px] text-white/30">or use email</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
           <div className="flex bg-black p-1 rounded-full border border-white/5">
             <button
               type="button"

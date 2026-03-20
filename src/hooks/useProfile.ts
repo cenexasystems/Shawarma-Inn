@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import { useSupabaseAuth } from '../lib/runtime';
 
 export interface Profile {
   id: string | number;
@@ -34,18 +35,29 @@ export const useProfile = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/users/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      if (useSupabaseAuth) {
+        setProfile({
+          id: user.id,
+          name: user.name,
+          phone: user.phone,
+          avatar_url: user.avatar_url,
+          status: user.status,
+        });
+      } else {
+        const response = await fetch('/api/users/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to load profile');
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Failed to load profile');
+        }
+
+        setProfile(payload.profile as Profile);
       }
 
-      setProfile(payload.profile as Profile);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');

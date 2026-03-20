@@ -1,0 +1,5 @@
+<svg width="420" height="220" viewBox="0 0 420 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="420" height="220" rx="20" fill="#F58A1F"/>
+  <path d="M202 54C173.333 54 152 76 152 103.5C152 117.033 157.1 129.688 167.2 138.9L191 161.2V186H213V151.2L190.8 130.4C184.267 124.133 181 116.367 181 107.1C181 97.3 188.2 89.7 198.3 89.7C208.133 89.7 215.2 96.7 215.2 106.5V112H240V105.4C240 76.8 221.933 54 202 54Z" fill="white"/>
+  <text x="210" y="205" fill="white" font-size="46" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" letter-spacing="8">SWIGGY</text>
+</svg>

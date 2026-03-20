@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { canUseAdminApi } from '../lib/runtime';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -15,6 +16,11 @@ export default function AdminLogin() {
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+
+    if (!canUseAdminApi) {
+      setError('Admin login is unavailable on this deployment because backend API is not connected.');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -38,6 +44,11 @@ export default function AdminLogin() {
       >
         <h1 className="font-bebas text-5xl uppercase tracking-[4px] text-center mb-2">Admin Login</h1>
         <p className="text-center text-white/60 text-sm mb-8">Restricted access for billing and menu control.</p>
+        {!canUseAdminApi && (
+          <p className="text-center text-amber-300/90 text-xs mb-6">
+            Connect a backend API and set VITE_API_BASE to enable admin authentication here.
+          </p>
+        )}
 
         <div className="space-y-5">
           <div>

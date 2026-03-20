@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { useAuth } from '../hooks/useAuth';
@@ -12,7 +13,7 @@ const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '919003195805';
 
 export default function Checkout({ cartData }: CheckoutProps) {
   const { cart, subtotal, gst, total, buildWhatsAppUrl, clearCart } = cartData;
-  const { user, login, signup } = useAuth();
+  const { user, login, signup, signInWithGoogle } = useAuth();
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
   const isCustomerLoggedIn = user?.role === 'user';
@@ -61,7 +62,29 @@ export default function Checkout({ cartData }: CheckoutProps) {
     }
   };
 
+  const handleGoogleCheckoutAuth = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setAuthError('Google sign-in did not return a valid credential.');
+      return;
+    }
+
+    setAuthError('');
+    try {
+      setAuthSaving(true);
+      await signInWithGoogle(credentialResponse.credential);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Google authentication failed');
+    } finally {
+      setAuthSaving(false);
+    }
+  };
+
   const handlePlaceOrder = async () => {
+    if (!isCustomerLoggedIn) {
+      setAuthError('Please sign in to place your order.');
+      return;
+    }
+
     if (!name || !phone) {
       alert("Phone number and name are required!");
       return;
@@ -129,9 +152,9 @@ export default function Checkout({ cartData }: CheckoutProps) {
   }
 
   return (
-    <main className="pt-32 pb-20 px-6 max-w-4xl mx-auto bg-[var(--black)] text-[var(--white)] min-h-screen">
+    <main className="pt-28 pb-16 px-4 sm:px-6 max-w-3xl mx-auto bg-[var(--black)] text-[var(--white)] min-h-screen">
       <div className="text-center mb-16">
-        <h1 className="font-bebas text-7xl md:text-8xl tracking-[4px] uppercase leading-none mb-4">
+        <h1 className="font-bebas text-6xl md:text-7xl tracking-[4px] uppercase leading-none mb-4">
           CHECKOUT
         </h1>
         <div className="flex items-center justify-center gap-4">
@@ -146,7 +169,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
       <div className="grid grid-cols-1 gap-12">
         {/* Step 1: Authentication (Inline) */}
         {!isCustomerLoggedIn && (
-          <div className="bg-[#111111] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl">
+          <div className="bg-[#111111] border border-white/5 rounded-[28px] p-6 md:p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-8">
               <h2 className="font-bebas text-3xl uppercase tracking-[2px] text-[var(--red)]">
                 AUTHENTICATION
@@ -164,6 +187,26 @@ export default function Checkout({ cartData }: CheckoutProps) {
                 >
                   Sign Up
                 </button>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-full flex justify-center">
+                <GoogleLogin
+                  onSuccess={(response) => {
+                    void handleGoogleCheckoutAuth(response);
+                  }}
+                  onError={() => setAuthError('Google sign-in popup was closed or blocked.')}
+                  shape="pill"
+                  text="continue_with"
+                  theme="filled_black"
+                  size="large"
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-5">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-[10px] uppercase tracking-[2px] text-white/30">or use email</span>
+                <div className="h-px flex-1 bg-white/10" />
               </div>
             </div>
             
@@ -217,7 +260,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
         )}
 
         {/* Step 2: Delivery Details */}
-        <div className="bg-[#111111] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl">
+        <div className="bg-[#111111] border border-white/5 rounded-[28px] p-6 md:p-8 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-white/5">
             <h2 className="font-bebas text-3xl uppercase tracking-[2px] text-[var(--red)]">
               DESTINATION & LOGISTICS
@@ -292,7 +335,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
         </div>
 
         {/* Step 3: Order Review & Payment */}
-        <div className="bg-[#111111] border border-white/5 rounded-[32px] p-8 md:p-10 shadow-2xl">
+        <div className="bg-[#111111] border border-white/5 rounded-[28px] p-6 md:p-8 shadow-2xl">
           <h2 className="font-bebas text-3xl uppercase tracking-[2px] text-[var(--red)] mb-10 pb-6 border-b border-white/5">
             ORDER SUMMARY
           </h2>
@@ -302,9 +345,9 @@ export default function Checkout({ cartData }: CheckoutProps) {
               <div key={ci.id} className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-4">
                   <span className="text-[var(--red)] font-bebas text-xl">×{ci.qty}</span>
-                  <span className="font-bebas text-xl tracking-wider text-white/80">{ci.name}</span>
+                  <span className="font-bebas text-lg tracking-wider text-white/80">{ci.name}</span>
                 </div>
-                <span className="font-bebas text-xl tracking-widest text-white">₹{ci.price * ci.qty}</span>
+                <span className="font-bebas text-lg tracking-widest text-white">₹{ci.price * ci.qty}</span>
               </div>
             ))}
           </div>
@@ -317,18 +360,20 @@ export default function Checkout({ cartData }: CheckoutProps) {
               <span>GST (5%)</span><span>₹{gst.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-end pt-6 border-t border-white/5 mt-4">
-              <span className="font-bebas text-2xl text-white/60">GRAND TOTAL</span>
-              <span className="font-bebas text-6xl text-[var(--red)] tracking-widest">₹{total.toFixed(0)}</span>
+              <span className="font-bebas text-xl text-white/60">GRAND TOTAL</span>
+              <span className="font-bebas text-5xl md:text-6xl text-[var(--red)] tracking-widest">₹{total.toFixed(0)}</span>
             </div>
           </div>
 
           <button
             onClick={handlePlaceOrder}
-            disabled={!name || !phone || saving}
-            className="w-full mt-10 bg-gradient-to-r from-[var(--red)] to-[#ff4d4d] text-white font-bebas text-3xl py-6 rounded-3xl flex items-center justify-center gap-4 tracking-[4px] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_20px_60px_rgba(214,43,43,0.3)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase"
+            disabled={!isCustomerLoggedIn || !name || !phone || saving}
+            className="w-full mt-8 bg-gradient-to-r from-[var(--red)] to-[#ff4d4d] text-white font-bebas text-2xl md:text-3xl py-5 rounded-3xl flex items-center justify-center gap-4 tracking-[3px] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_20px_60px_rgba(214,43,43,0.3)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase"
           >
             {saving ? (
               <span className="animate-pulse">PROCESSING...</span>
+            ) : !isCustomerLoggedIn ? (
+              <span>Sign In To Continue</span>
             ) : (
               <>
                 Confirm & Pay via WhatsApp
