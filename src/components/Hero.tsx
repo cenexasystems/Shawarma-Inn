@@ -15,13 +15,27 @@ export default function Hero() {
       return;
     }
 
+    video.defaultMuted = true;
     video.muted = true;
-    const playPromise = video.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-      playPromise.catch(() => {
-        // Ignore autoplay errors and retry on user visibility/activity events.
-      });
+
+    const tryPlay = () => {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          // Ignore autoplay errors and retry on user visibility/activity events.
+        });
+      }
+    };
+
+    if (video.readyState >= 2) {
+      tryPlay();
+      return;
     }
+
+    const onCanPlay = () => {
+      tryPlay();
+    };
+    video.addEventListener('canplay', onCanPlay, { once: true });
   };
 
   // Auto-play fix for browsers and refresh restore cases
@@ -34,6 +48,12 @@ export default function Hero() {
     video.load();
     ensurePlayback();
 
+    const retryTimer = window.setInterval(() => {
+      if (video.paused && document.visibilityState === 'visible') {
+        ensurePlayback();
+      }
+    }, 1800);
+
     const handlePageShow = () => ensurePlayback();
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -45,6 +65,7 @@ export default function Hero() {
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
+      window.clearInterval(retryTimer);
       window.removeEventListener('pageshow', handlePageShow);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
@@ -68,7 +89,9 @@ export default function Hero() {
         loop
         playsInline
         preload="auto"
+        poster="/i_also_need_202603192209.png"
         onLoadedData={ensurePlayback}
+        onCanPlay={ensurePlayback}
         className="absolute inset-0 w-full h-full object-cover z-0"
         src="/hero-bg.mp4.mp4"
       />

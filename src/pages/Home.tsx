@@ -32,8 +32,12 @@ const branches = [
 ];
 
 
-const swiggyUrl = import.meta.env.VITE_SWIGGY_URL || 'https://www.swiggy.com/city/chennai';
-const zomatoUrl = import.meta.env.VITE_ZOMATO_URL || 'https://www.zomato.com/chennai';
+const swiggyUrl =
+  import.meta.env.VITE_SWIGGY_URL ||
+  'https://www.swiggy.com/city/chennai/shawarma-inn-poonamallee-high-rd-madhavaram-rest420159';
+const zomatoUrl =
+  import.meta.env.VITE_ZOMATO_URL ||
+  'https://www.zomato.com/chennai/shawarma-inn-madhavaram';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -57,12 +61,15 @@ export default function Home() {
             className="group relative bg-[#1a1a1a] border border-white/10 rounded-3xl p-8 overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-[#f97316] hover:shadow-[0_20px_60px_rgba(249,115,22,0.28)]"
           >
             <div className="absolute -right-16 -top-16 w-44 h-44 rounded-full bg-[#f97316]/20 blur-2xl scale-0 group-hover:scale-100 transition-transform duration-500" />
+            <div className="absolute top-4 right-4 bg-[#f97316] text-black text-[10px] font-bold uppercase tracking-[2px] px-3 py-1 rounded-full shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+              Pop Out Offer
+            </div>
             <p className="text-[11px] uppercase tracking-[3px] text-white/40">Fast Delivery Partner</p>
             <h3 className="font-bebas text-5xl text-[#f97316] tracking-[3px] mt-2">Swiggy</h3>
             <p className="text-white/70 font-body mt-4 leading-relaxed">
-              Very fresh shawarma store, grilled hot, packed clean, and delivered quick to your door.
+              Very fresh Shawarma Inn store, grilled hot every batch, wrapped clean, and delivered fast to your door.
             </p>
-            <span className="inline-flex mt-6 text-[11px] uppercase tracking-[3px] text-white/90 bg-[#f97316]/20 px-4 py-2 rounded-full border border-[#f97316]/30 group-hover:translate-x-2 transition-transform">
+            <span className="inline-flex mt-6 text-[11px] uppercase tracking-[3px] text-white/90 bg-[#f97316]/20 px-4 py-2 rounded-full border border-[#f97316]/30 group-hover:translate-x-2 group-hover:scale-105 transition-transform duration-300">
               Open Shawarma Inn on Swiggy
             </span>
           </a>
@@ -74,12 +81,15 @@ export default function Home() {
             className="group relative bg-[#1a1a1a] border border-white/10 rounded-3xl p-8 overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-[#ef4444] hover:shadow-[0_20px_60px_rgba(239,68,68,0.28)]"
           >
             <div className="absolute -right-16 -top-16 w-44 h-44 rounded-full bg-[#ef4444]/20 blur-2xl scale-0 group-hover:scale-100 transition-transform duration-500" />
+            <div className="absolute top-4 right-4 bg-[#ef4444] text-white text-[10px] font-bold uppercase tracking-[2px] px-3 py-1 rounded-full shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+              Pop Out Offer
+            </div>
             <p className="text-[11px] uppercase tracking-[3px] text-white/40">Customer Favorite</p>
             <h3 className="font-bebas text-5xl text-[#ef4444] tracking-[3px] mt-2">Zomato</h3>
             <p className="text-white/70 font-body mt-4 leading-relaxed">
-              Freshly sliced shawarma, juicy wraps, and signature sauces, all from Shawarma Inn kitchens.
+              Freshly sliced shawarma, juicy wraps, and signature sauces from the Shawarma Inn Madhavaram kitchen.
             </p>
-            <span className="inline-flex mt-6 text-[11px] uppercase tracking-[3px] text-white/90 bg-[#ef4444]/20 px-4 py-2 rounded-full border border-[#ef4444]/30 group-hover:translate-x-2 transition-transform">
+            <span className="inline-flex mt-6 text-[11px] uppercase tracking-[3px] text-white/90 bg-[#ef4444]/20 px-4 py-2 rounded-full border border-[#ef4444]/30 group-hover:translate-x-2 group-hover:scale-105 transition-transform duration-300">
               Open Shawarma Inn on Zomato
             </span>
           </a>
