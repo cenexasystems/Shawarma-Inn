@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
+import { useSupabaseAuth } from '../lib/runtime';
 
 interface CheckoutProps {
   cartData?: any;
@@ -73,7 +74,12 @@ export default function Checkout({ cartData }: CheckoutProps) {
       setAuthSaving(true);
       await signInWithGoogle(credentialResponse.credential);
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Google authentication failed');
+      const raw = err instanceof Error ? err.message : 'Google authentication failed';
+      if (raw.toLowerCase().includes('provider') && raw.toLowerCase().includes('not enabled')) {
+        setAuthError('Google sign-in is temporarily unavailable. Continue with Email Login/Sign Up.');
+      } else {
+        setAuthError(raw);
+      }
     } finally {
       setAuthSaving(false);
     }
@@ -152,7 +158,8 @@ export default function Checkout({ cartData }: CheckoutProps) {
   }
 
   return (
-    <main className="pt-24 pb-12 px-4 sm:px-5 max-w-2xl mx-auto bg-[var(--black)] text-[var(--white)] min-h-screen">
+    <main className="pt-24 bg-[var(--black)] text-[var(--white)] min-h-screen">
+      <div className="px-4 sm:px-5 max-w-2xl mx-auto pb-12">
       <div className="text-center mb-10">
         <h1 className="font-bebas text-5xl md:text-6xl tracking-[3px] uppercase leading-none mb-3">
           CHECKOUT
@@ -190,25 +197,31 @@ export default function Checkout({ cartData }: CheckoutProps) {
               </div>
             </div>
 
-            <div className="mb-6">
-              <div className="w-full flex justify-center">
-                <GoogleLogin
-                  onSuccess={(response) => {
-                    void handleGoogleCheckoutAuth(response);
-                  }}
-                  onError={() => setAuthError('Google sign-in popup was closed or blocked.')}
-                  shape="pill"
-                  text="continue_with"
-                  theme="filled_black"
-                  size="large"
-                />
+            {useSupabaseAuth ? (
+              <div className="mb-6">
+                <div className="w-full flex justify-center">
+                  <GoogleLogin
+                    onSuccess={(response) => {
+                      void handleGoogleCheckoutAuth(response);
+                    }}
+                    onError={() => setAuthError('Google sign-in popup was closed or blocked.')}
+                    shape="pill"
+                    text="continue_with"
+                    theme="filled_black"
+                    size="large"
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-5">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="text-[10px] uppercase tracking-[2px] text-white/30">or use email</span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
               </div>
-              <div className="flex items-center gap-2 mt-5">
-                <div className="h-px flex-1 bg-white/10" />
-                <span className="text-[10px] uppercase tracking-[2px] text-white/30">or use email</span>
-                <div className="h-px flex-1 bg-white/10" />
-              </div>
-            </div>
+            ) : (
+              <p className="text-[10px] text-center text-white/35 uppercase tracking-[2px] mb-6">
+                Google sign-in is disabled in local auth mode. Use email login or sign up.
+              </p>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {authMode === 'signup' && (
@@ -327,7 +340,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
             {deliveryMethod === 'pickup' && (
               <div className="bg-[#d62b2b]/5 border border-[#d62b2b]/20 rounded-2xl p-6 animate-in zoom-in-95 duration-500">
                 <p className="text-xs text-[var(--red)] font-body tracking-wide leading-relaxed">
-                  <strong>Pickup selected:</strong> You can collect your order from our Kolathur Main Branch within 20-30 minutes of confirmation.
+                  <strong>Pickup selected:</strong> You can collect your order from our Mathur Branch within 20-30 minutes of confirmation.
                 </p>
               </div>
             )}
@@ -365,10 +378,17 @@ export default function Checkout({ cartData }: CheckoutProps) {
             </div>
           </div>
 
+          <div className="bg-black/40 border border-white/5 rounded-2xl p-6 mt-8 mb-6">
+            <div className="flex justify-between items-center">
+              <span className="font-bebas text-2xl uppercase tracking-[2px] text-white/60">Amount to Pay</span>
+              <span className="font-bebas text-5xl md:text-6xl text-[var(--red)] tracking-wider">₹{total.toFixed(0)}</span>
+            </div>
+          </div>
+
           <button
             onClick={handlePlaceOrder}
             disabled={!isCustomerLoggedIn || !name || !phone || saving}
-            className="w-full mt-6 bg-gradient-to-r from-[var(--red)] to-[#ff4d4d] text-white font-bebas text-xl md:text-2xl py-4 rounded-2xl flex items-center justify-center gap-3 tracking-[2px] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_20px_60px_rgba(214,43,43,0.3)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase"
+            className="w-full bg-gradient-to-r from-[var(--red)] to-[#ff4d4d] text-white font-bebas text-xl md:text-2xl py-4 rounded-2xl flex items-center justify-center gap-3 tracking-[2px] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_20px_60px_rgba(214,43,43,0.3)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase"
           >
             {saving ? (
               <span className="animate-pulse">PROCESSING...</span>
@@ -385,6 +405,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
             * Direct WhatsApp integration ensures real-time updates and manual customization for your order.
           </p>
         </div>
+      </div>
       </div>
       <Footer />
     </main>

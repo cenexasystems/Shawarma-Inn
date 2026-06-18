@@ -8,19 +8,14 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { adminLogin } = useAuth();
 
-  const [email, setEmail] = useState('admin@shawarmainn.local');
-  const [password, setPassword] = useState('admin12345');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
-
-    if (!canUseAdminApi) {
-      setError('Admin login is unavailable on this deployment because backend API is not connected.');
-      return;
-    }
 
     try {
       setSaving(true);
@@ -30,7 +25,12 @@ export default function AdminLogin() {
       }
       navigate('/admin');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in as admin');
+      const raw = err instanceof Error ? err.message : 'Failed to sign in as admin';
+      if (raw.toLowerCase().includes('request failed') || raw.toLowerCase().includes('requires the local backend api')) {
+        setError('Admin login needs backend API. For deployment, set VITE_API_BASE to your backend URL (example: https://your-backend.onrender.com/api).');
+      } else {
+        setError(raw);
+      }
     } finally {
       setSaving(false);
     }
@@ -45,8 +45,8 @@ export default function AdminLogin() {
         <h1 className="font-bebas text-5xl uppercase tracking-[4px] text-center mb-2">Admin Login</h1>
         <p className="text-center text-white/60 text-sm mb-8">Restricted access for billing and menu control.</p>
         {!canUseAdminApi && (
-          <p className="text-center text-amber-300/90 text-xs mb-6">
-            Connect a backend API and set VITE_API_BASE to enable admin authentication here.
+          <p className="text-center text-amber-300/90 text-xs mb-6 leading-relaxed">
+            Admin dashboard needs backend API. Keep customer login on Supabase (free), and set VITE_API_BASE for admin APIs.
           </p>
         )}
 
@@ -57,6 +57,8 @@ export default function AdminLogin() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              placeholder="Enter admin email"
+              autoComplete="username"
               className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-[#ef8f2f]"
             />
           </div>
@@ -67,6 +69,8 @@ export default function AdminLogin() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter secure password"
+              autoComplete="current-password"
               className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-[#ef8f2f]"
             />
           </div>

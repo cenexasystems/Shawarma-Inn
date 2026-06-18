@@ -5,7 +5,7 @@ interface BranchMapProps {
 
 export default function BranchMap({ mapUrl, className = '' }: BranchMapProps) {
   return (
-    <div className={`w-full h-[500px] rounded-xl overflow-hidden shadow-2xl grayscale brightness-50 contrast-125 hover:grayscale-0 transition-all duration-1000 border border-white/10 ${className}`}>
+    <div className={`w-full h-[320px] md:h-[360px] rounded-xl overflow-hidden shadow-2xl grayscale brightness-50 contrast-125 hover:grayscale-0 transition-all duration-1000 border border-white/10 ${className}`}>
       <iframe
         src={mapUrl}
         width="100%"

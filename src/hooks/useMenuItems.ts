@@ -4,6 +4,16 @@ import localMenuData from '../data/menu.json';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../lib/runtime';
 
+const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300';
+
+const localMenuByName = new Map(
+  (localMenuData as MenuItem[]).map((item) => [item.name.trim().toLowerCase(), item]),
+);
+
+function resolveMenuImage(name: string) {
+  return localMenuByName.get(name.trim().toLowerCase())?.image || DEFAULT_FOOD_IMAGE;
+}
+
 export const useMenuItems = () => {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +51,7 @@ export const useMenuItems = () => {
             price: Number(row.price),
             category: row.category,
             rating: 4.8,
+            image: resolveMenuImage(row.name),
           }));
         } else {
           const response = await fetch('/api/menu-items');
@@ -57,6 +68,7 @@ export const useMenuItems = () => {
             price: Number(row.price),
             category: row.category,
             rating: 4.8,
+            image: resolveMenuImage(row.name),
           })) as MenuItem[];
         }
 

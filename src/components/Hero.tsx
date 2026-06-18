@@ -5,9 +5,9 @@ export default function Hero() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Browsers block autoplay with sound. We start muted to ensure the video plays,
-  // then provide a clear way to unmute.
-  const [isMuted, setIsMuted] = useState(true);
+  // Sound enabled by default. Browser policy will autoplay muted initially,
+  // but user can unmute immediately via the toggle button.
+  const [isMuted, setIsMuted] = useState(false);
 
   const ensurePlayback = () => {
     const video = videoRef.current;
@@ -15,14 +15,16 @@ export default function Hero() {
       return;
     }
 
-    video.defaultMuted = true;
-    video.muted = true;
-
     const tryPlay = () => {
       const playPromise = video.play();
       if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {
-          // Ignore autoplay errors and retry on user visibility/activity events.
+        playPromise.catch((error) => {
+          // If browser blocks unmuted autoplay, fallback to muted so video still plays
+          if (error.name === 'NotAllowedError') {
+            setIsMuted(true);
+            video.muted = true;
+            video.play().catch(() => {});
+          }
         });
       }
     };
@@ -85,7 +87,7 @@ export default function Hero() {
       <video
         ref={videoRef}
         autoPlay
-        muted
+        muted={isMuted}
         loop
         playsInline
         preload="auto"
@@ -117,7 +119,7 @@ export default function Hero() {
 
           {/* EST. 2018 Badge */}
           <div className="inline-flex items-center gap-2 bg-[rgba(214,43,43,0.15)] text-[var(--red)] border border-[var(--red)]/20 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[3px] mb-8 font-bebas backdrop-blur-md">
-            THE NOCTURNE CHAPTER · KOLATHUR
+            EST. 2018 · MATHUR
           </div>
 
           {/* ── Main Headline ── */}
@@ -155,8 +157,8 @@ export default function Hero() {
             className="text-[var(--white)]/70 text-[18px] font-light mb-12 leading-[1.8] font-body max-w-md"
             style={{ textShadow: '0 2px 10px rgba(0,0,0,0.95)' }}
           >
-            Authentic Lebanese secrets across 5 sanctuaries in Chennai.
-            Flame-grilled by night, delivered in 30 minutes.
+            Authentic Lebanese shawarma served fresh from our Mathur branch.
+            Flame grilled, handcrafted and delivered hot across Mathur and nearby areas.
           </p>
 
           {/* CTAs */}
@@ -221,31 +223,28 @@ export default function Hero() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
+          {/* Rating badge pinned on top of image card */}
+          <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[16px] px-4 py-3 flex flex-col items-center shadow-2xl">
+            <p className="font-bebas text-3xl text-amber-400 leading-none tracking-[2px]">4.9</p>
+            <div className="flex gap-1 mt-2">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <p className="font-body text-[8px] text-white/40 mt-2 tracking-[3px] uppercase">Top Rated</p>
+          </div>
+
           <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
             <div>
               <p className="font-bebas text-2xl text-[var(--white)] tracking-[3px]">SIGNATURE WRAP</p>
-              <p className="font-body text-[10px] text-[var(--white)]/50 tracking-[3px] uppercase">Kolathur Sanctuary</p>
+              <p className="font-body text-[10px] text-[var(--white)]/50 tracking-[3px] uppercase">Mathur Branch</p>
             </div>
             <span className="bg-[var(--red)] text-white text-[10px] font-bold font-body tracking-[2px] px-4 py-2 rounded-full shadow-lg">
               HOT
             </span>
           </div>
-        </div>
-
-        {/* Rating badge */}
-        <div
-          className="absolute top-[15%] left-[5%] lg:left-[2%] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[20px] px-5 py-4 flex flex-col items-center shadow-2xl"
-          style={{ transform: 'rotate(-4deg)' }}
-        >
-          <p className="font-bebas text-3xl text-amber-400 leading-none tracking-[2px]">4.9</p>
-          <div className="flex gap-1 mt-2">
-            {[...Array(5)].map((_, i) => (
-              <svg key={i} className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <p className="font-body text-[8px] text-white/40 mt-2 tracking-[3px] uppercase">Top Rated</p>
         </div>
 
         {/* Mute toggle */}

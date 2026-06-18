@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
+import { useSupabaseAuth } from '../lib/runtime';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,31 +17,71 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const submit = async () => {
     setError('');
 
-    if (!email || !password) {
-      setError('Email and password are required.');
+    // Validate email format
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.');
       return;
     }
 
-    if (mode === 'signup' && password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!password) {
+      setError('Password is required.');
       return;
+    }
+
+    if (mode === 'signup') {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        return;
+      }
+      if (!name?.trim()) {
+        setError('Please enter your name.');
+        return;
+      }
     }
 
     try {
       setSaving(true);
       if (mode === 'signup') {
-        await signup({ email, password, name });
+        await signup({ email, password, name: name?.trim() });
+        // Clear form and close on success
+        setName('');
+        setEmail('');
+        setPassword('');
+        onClose();
       } else {
         await login({ email, password });
+        setEmail('');
+        setPassword('');
+        onClose();
       }
-      onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      const errorMsg = err instanceof Error ? err.message : 'Authentication failed';
+      // Provide helpful error messages
+      if (errorMsg.toLowerCase().includes('invalid') || errorMsg.toLowerCase().includes('not found')) {
+        setError('Email or password is incorrect.');
+      } else if (errorMsg.toLowerCase().includes('already')) {
+        setError('This email is already registered. Please sign in.');
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setSaving(false);
     }
@@ -58,17 +99,24 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await signInWithGoogle(credentialResponse.credential);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google authentication failed');
+      const raw = err instanceof Error ? err.message : 'Google authentication failed';
+      if (raw.toLowerCase().includes('supabase auth mode')) {
+        setError('Google sign-in requires Supabase mode. Set VITE_AUTH_MODE=supabase and restart.');
+      } else
+      if (raw.toLowerCase().includes('provider') && raw.toLowerCase().includes('not enabled')) {
+        setError('Google sign-in is temporarily unavailable. Please use Email Login/Sign Up below.');
+      } else {
+        setError(raw);
+      }
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/98 backdrop-blur-md transition-all duration-300">
-      <div className="relative w-full max-w-md bg-[#111111] rounded-[32px] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,1)] border border-white/5 p-10">
-        
-        {/* Close */}
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-3 sm:p-6 bg-black/98 backdrop-blur-md transition-all duration-300 overflow-y-auto overscroll-contain" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="relative w-full max-w-md bg-[#111111] rounded-[28px] sm:rounded-[32px] overflow-y-auto max-h-[calc(100vh-24px)] sm:max-h-[calc(100vh-48px)] shadow-[0_40px_120px_rgba(0,0,0,1)] border border-white/5 p-6 sm:p-10 my-3 sm:my-6">
+
         <button
           onClick={onClose}
           className="absolute top-8 right-8 text-white/30 hover:text-white transition-all duration-300 hover:rotate-90"
@@ -78,7 +126,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </svg>
         </button>
 
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-[var(--red)]/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-[var(--red)]/20 shadow-[0_0_40px_rgba(214,43,43,0.1)]">
             <svg className="w-10 h-10 text-[var(--red)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,27 +140,33 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           event.preventDefault();
           void submit();
         }}>
-          <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-[3px] text-center text-white/30">Quick Sign-In</p>
-            <div className="w-full flex justify-center">
-              <GoogleLogin
-                onSuccess={(response) => {
-                  void submitGoogle(response);
-                }}
-                onError={() => setError('Google sign-in popup was closed or blocked.')}
-                shape="pill"
-                text="continue_with"
-                theme="filled_black"
-                size="large"
-              />
-            </div>
-          </div>
+          {useSupabaseAuth ? (
+            <>
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-[3px] text-center text-white/30">Quick Sign-In</p>
+                <div className="w-full flex justify-center">
+                  <GoogleLogin
+                    onSuccess={(response) => {
+                      void submitGoogle(response);
+                    }}
+                    onError={() => setError('Google sign-in popup was closed or blocked.')}
+                    shape="pill"
+                    text="continue_with"
+                    theme="filled_black"
+                    size="large"
+                  />
+                </div>
+              </div>
 
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[10px] uppercase tracking-[2px] text-white/30">or use email</span>
-            <div className="h-px flex-1 bg-white/10" />
-          </div>
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-[10px] uppercase tracking-[2px] text-white/30">or use email</span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+            </>
+          ) : (
+            <p className="text-[10px] text-center text-white/35 uppercase tracking-[2px]">Google sign-in is disabled in local auth mode. Use email login or sign up.</p>
+          )}
 
           <div className="flex bg-black p-1 rounded-full border border-white/5">
             <button

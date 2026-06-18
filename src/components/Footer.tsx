@@ -12,7 +12,7 @@ export default function Footer() {
             SHAWARMA INN
           </Link>
           <p className="text-[var(--white)]/50 text-sm font-body leading-relaxed max-w-xs">
-            Authentic Lebanese flame-grilled perfection. Serving Chennai's finest shawarma across 5 domains since 2018.
+            Authentic Lebanese flame-grilled perfection. Serving Mathur's finest shawarma since 2018.
           </p>
           <div className="flex items-center gap-5 pt-4">
             <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[var(--white)] hover:bg-[var(--red)] transition-all duration-300">
@@ -30,8 +30,8 @@ export default function Footer() {
           <ul className="flex flex-col gap-4">
             {['Menu', 'Branches', 'Gallery', 'Reviews'].map(item => (
               <li key={item}>
-                <Link 
-                  to={item === 'Menu' ? '/menu' : item === 'Branches' ? '/branches' : '/'} 
+                <Link
+                  to={item === 'Menu' ? '/menu' : item === 'Branches' ? '/branches' : item === 'Reviews' ? '/#reviews' : '/'}
                   className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors"
                 >
                   {item}
@@ -63,8 +63,8 @@ export default function Footer() {
           <h4 className="text-[var(--red)] font-bebas text-xl tracking-[4px] uppercase">CONNECT</h4>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/30 font-bold uppercase tracking-[2px] mb-1">HQ KOLATHUR</p>
-              <p className="text-white/60 text-sm font-body">12/4, Main Road, Kolathur, Chennai - 600099</p>
+              <p className="text-[10px] text-white/30 font-bold uppercase tracking-[2px] mb-1">MATHUR BRANCH</p>
+              <p className="text-white/60 text-sm font-body">Mathur Main Road, Mathur, Chennai - 600099</p>
             </div>
             <div>
               <p className="text-[10px] text-white/30 font-bold uppercase tracking-[2px] mb-1">DELIVERED BY</p>

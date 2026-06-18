@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { canUseAdminApi } from '../lib/runtime';
 
 interface NavbarProps {
   onCartClick: () => void;
@@ -12,9 +11,9 @@ interface NavbarProps {
 const navLinks = [
   { label: 'HOME', to: '/' },
   { label: 'MENU', to: '/menu' },
-  { label: 'BRANCHES', to: '/branches' },
-  { label: 'CHECKOUT', to: '/checkout' },
-  { label: 'ADMIN', to: '/admin/login' },
+  { label: 'REVIEWS', to: '/#reviews' },
+  { label: 'CONTACT', to: '/#branch' },
+  { label: 'ORDER ONLINE', to: '/#order-online' },
 ];
 
 export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarProps) {
@@ -22,6 +21,12 @@ export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarPr
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isHome = location.pathname === '/';
+
+  const navClass = isHome
+    ? 'bg-transparent border-transparent backdrop-blur-0'
+    : 'bg-[rgba(10,10,10,0.97)] border-[rgba(255,255,255,0.07)] backdrop-blur-[12px]';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -34,7 +39,7 @@ export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarPr
   }, [dropdownRef]);
 
   return (
-    <nav className="fixed top-0 w-full z-50 h-[64px] bg-[rgba(10,10,10,0.97)] backdrop-blur-[12px] border-b-[0.5px] border-[rgba(255,255,255,0.07)] flex justify-between items-center px-8 transition-all">
+    <nav className={`fixed top-0 w-full z-50 h-[64px] border-b-[0.5px] flex justify-between items-center px-8 transition-all ${navClass}`}>
       {/* Logo LEFT: "SHAWARMA INN" with .logo-shimmer class */}
       <Link to="/" className="text-2xl font-black uppercase logo-shimmer">
         SHAWARMA INN
@@ -42,7 +47,7 @@ export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarPr
 
       {/* Links CENTER: HOME · MENU · BRANCHES · CHECKOUT — Sora 600, 11px, uppercase, letter-spacing 0.14em */}
       <div className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
-        {navLinks.filter((link) => canUseAdminApi || link.to !== '/admin/login').map(link => {
+        {navLinks.map(link => {
           const active = link.to === '/' ? location.pathname === '/' : location.pathname.startsWith(link.to);
           return (
             <Link

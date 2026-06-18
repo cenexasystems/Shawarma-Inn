@@ -29,6 +29,10 @@ function sanitizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+function sanitizeReviewText(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
 function createToken(user) {
   return jwt.sign(
     {
@@ -461,6 +465,121 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
   return res.status(201).json({ order });
 });
 
+app.post('/api/franchise-leads', (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const phone = String(req.body.phone || '').trim();
+  const email = sanitizeEmail(req.body.email);
+  const message = String(req.body.message || '').trim();
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required.' });
+  }
+
+  if (!phone || phone.length < 7) {
+    return res.status(400).json({ error: 'Please enter a valid phone number.' });
+  }
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Please enter a valid email address.' });
+  }
+
+  const createdAt = new Date().toISOString();
+  const result = db.prepare(
+    `INSERT INTO franchise_leads (name, phone, email, message, created_at)
+     VALUES (?, ?, ?, ?, ?)`
+  ).run(name, phone, email, message || null, createdAt);
+
+  return res.status(201).json({
+    lead: {
+      id: Number(result.lastInsertRowid),
+      name,
+      phone,
+      email,
+      message: message || null,
+      created_at: createdAt,
+    },
+  });
+});
+
+app.get('/api/reviews', (_req, res) => {
+  const rawLimit = Number(_req.query.limit);
+  const rawOffset = Number(_req.query.offset);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 30) : 12;
+  const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
+
+  const rows = db.prepare(
+    `SELECT id, name, location, avatar_url, review_text, rating, created_at
+     FROM reviews
+     ORDER BY rating DESC, created_at DESC
+     LIMIT ? OFFSET ?`
+  ).all(limit, offset);
+
+  return res.json({ reviews: rows });
+});
+
+app.post('/api/reviews', (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const reviewText = sanitizeReviewText(req.body.review_text);
+  const rating = Number(req.body.rating);
+  const location = String(req.body.location || '').trim();
+  const avatarUrl = String(req.body.avatar_url || '').trim();
+
+  if (!name) {
+    return res.status(400).json({ error: 'Customer name is required.' });
+  }
+
+  if (!reviewText) {
+    return res.status(400).json({ error: 'Review message is required.' });
+  }
+
+  if (reviewText.length > 300) {
+    return res.status(400).json({ error: 'Review message must be 300 characters or less.' });
+  }
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be an integer between 1 and 5.' });
+  }
+
+  const tenMinutesAgoIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const duplicate = db.prepare(
+    `SELECT id
+     FROM reviews
+     WHERE lower(name) = lower(?)
+       AND review_text = ?
+       AND created_at >= ?
+     LIMIT 1`
+  ).get(name, reviewText, tenMinutesAgoIso);
+
+  if (duplicate) {
+    return res.status(429).json({ error: 'Duplicate review detected. Please try again later.' });
+  }
+
+  const createdAt = new Date().toISOString();
+  const result = db.prepare(
+    `INSERT INTO reviews (name, location, avatar_url, review_text, rating, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(
+    name,
+    location || null,
+    avatarUrl || null,
+    reviewText,
+    rating,
+    createdAt,
+  );
+
+  return res.status(201).json({
+    review: {
+      id: Number(result.lastInsertRowid),
+      name,
+      location: location || null,
+      avatar_url: avatarUrl || null,
+      review_text: reviewText,
+      rating,
+      created_at: createdAt,
+    },
+  });
+});
+
 app.get('/api/orders/mine', authRequired, (req, res) => {
   if (req.user.role !== 'user') {
     return res.status(403).json({ error: 'Only customer accounts can access this endpoint.' });
@@ -641,9 +760,13 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Shawarma Inn API running on http://localhost:${PORT}`);
-  // eslint-disable-next-line no-console
-  console.log(`SQLite database file: ${dbPath}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Shawarma Inn API running on http://localhost:${PORT}`);
+    // eslint-disable-next-line no-console
+    console.log(`SQLite database file: ${dbPath}`);
+  });
+}
+
+export default app;

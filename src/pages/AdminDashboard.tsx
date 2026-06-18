@@ -164,6 +164,9 @@ export default function AdminDashboard() {
             <Link to="/pos" className="bg-[#ef8f2f] text-[#101010] px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm">
               Open POS Screen
             </Link>
+            <Link to="/analytics" className="bg-white/10 text-white px-6 py-3 rounded-full font-bold uppercase tracking-wider text-sm hover:bg-white/20 transition-all">
+              📊 Analytics
+            </Link>
             <button onClick={logout} className="border border-white/20 px-6 py-3 rounded-full text-sm uppercase tracking-wider">
               Logout
             </button>

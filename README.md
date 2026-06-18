@@ -53,11 +53,7 @@ npm start
 
 ### Admin
 - Open: `/admin/login`
-- Default seeded credentials:
-  - Email: `admin@shawarmainn.local`
-  - Password: `admin12345`
-
-You can override admin credentials with environment variables before starting the server:
+Set admin credentials with environment variables before starting the server:
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
 - `VITE_SWIGGY_URL`

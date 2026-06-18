@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { authApi, profileApi, type AuthUser } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
-import { useSupabaseAuth } from '../lib/runtime';
+import { hasExplicitApiBase, isLocalHost, useSupabaseAuth } from '../lib/runtime';
 
 interface AuthSession {
   token: string;
@@ -38,6 +38,23 @@ interface ProfileRow {
   phone: string | null;
   avatar_url: string | null;
   provider: string | null;
+}
+
+function mapSupabaseAuthError(errorMessage: string) {
+  const normalized = errorMessage.toLowerCase();
+
+  if (
+    normalized.includes('provider') &&
+    normalized.includes('not enabled')
+  ) {
+    return 'Google sign-in is not enabled in Supabase Auth Providers. Use email/password for now or enable Google provider in Supabase dashboard.';
+  }
+
+  if (normalized.includes('database error saving new user')) {
+    return 'Supabase could not create your user profile. Run the project SQL setup in Supabase (profiles table, RLS policies, and handle_new_user trigger), then try sign up again.';
+  }
+
+  return errorMessage;
 }
 
 function readSessionFromStorage(): AuthSession | null {
@@ -193,12 +210,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        throw new Error(error.message);
+        // Fallback to backend API so email signup still works even if Supabase user/profile setup is misconfigured.
+        const { token, user } = await authApi.signup(input);
+        persistSession({ token, user });
+        return user;
       }
 
       const activeSession = data.session || (await supabase.auth.getSession()).data.session;
       if (!activeSession) {
         throw new Error('Signup successful. Please verify your email, then sign in.');
+      }
+
+      // Create or update profile immediately after signup
+      if (activeSession?.user?.id) {
+        try {
+          const payload = {
+            id: activeSession.user.id,
+            name: input.name || null,
+            phone: null,
+            avatar_url: null,
+            provider: 'email',
+            updated_at: new Date().toISOString(),
+          };
+          await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+        } catch (profileErr) {
+          console.warn('Profile creation warning:', profileErr);
+          // Don't fail signup if profile creation fails
+        }
       }
 
       const user = await syncSupabaseSession(activeSession);
@@ -222,7 +260,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        throw new Error(error.message);
+        // Fallback to backend API for local email accounts and Supabase outages.
+        const { token, user } = await authApi.login(input);
+        persistSession({ token, user });
+        return user;
       }
 
       const user = await syncSupabaseSession(data.session);
@@ -239,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [persistSession, syncSupabaseSession]);
 
   const adminLogin = useCallback(async (input: { email: string; password: string }) => {
-    if (useSupabaseAuth) {
+    if (useSupabaseAuth && !hasExplicitApiBase && !isLocalHost) {
       throw new Error('Admin login requires the local backend API deployment.');
     }
 
@@ -250,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(async (idToken: string) => {
     if (!useSupabaseAuth) {
-      throw new Error('Google sign-in is available on Supabase auth mode.');
+      throw new Error('Google sign-in is only available in Supabase auth mode. Set VITE_AUTH_MODE=supabase and reload the page.');
     }
 
     const { data, error } = await supabase.auth.signInWithIdToken({
@@ -259,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(mapSupabaseAuthError(error.message));
     }
 
     const activeSession = data.session || (await supabase.auth.getSession()).data.session;

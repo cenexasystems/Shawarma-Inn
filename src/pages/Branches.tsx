@@ -10,73 +10,89 @@ export default function Branches() {
 
   return (
     <main className="pt-[80px] min-h-screen bg-[var(--black)]">
-      <section className="max-w-7xl mx-auto px-8 py-16">
-        <h1 className="font-bebas text-6xl md:text-8xl tracking-wide uppercase mb-4 text-[var(--white)] text-center">
+      <section className="max-w-7xl mx-auto px-6 md:px-8 py-12 md:py-16">
+        <h1 className="font-bebas text-5xl sm:text-6xl md:text-8xl tracking-wide uppercase mb-4 text-[var(--white)] text-center">
           OUR LOCATIONS
         </h1>
-        <p className="text-center font-body text-[var(--white)]/60 text-lg md:text-xl max-w-2xl mx-auto mb-16">
-          Find the nearest Shawarma Inn sanctuary for your nocturnal cravings.
+        <p className="text-center font-body text-[var(--white)]/60 text-base md:text-xl max-w-2xl mx-auto mb-12 md:mb-16 px-2">
+          Find the nearest Shawarma Inn sanctuary for your nocturnal cravings. Our Mathur branch is the flagship store.
         </p>
 
-        {/* 3 columns grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Branch grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {branches.map(branch => (
             <div
               key={branch.id}
               onClick={() => setActiveBranch(branch)}
-              className={`cursor-pointer group bg-[var(--card-bg)] rounded-[16px] overflow-hidden border transition-all duration-300 ${
+              className={`cursor-pointer group bg-[var(--card-bg)] rounded-[16px] overflow-hidden border transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(0,0,0,0.45)] ${
                 activeBranch.id === branch.id ? 'border-[var(--red)] ring-1 ring-[var(--red)]' : 'border-[var(--border)] hover:border-[var(--white)]/30'
               }`}
             >
               {/* Branch photo */}
               <div className="relative h-48 overflow-hidden bg-[var(--charcoal)]">
-                <img 
-                  src={branch.imageUrl || branch.image} 
-                  alt={branch.name} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                <img
+                  src={branch.imageUrl || branch.image}
+                  alt={branch.name}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-6">
                   {branch.isFlagship && (
-                    <span className="w-max bg-[var(--red)] text-white text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded-sm mb-2">
+                    <span className="w-max bg-[var(--red)] text-white text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded-sm mb-2 shadow-lg">
                        FLAGSHIP STORE
                     </span>
                   )}
                   <h3 className="font-bebas text-2xl tracking-wide text-white">{branch.name}</h3>
                 </div>
               </div>
-              
+
               <div className="p-6 font-body">
                 <p className="text-[var(--white)]/70 text-sm mb-4 leading-relaxed line-clamp-2 min-h-[40px]">{branch.address}</p>
-                <div className="flex flex-col gap-2 text-sm text-[var(--white)]">
+                <div className="flex flex-col gap-2.5 text-sm text-[var(--white)]">
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-[var(--red)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 shrink-0 text-[var(--red)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {branch.hours}
+                    <span className="truncate">{branch.hours}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-[var(--red)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 shrink-0 text-[var(--red)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    {branch.phone}
+                    <span className="truncate">{branch.phone}</span>
                   </div>
                 </div>
+
+                <a
+                  href={branch.mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                  className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[2px] text-[var(--red)] hover:text-white border border-[var(--red)]/30 hover:border-[var(--red)] hover:bg-[var(--red)]/10 rounded-full px-4 py-2 transition-all duration-300"
+                >
+                  Get Directions
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4" />
+                  </svg>
+                </a>
               </div>
             </div>
           ))}
         </div>
 
         {/* Map iframe at bottom */}
-        <div className="mt-16 bg-[var(--card-bg)] rounded-xl border border-[var(--border)] overflow-hidden shadow-2xl w-full h-[400px]">
+        <div className="mt-12 md:mt-16 bg-[var(--card-bg)] rounded-xl border border-[var(--border)] overflow-hidden shadow-2xl w-full h-[280px] sm:h-[340px] md:h-[420px]">
            {activeBranch ? (
-             <iframe 
+             <iframe
+               key={activeBranch.id}
                src={`https://maps.google.com/maps?q=${encodeURIComponent(activeBranch.address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-               width="100%" 
-               height="100%" 
-               style={{ border: 0 }} 
-               allowFullScreen 
-               loading="lazy" 
+               width="100%"
+               height="100%"
+               style={{ border: 0 }}
+               allowFullScreen
+               loading="lazy"
                referrerPolicy="no-referrer-when-downgrade"
+               title={`Map for ${activeBranch.name}`}
              />
            ) : (
              <div className="w-full h-full flex items-center justify-center text-[var(--white)]/40 font-bebas text-2xl">

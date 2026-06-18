@@ -1,18 +1,11 @@
-import { hasSupabaseConfig } from './supabaseConfig';
-
 const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
 export const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-const envAuthMode = (import.meta.env.VITE_AUTH_MODE as string | undefined)?.toLowerCase();
+// Keep authentication in local mode to avoid dependency on Supabase profile triggers.
+export const useSupabaseAuth = import.meta.env.VITE_AUTH_MODE === 'supabase';
 
-export const useSupabaseAuth = envAuthMode
-  ? envAuthMode === 'supabase'
-  : !isLocalHost && hasSupabaseConfig;
-
-export const useLocalApi = envAuthMode
-  ? envAuthMode === 'local'
-  : !useSupabaseAuth;
+export const useLocalApi = true;
 
 export const hasExplicitApiBase = Boolean(import.meta.env.VITE_API_BASE);
 

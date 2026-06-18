@@ -15,8 +15,10 @@ import ProfileSetup from './pages/ProfileSetup';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import PosBilling from './pages/PosBilling';
+import Analytics from './pages/Analytics';
 import { useCart } from './hooks/useCart';
 import { useAuth } from './hooks/useAuth';
+import { runAutomaticMigration, initializeWithHealthCheck } from './lib/supabaseMigration';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,24 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Initialize automatic migration on app load (silent, non-blocking)
+  useEffect(() => {
+    // Run migration in background without blocking UI
+    void (async () => {
+      try {
+        // Check Supabase health before operating
+        await initializeWithHealthCheck();
+        // Run migration silently (only logs errors)
+        const result = await runAutomaticMigration();
+        if (result.summary.errors.length > 0) {
+          console.info('Migration completed with warnings:', result.summary.errors);
+        }
+      } catch (error) {
+        console.info('Migration initialization skipped:', error);
+      }
+    })();
+  }, []);
+
   // Use the custom hook
   const cartData = useCart();
 
@@ -53,6 +73,18 @@ export default function App() {
       navigate('/profile-setup', { replace: true });
     }
   }, [authLoading, user, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!location.hash) {
+      return;
+    }
+
+    const id = location.hash.replace('#', '');
+    const target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.hash, location.pathname]);
 
   if (loading) return <Loader />;
 
@@ -95,6 +127,10 @@ export default function App() {
           path="/pos"
           element={user?.role === 'admin' ? <PosBilling /> : <Navigate to="/admin/login" replace />}
         />
+        <Route
+          path="/analytics"
+          element={user?.role === 'admin' ? <Analytics /> : <Navigate to="/admin/login" replace />}
+        />
       </Routes>
 
       {/* Floating Checkout Button (Bottom) */}
@@ -105,8 +141,11 @@ export default function App() {
             className="w-full bg-[var(--red)] text-white font-bebas text-xl py-4 rounded-full flex items-center justify-between px-8 tracking-[2px] shadow-[0_20px_40px_rgba(214,43,43,0.4)] hover:scale-105 active:scale-95 transition-all border border-white/10"
           >
             <span>CHECKOUT</span>
-            <div className="flex items-center gap-2">
-              <span className="text-white/40 text-[10px] items-center">({cartData.count} ITEMS)</span>
+            <div className="flex items-center gap-3">
+              <div className="text-right leading-tight">
+                <div className="text-white/45 text-[10px]">{cartData.count} ITEMS</div>
+                <div className="text-white text-[12px] tracking-[1px]">₹{cartData.total.toFixed(0)}</div>
+              </div>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>

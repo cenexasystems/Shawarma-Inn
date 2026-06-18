@@ -16,7 +16,7 @@ interface ApiRequestOptions {
   body?: unknown;
 }
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) || '/api';
+const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined)?.trim() || '/api');
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -78,5 +78,50 @@ export const profileApi = {
       method: 'PUT',
       token,
       body: updates,
+    }),
+};
+
+export const franchiseApi = {
+  submitLead: (input: { name: string; phone: string; email: string; message?: string }) =>
+    apiRequest<{
+      lead: {
+        id: number;
+        name: string;
+        phone: string;
+        email: string;
+        message: string | null;
+        created_at: string;
+      };
+    }>('/franchise-leads', {
+      method: 'POST',
+      body: input,
+    }),
+};
+
+export interface HomepageReview {
+  id: number;
+  name: string;
+  location: string | null;
+  avatar_url: string | null;
+  review_text: string;
+  rating: number;
+  created_at: string;
+}
+
+export const reviewApi = {
+  list: (input?: { limit?: number; offset?: number }) =>
+    apiRequest<{ reviews: HomepageReview[] }>(
+      `/reviews?limit=${input?.limit ?? 12}&offset=${input?.offset ?? 0}`,
+    ),
+  submit: (input: {
+    name: string;
+    review_text: string;
+    rating: number;
+    location?: string;
+    avatar_url?: string;
+  }) =>
+    apiRequest<{ review: HomepageReview }>('/reviews', {
+      method: 'POST',
+      body: input,
     }),
 };

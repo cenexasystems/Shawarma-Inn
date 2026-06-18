@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const dataDir = path.join(rootDir, 'data');
+const dataDir = process.env.VERCEL ? path.join('/tmp', 'shawarma-inn-data') : path.join(rootDir, 'data');
 const dbPath = path.join(dataDir, 'billing.sqlite');
 
 if (!fs.existsSync(dataDir)) {
@@ -116,12 +116,36 @@ function runMigrations() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS franchise_leads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT NOT NULL,
+      message TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      location TEXT,
+      avatar_url TEXT,
+      review_text TEXT NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
 function seedAdmin() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@shawarmainn.local';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin12345';
+  const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const adminPassword = String(process.env.ADMIN_PASSWORD || '').trim();
+
+  // Do not create a default admin account without explicit credentials.
+  if (!adminEmail || !adminPassword) {
+    return;
+  }
 
   const existingAdmin = db
     .prepare('SELECT id FROM users WHERE email = ?')

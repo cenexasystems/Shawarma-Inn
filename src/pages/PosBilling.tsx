@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../lib/api';
+import Invoice from '../components/Invoice';
+import RecentOrders from '../components/RecentOrders';
+import type { CartItem } from '../types';
 
 interface PosMenuItem {
   id: number;
@@ -19,16 +22,20 @@ interface GeneratedOrder {
   items: Array<{ id: number; name: string; quantity: number; price: number }>;
 }
 
+type OrderType = 'dine-in' | 'takeaway' | 'delivery';
+
 export default function PosBilling() {
   const { user, token } = useAuth();
 
   const [menuItems, setMenuItems] = useState<PosMenuItem[]>([]);
   const [cart, setCart] = useState<Record<number, number>>({});
   const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(101);
-  const [generatedOrder, setGeneratedOrder] = useState<GeneratedOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [orderType, setOrderType] = useState<OrderType>('dine-in');
+  const [showInvoice, setShowInvoice] = useState(false);
 
   const tokenRequired = token || '';
 
@@ -77,9 +84,30 @@ export default function PosBilling() {
       }>;
   }, [cart, menuItems]);
 
-  const total = useMemo(
+  const subtotal = useMemo(
     () => cartLines.reduce((sum, line) => sum + line.subtotal, 0),
     [cartLines],
+  );
+
+  const discountAmount = useMemo(
+    () => Math.round((subtotal * discount) / 100 * 100) / 100,
+    [subtotal, discount],
+  );
+
+  const taxableAmount = subtotal - discountAmount;
+  const tax = useMemo(
+    () => Math.round(taxableAmount * 0.05 * 100) / 100,
+    [taxableAmount],
+  );
+
+  const total = useMemo(
+    () => Math.round((taxableAmount + tax) * 100) / 100,
+    [taxableAmount, tax],
+  );
+
+  const itemCount = useMemo(
+    () => Object.values(cart).reduce((sum, qty) => sum + qty, 0),
+    [cart],
   );
 
   const addItem = (id: number) => {
@@ -89,9 +117,22 @@ export default function PosBilling() {
     }));
   };
 
+  const removeItem = (id: number) => {
+    setCart((prev) => {
+      const updated = { ...prev };
+      if (updated[id] <= 1) {
+        delete updated[id];
+      } else {
+        updated[id]--;
+      }
+      return updated;
+    });
+  };
+
   const clearCart = () => {
     setCart({});
-    setGeneratedOrder(null);
+    setDiscount(0);
+    setShowInvoice(false);
   };
 
   const generateBill = async () => {
@@ -100,75 +141,42 @@ export default function PosBilling() {
       return;
     }
 
+    // Open invoice modal without API call (for fast POS)
+    setShowInvoice(true);
+    setError('');
+  };
+
+  const markPaid = async () => {
     try {
       setSaving(true);
       setError('');
+
       const payload = {
         items: cartLines.map((line) => ({
           menu_item_id: line.menuItem.id,
           quantity: line.quantity,
         })),
+        total: total,
+        orderType,
       };
 
-      const response = await apiRequest<{ order: GeneratedOrder }>('/orders/generate', {
-        method: 'POST',
-        token: tokenRequired,
-        body: payload,
-      });
-
-      setGeneratedOrder(response.order);
-      setCurrentOrderNumber(response.order.order_number);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate bill');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const markPaid = async () => {
-    if (!generatedOrder) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError('');
-      const response = await apiRequest<{ order: GeneratedOrder; nextOrderNumber: number }>(
-        `/orders/${generatedOrder.id}/mark-paid`,
+      await apiRequest<{ order: GeneratedOrder; nextOrderNumber: number }>(
+        '/orders/generate',
         {
           method: 'POST',
           token: tokenRequired,
+          body: payload,
         },
       );
 
-      setGeneratedOrder({ ...generatedOrder, status: response.order.status });
-      setCurrentOrderNumber(response.nextOrderNumber || currentOrderNumber + 1);
-      setCart({});
+      setCurrentOrderNumber(currentOrderNumber + 1);
+      setShowInvoice(false);
+      clearCart();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark order as paid');
+      setError(err instanceof Error ? err.message : 'Failed to save order');
     } finally {
       setSaving(false);
     }
-  };
-
-  const invoiceText = useMemo(() => {
-    if (!generatedOrder) {
-      return '';
-    }
-
-    const lines = generatedOrder.items.map((item) => `${item.name} x${item.quantity}`);
-    return [
-      `Order #${generatedOrder.order_number}`,
-      ...lines,
-      `Total Rs ${generatedOrder.total.toFixed(0)}`,
-    ].join('\n');
-  }, [generatedOrder]);
-
-  const copyInvoice = async () => {
-    if (!invoiceText) {
-      return;
-    }
-    await navigator.clipboard.writeText(invoiceText);
   };
 
   if (!user) {
@@ -178,6 +186,14 @@ export default function PosBilling() {
   if (user.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
+
+  const cartItemsForInvoice: CartItem[] = cartLines.map(line => ({
+    id: line.menuItem.id,
+    name: line.menuItem.name,
+    price: line.menuItem.price,
+    qty: line.quantity,
+    image: '',
+  }));
 
   return (
     <main className="min-h-screen bg-[#121212] text-[#f7f7f7] px-3 py-5 md:px-6 md:py-8">
@@ -212,66 +228,137 @@ export default function PosBilling() {
           )}
         </section>
 
-        <aside className="bg-[#181818] rounded-[20px] border border-white/10 p-4 md:p-6 flex flex-col gap-4">
-          <h2 className="font-bebas text-4xl tracking-[3px] uppercase">Current Cart</h2>
+        <aside className="bg-[#181818] rounded-[20px] border border-white/10 p-4 md:p-6 flex flex-col gap-4 max-h-[90vh] overflow-hidden flex-col">
+          <h2 className="font-bebas text-4xl tracking-[3px] uppercase">Current Order</h2>
 
-          <div className="space-y-2 max-h-[300px] overflow-auto pr-1">
+          {/* Order Type Toggle */}
+          <div className="flex gap-2">
+            {(['dine-in', 'takeaway', 'delivery'] as OrderType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => setOrderType(type)}
+                className={`flex-1 py-2 px-3 rounded-lg font-bebas text-xs tracking-wider uppercase transition-all ${
+                  orderType === type
+                    ? 'bg-[#ef8f2f] text-[#121212]'
+                    : 'bg-black/20 text-white/60 border border-white/10 hover:border-white/30'
+                }`}
+              >
+                {type === 'dine-in' ? '🪑 Dine In' : type === 'takeaway' ? '📦 Takeaway' : '🚗 Delivery'}
+              </button>
+            ))}
+          </div>
+
+          {/* Cart Items */}
+          <div className="space-y-2 flex-1 overflow-auto pr-2">
             {cartLines.length === 0 && <p className="text-white/50 text-sm">Tap menu buttons to add items.</p>}
             {cartLines.map((line) => (
-              <div key={line.menuItem.id} className="flex justify-between items-center bg-black/20 border border-white/10 rounded-xl p-3">
-                <div>
-                  <p className="font-semibold text-[16px]">{line.menuItem.name}</p>
-                  <p className="text-xs text-white/60">x{line.quantity}</p>
+              <div key={line.menuItem.id} className="bg-black/30 border border-white/10 rounded-xl p-3 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-sm">{line.menuItem.name}</p>
+                    <p className="text-xs text-white/60">₹{line.menuItem.price}</p>
+                  </div>
+                  <p className="text-[#4ade80] font-bold">₹{line.subtotal.toFixed(0)}</p>
                 </div>
-                <p className="text-[#4ade80] font-bold text-lg">Rs {line.subtotal.toFixed(0)}</p>
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-2 bg-black/40 rounded-lg p-1">
+                  <button
+                    onClick={() => removeItem(line.menuItem.id)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-[#ef8f2f] hover:bg-[#ef8f2f]/20 text-sm font-bold"
+                  >
+                    −
+                  </button>
+                  <span className="flex-1 text-center font-bold text-sm">{line.quantity}</span>
+                  <button
+                    onClick={() => addItem(line.menuItem.id)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-[#ef8f2f] hover:bg-[#ef8f2f]/20 text-sm font-bold"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-white/10 pt-3 flex justify-between items-end">
-            <p className="font-bebas text-3xl tracking-[2px]">Total</p>
-            <p className="font-bebas text-5xl text-[#ef8f2f]">Rs {total.toFixed(0)}</p>
+          {/* Discount Input */}
+          <div className="border-t border-white/10 pt-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold uppercase text-white/70">Discount (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="99"
+                value={discount}
+                onChange={(e) => setDiscount(Math.max(0, Math.min(99, parseInt(e.target.value) || 0)))}
+                className="w-16 bg-black/50 border border-white/20 rounded-lg px-2 py-1 text-sm text-center font-bold"
+              />
+            </div>
+            {discount > 0 && (
+              <p className="text-xs text-red-400">Discount: -₹{discountAmount.toFixed(2)}</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 gap-3">
+          {/* Totals Summary */}
+          <div className="border-t border-white/10 pt-3 space-y-2 text-sm">
+            <div className="flex justify-between text-white/70">
+              <span>{itemCount} items</span>
+              <span className="font-bold">₹{subtotal.toFixed(2)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-red-400">
+                <span>Discount ({discount}%)</span>
+                <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-white/70">
+              <span>Tax (5%)</span>
+              <span className="font-bold text-[#4ade80]">₹{tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-end border-t border-white/10 pt-2">
+              <p className="font-bebas text-2xl tracking-[2px]">TOTAL</p>
+              <p className="font-bebas text-5xl text-[#ef8f2f]">₹{total.toFixed(2)}</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={clearCart}
-              className="w-full rounded-2xl py-4 bg-[#2b2b2b] text-white text-lg font-semibold"
+              className="rounded-2xl py-3 bg-[#2b2b2b] text-white text-sm font-semibold hover:bg-[#3a3a3a] transition-all active:scale-95"
             >
-              Clear Cart
+              Clear
             </button>
             <button
               onClick={generateBill}
               disabled={saving || cartLines.length === 0}
-              className="w-full rounded-2xl py-4 bg-[#ef8f2f] text-[#121212] text-lg font-bold disabled:opacity-50"
+              className="rounded-2xl py-3 bg-[#ef8f2f] text-[#121212] text-sm font-bold disabled:opacity-50 hover:bg-yellow-500 transition-all active:scale-95"
             >
-              {saving ? 'Please wait...' : 'Generate Bill'}
-            </button>
-            <button
-              onClick={markPaid}
-              disabled={saving || !generatedOrder || generatedOrder.status === 'paid'}
-              className="w-full rounded-2xl py-4 bg-[#22c55e] text-[#09210f] text-lg font-bold disabled:opacity-50"
-            >
-              Mark Paid
+              {saving ? 'Wait...' : 'Print Bill'}
             </button>
           </div>
 
-          {generatedOrder && (
-            <div className="mt-1 rounded-xl border border-white/10 bg-black/20 p-3 space-y-2">
-              <p className="text-sm uppercase tracking-[2px] text-white/70">Invoice Preview</p>
-              <pre className="text-xs whitespace-pre-wrap text-white/90 leading-relaxed">{invoiceText}</pre>
-              <button
-                onClick={() => void copyInvoice()}
-                className="w-full mt-2 rounded-xl border border-white/20 py-2 text-sm uppercase tracking-wider"
-              >
-                Copy to Clipboard
-              </button>
-            </div>
-          )}
+          {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {/* Recent Orders Panel */}
+          <div className="mt-2">
+            <RecentOrders />
+          </div>
         </aside>
       </div>
+
+      {/* Invoice Modal */}
+      {showInvoice && (
+        <Invoice
+          items={cartItemsForInvoice}
+          subtotal={subtotal}
+          tax={tax}
+          discount={discount}
+          total={total}
+          orderType={orderType}
+          onClose={() => setShowInvoice(false)}
+          onMarkPaid={markPaid}
+        />
+      )}
     </main>
   );
 }
