@@ -1,25 +1,39 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Youtube } from 'lucide-react';
+import { Instagram, Phone, Mail } from 'lucide-react';
+import branchesData from '../data/branches.json';
+import type { Branch } from '../types';
+
+const branches: Branch[] = branchesData as Branch[];
+const flagship = branches.find((branch) => branch.isFlagship) || branches[0];
+const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@shawarmainn.in';
 
 export default function Footer() {
   return (
     <footer className="w-full py-20 px-8 bg-[#0a0a0a] border-t border-[var(--border)] relative z-20">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
-        
+
         {/* Column 1: Brand & Social */}
         <div className="space-y-6">
           <Link to="/" className="text-4xl font-bebas tracking-widest logo-shimmer inline-block">
             SHAWARMA INN
           </Link>
-          <p className="text-[var(--white)]/50 text-sm font-body leading-relaxed max-w-xs">
+          <p className="text-white/50 text-sm font-body leading-relaxed max-w-xs">
             Authentic Lebanese flame-grilled perfection. Serving Mathur's finest shawarma since 2018.
           </p>
-          <div className="flex items-center gap-5 pt-4">
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[var(--white)] hover:bg-[var(--red)] transition-all duration-300">
-              <Instagram size={20} />
+          <div className="flex items-center gap-3">
+            <a
+              href={`tel:${flagship.phone.replace(/\s+/g, '')}`}
+              className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[var(--red)] transition-all duration-300"
+              aria-label="Call us"
+            >
+              <Phone size={18} />
             </a>
-            <a href="https://youtube.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[var(--white)] hover:bg-[var(--red)] transition-all duration-300">
-              <Youtube size={20} />
+            <a
+              href={`mailto:${supportEmail}`}
+              className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[var(--red)] transition-all duration-300"
+              aria-label="Email us"
+            >
+              <Mail size={18} />
             </a>
           </div>
         </div>
@@ -28,31 +42,44 @@ export default function Footer() {
         <div className="space-y-6 lg:pl-10">
           <h4 className="text-[var(--red)] font-bebas text-xl tracking-[4px] uppercase">THE EXPERIENCE</h4>
           <ul className="flex flex-col gap-4">
-            {['Menu', 'Branches', 'Gallery', 'Reviews'].map(item => (
-              <li key={item}>
-                <Link
-                  to={item === 'Menu' ? '/menu' : item === 'Branches' ? '/branches' : item === 'Reviews' ? '/#reviews' : '/'}
-                  className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors"
-                >
-                  {item}
-                </Link>
-              </li>
-            ))}
+            <li>
+              <Link to="/menu" className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors">
+                Menu
+              </Link>
+            </li>
+            <li>
+              <Link to="/branches" className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors">
+                Branches
+              </Link>
+            </li>
+            <li>
+              <Link to="/#reviews" className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors">
+                Reviews
+              </Link>
+            </li>
+            <li>
+              <Link to="/#franchise" className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors">
+                Franchise
+              </Link>
+            </li>
           </ul>
         </div>
 
-        {/* Column 3: Quick Links */}
+        {/* Column 3: Branches on Instagram */}
         <div className="space-y-6 lg:pl-10">
-          <h4 className="text-[var(--red)] font-bebas text-xl tracking-[4px] uppercase">QUICK LINKS</h4>
+          <h4 className="text-[var(--red)] font-bebas text-xl tracking-[4px] uppercase">FOLLOW OUR BRANCHES</h4>
           <ul className="flex flex-col gap-4">
-            {['My Account', 'Order History', 'Franchise', 'Careers'].map(item => (
-              <li key={item}>
-                <Link 
-                  to={item === 'My Account' ? '/profile' : item === 'Franchise' ? '/' : '/'} 
-                  className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors"
+            {branches.map((branch) => (
+              <li key={branch.id}>
+                <a
+                  href={branch.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-white/40 hover:text-white font-body text-sm tracking-wide transition-colors"
                 >
-                  {item}
-                </Link>
+                  <Instagram size={14} className="shrink-0" />
+                  {branch.name}
+                </a>
               </li>
             ))}
           </ul>
@@ -63,8 +90,11 @@ export default function Footer() {
           <h4 className="text-[var(--red)] font-bebas text-xl tracking-[4px] uppercase">CONNECT</h4>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/30 font-bold uppercase tracking-[2px] mb-1">MATHUR BRANCH</p>
-              <p className="text-white/60 text-sm font-body">Mathur Main Road, Mathur, Chennai - 600099</p>
+              <p className="text-[10px] text-white/30 font-bold uppercase tracking-[2px] mb-1">{flagship.name}</p>
+              <p className="text-white/60 text-sm font-body">{flagship.address}</p>
+              <a href={`tel:${flagship.phone.replace(/\s+/g, '')}`} className="text-white/60 text-sm font-body hover:text-white transition-colors">
+                {flagship.phone}
+              </a>
             </div>
             <div>
               <p className="text-[10px] text-white/30 font-bold uppercase tracking-[2px] mb-1">DELIVERED BY</p>
@@ -79,14 +109,13 @@ export default function Footer() {
       </div>
 
       {/* Bottom Copyright */}
-      <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-[10px] text-white/20 font-body tracking-[2px] uppercase">
-          © {new Date().getFullYear()} SHAWARMA INN. ALL RIGHTS RESERVED.
+      <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col items-center gap-2 text-center">
+        <p className="text-white text-[11px] font-body tracking-[2px] uppercase">
+          © 2026 SHAWARMA INN. ALL RIGHTS RESERVED.
         </p>
-        <div className="flex gap-8">
-          <Link to="/" className="text-[10px] text-white/20 hover:text-white uppercase tracking-[2px] transition-colors">Privacy Policy</Link>
-          <Link to="/" className="text-[10px] text-white/20 hover:text-white uppercase tracking-[2px] transition-colors">Terms of Service</Link>
-        </div>
+        <p className="text-white text-[11px] font-body tracking-[2px] uppercase">
+          Powered by Cenexa Systems © 2026
+        </p>
       </div>
     </footer>
   );

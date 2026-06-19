@@ -22,8 +22,18 @@ export interface Branch {
   mapUrl?: string;
   maps?: string;
   badge?: string;
+  instagram?: string;
   isFlagship?: boolean;
   flagship?: boolean;
+}
+
+export interface VideoTestimonial {
+  branchId: string;
+  branchName: string;
+  customerName: string;
+  quote: string;
+  videoUrl: string | null;
+  posterUrl: string | null;
 }
 
 export interface Review {

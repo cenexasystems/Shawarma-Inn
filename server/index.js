@@ -508,7 +508,7 @@ app.get('/api/reviews', (_req, res) => {
   const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
 
   const rows = db.prepare(
-    `SELECT id, name, location, avatar_url, review_text, rating, created_at
+    `SELECT id, name, location, avatar_url, phone, review_text, rating, created_at
      FROM reviews
      ORDER BY rating DESC, created_at DESC
      LIMIT ? OFFSET ?`
@@ -523,6 +523,7 @@ app.post('/api/reviews', (req, res) => {
   const rating = Number(req.body.rating);
   const location = String(req.body.location || '').trim();
   const avatarUrl = String(req.body.avatar_url || '').trim();
+  const phone = String(req.body.phone || '').trim();
 
   if (!name) {
     return res.status(400).json({ error: 'Customer name is required.' });
@@ -556,12 +557,13 @@ app.post('/api/reviews', (req, res) => {
 
   const createdAt = new Date().toISOString();
   const result = db.prepare(
-    `INSERT INTO reviews (name, location, avatar_url, review_text, rating, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO reviews (name, location, avatar_url, phone, review_text, rating, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   ).run(
     name,
     location || null,
     avatarUrl || null,
+    phone || null,
     reviewText,
     rating,
     createdAt,
@@ -573,6 +575,7 @@ app.post('/api/reviews', (req, res) => {
       name,
       location: location || null,
       avatar_url: avatarUrl || null,
+      phone: phone || null,
       review_text: reviewText,
       rating,
       created_at: createdAt,

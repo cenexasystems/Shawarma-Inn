@@ -103,6 +103,7 @@ export interface HomepageReview {
   name: string;
   location: string | null;
   avatar_url: string | null;
+  phone: string | null;
   review_text: string;
   rating: number;
   created_at: string;
@@ -119,6 +120,7 @@ export const reviewApi = {
     rating: number;
     location?: string;
     avatar_url?: string;
+    phone?: string;
   }) =>
     apiRequest<{ review: HomepageReview }>('/reviews', {
       method: 'POST',

@@ -131,11 +131,17 @@ function runMigrations() {
       name TEXT NOT NULL,
       location TEXT,
       avatar_url TEXT,
+      phone TEXT,
       review_text TEXT NOT NULL,
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  const reviewColumns = db.prepare('PRAGMA table_info(reviews)').all().map((col) => col.name);
+  if (!reviewColumns.includes('phone')) {
+    db.exec('ALTER TABLE reviews ADD COLUMN phone TEXT');
+  }
 }
 
 function seedAdmin() {
