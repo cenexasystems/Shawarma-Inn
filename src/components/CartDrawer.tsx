@@ -66,7 +66,17 @@ export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProp
               <div key={ci.id} className="flex items-center gap-4 group">
                 <div className="w-16 h-16 bg-[var(--card-bg)] rounded-xl overflow-hidden border border-[var(--border)] flex-shrink-0">
                   {ci.image ? (
-                    <img src={ci.image} alt={ci.name} className="w-full h-full object-cover" />
+                    <img
+                      src={ci.image}
+                      alt={ci.name}
+                      className="w-full h-full object-cover"
+                      onError={({ currentTarget }) => {
+                        currentTarget.style.display = 'none';
+                        currentTarget.parentElement!.textContent = '🌯';
+                        currentTarget.parentElement!.className =
+                          'w-full h-full flex items-center justify-center text-2xl';
+                      }}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl">🌯</div>
                   )}

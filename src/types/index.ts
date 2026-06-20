@@ -1,5 +1,6 @@
 export interface MenuItem {
   id: string | number;
+  slug?: string;
   name: string;
   emoji?: string; // legacy
   desc?: string;
@@ -9,6 +10,7 @@ export interface MenuItem {
   category: string;
   image?: string;
   bestseller?: boolean;
+  isVeg?: boolean;
 }
 
 export interface Branch {

@@ -1,0 +1,36 @@
+{
+  "totalProducts": 167,
+  "totalCategories": 13,
+  "categories": {
+    "Bring Your Own Chips": 3,
+    "Burgers": 20,
+    "Combo Deals": 5,
+    "Desserts": 3,
+    "Loaded Fries": 3,
+    "Milkshakes": 8,
+    "Mojitos": 12,
+    "Momos": 7,
+    "Pizza": 7,
+    "Shawarma": 58,
+    "Starters": 13,
+    "Toasts": 20,
+    "Waffles": 8
+  },
+  "totalCombos": 5,
+  "totalDesserts": 3,
+  "totalBeverages": 20,
+  "missingPrices": [],
+  "duplicateProducts": [],
+  "bestsellers": [
+    "Classic Shawarma Roll",
+    "Peri Peri Shawarma Roll",
+    "BBQ Shawarma Roll",
+    "Zinger Chicken Burger",
+    "Chicken Pizza",
+    "Chicken Momos",
+    "Chicken Loaded French Fries",
+    "Mint Mojito",
+    "Oreo Milkshake",
+    "Nutella Waffle"
+  ]
+}

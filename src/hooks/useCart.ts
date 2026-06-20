@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export interface CartItem {
   id: string | number;
@@ -8,9 +8,24 @@ export interface CartItem {
   image?: string;
 }
 
+const STORAGE_KEY = 'si_cart';
+
+function loadCart(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
 export const useCart = () => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  
+  const [cart, setCart] = useState<CartItem[]>(loadCart);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+  }, [cart]);
+
   const addItem = (item: any) => setCart(prev => {
     const ex = prev.find(i => i.id === item.id);
     return ex ? prev.map(i => i.id === item.id ? {...i, qty: i.qty+1} : i) : [...prev, {...item, qty:1}];

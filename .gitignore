@@ -28,3 +28,8 @@ data/*.sqlite-*
 *.sw?
 
 .vercel
+
+# Source menu PDF and intermediate page extraction artifacts (large, not needed in repo)
+docs/*.pdf
+docs/pages/
+docs/menu-extracted.txt

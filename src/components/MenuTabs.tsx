@@ -1,4 +1,19 @@
-const CATEGORIES = ['All', 'Shawarma', 'Wraps', 'Bowls', 'Juice', 'Pizza', 'Mojito', 'Sides', 'Desserts'];
+const CATEGORIES = [
+  'All',
+  'Shawarma',
+  'Burgers',
+  'Pizza',
+  'Momos',
+  'Toasts',
+  'Starters',
+  'Loaded Fries',
+  'Bring Your Own Chips',
+  'Mojitos',
+  'Milkshakes',
+  'Waffles',
+  'Desserts',
+  'Combo Deals',
+];
 
 interface MenuTabsProps {
   active: string;

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import menuData from '../data/menu.json';
 import type { MenuItem } from '../types';
+import { categoryFallbackImage } from '../utils/categoryImages';
 
 const trending = (menuData as MenuItem[]).filter((item) => item.bestseller).slice(0, 8);
 
@@ -39,11 +40,16 @@ export default function TrendingProducts() {
             >
               <div className="relative aspect-square overflow-hidden">
                 <img
-                  src={item.image}
+                  src={item.image || categoryFallbackImage(item.category)}
                   alt={item.name}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  onError={({ currentTarget }) => {
+                    currentTarget.onerror = null;
+                    currentTarget.src = categoryFallbackImage(item.category);
+                  }}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <span className="absolute top-2 left-2 bg-[#d62b2b] text-white text-[9px] font-bold uppercase tracking-[1.5px] px-2 py-1 rounded-full">
                   Bestseller
                 </span>
