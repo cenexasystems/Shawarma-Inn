@@ -198,7 +198,7 @@ export default function ReviewsCarousel() {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Customer Name"
-                className="w-full appearance-none bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
+                className="w-full appearance-none bg-black/50 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
               />
 
               <input
@@ -206,7 +206,7 @@ export default function ReviewsCarousel() {
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
                 placeholder="Phone Number (optional)"
-                className="w-full appearance-none bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
+                className="w-full appearance-none bg-black/50 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
               />
 
               <input
@@ -214,7 +214,7 @@ export default function ReviewsCarousel() {
                 value={location}
                 onChange={(event) => setLocation(event.target.value)}
                 placeholder="Location (optional)"
-                className="w-full appearance-none bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
+                className="w-full appearance-none bg-black/50 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
               />
 
               <input
@@ -222,7 +222,7 @@ export default function ReviewsCarousel() {
                 value={avatarUrl}
                 onChange={(event) => setAvatarUrl(event.target.value)}
                 placeholder="Profile Image URL (optional)"
-                className="w-full appearance-none bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
+                className="w-full appearance-none bg-black/50 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-[#d62b2b]"
               />
 
               <textarea
@@ -231,7 +231,7 @@ export default function ReviewsCarousel() {
                 rows={4}
                 maxLength={300}
                 placeholder="Write your review..."
-                className="w-full appearance-none bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-[#d62b2b] resize-none"
+                className="w-full appearance-none bg-black/50 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-[#d62b2b] resize-none"
               />
 
               <div className="flex items-center justify-between">
@@ -343,21 +343,23 @@ export default function ReviewsCarousel() {
               </div>
             )}
 
-            {reviews.length > visibleCount && (
+            {reviews.length > 0 && (
               <div className="flex items-center justify-center gap-4 mt-6">
                 <button
                   type="button"
                   onClick={goPrev}
+                  disabled={reviews.length <= visibleCount}
                   aria-label="Previous reviews"
-                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-[#d62b2b] hover:border-[#d62b2b] transition-colors"
+                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-[#d62b2b] hover:border-[#d62b2b] transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/10 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button
                   type="button"
                   onClick={goNext}
+                  disabled={reviews.length <= visibleCount}
                   aria-label="Next reviews"
-                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-[#d62b2b] hover:border-[#d62b2b] transition-colors"
+                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-[#d62b2b] hover:border-[#d62b2b] transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/10 disabled:cursor-not-allowed"
                 >
                   <ChevronRight size={18} />
                 </button>

@@ -69,19 +69,21 @@ export default function Footer() {
         <div className="space-y-6 lg:pl-10">
           <h4 className="text-[var(--red)] font-bebas text-xl tracking-[4px] uppercase">FOLLOW OUR BRANCHES</h4>
           <ul className="flex flex-col gap-4">
-            {branches.map((branch) => (
-              <li key={branch.id}>
-                <a
-                  href={branch.instagram}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 text-white/40 hover:text-white font-body text-sm tracking-wide transition-colors"
-                >
-                  <Instagram size={14} className="shrink-0" />
-                  {branch.name}
-                </a>
-              </li>
-            ))}
+            {branches
+              .filter((branch) => branch.instagram)
+              .map((branch) => (
+                <li key={branch.id}>
+                  <a
+                    href={branch.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 text-white/40 hover:text-white font-body text-sm tracking-wide transition-colors"
+                  >
+                    <Instagram size={14} className="shrink-0" />
+                    {branch.name}
+                  </a>
+                </li>
+              ))}
           </ul>
         </div>
 
