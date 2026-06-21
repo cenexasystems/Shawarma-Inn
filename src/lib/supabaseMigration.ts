@@ -58,7 +58,7 @@ export async function createBackup(): Promise<void> {
   const state = getMigrationState();
   const backup: BackupData = {};
 
-  const tables = ['shawarmainn_orders', 'menu', 'staff', 'inventory', 'config', 'shifts', 'restocks'];
+  const tables = ['shawarmainn_orders', 'menu'];
 
   for (const table of tables) {
     const data = localStorage.getItem(table);
@@ -171,70 +171,11 @@ async function migrateMenuItems(): Promise<number> {
   return insertedCount;
 }
 
-async function migrateInventory(): Promise<number> {
-  const inventoryData = localStorage.getItem('inventory');
-  if (!inventoryData) return 0;
-
-  const items = JSON.parse(inventoryData);
-  if (!Array.isArray(items)) return 0;
-
-  let insertedCount = 0;
-
-  for (const item of items) {
-    try {
-      const { error } = await supabaseClient.from('inventory').insert({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        unit: item.unit || 'piece',
-        reorder_level: item.reorderLevel || 10,
-      });
-
-      if (!error) insertedCount++;
-    } catch {
-      // Skip duplicates
-    }
-  }
-
-  return insertedCount;
-}
-
-async function migrateStaff(): Promise<number> {
-  const staffData = localStorage.getItem('staff');
-  if (!staffData) return 0;
-
-  const staff = JSON.parse(staffData);
-  if (!Array.isArray(staff)) return 0;
-
-  let insertedCount = 0;
-
-  for (const member of staff) {
-    try {
-      const { error } = await supabaseClient.from('staff').insert({
-        id: member.id,
-        name: member.name,
-        email: member.email,
-        role: member.role,
-        hourly_rate: member.hourlyRate || 0,
-        is_active: member.isActive !== false,
-      });
-
-      if (!error) insertedCount++;
-    } catch {
-      // Skip duplicates
-    }
-  }
-
-  return insertedCount;
-}
-
 export interface MigrationSummary {
   success: boolean;
   summary: {
     orders: number;
     menuItems: number;
-    inventory: number;
-    staff: number;
     errors: string[];
   };
   timestamp: number;
@@ -248,7 +189,7 @@ export async function runAutomaticMigration(): Promise<MigrationSummary> {
   if (state.status === MIGRATION_STATE.COMPLETED) {
     return {
       success: true,
-      summary: { orders: 0, menuItems: 0, inventory: 0, staff: 0, errors: [] },
+      summary: { orders: 0, menuItems: 0, errors: [] },
       timestamp: state.timestamp,
     };
   }
@@ -264,8 +205,6 @@ export async function runAutomaticMigration(): Promise<MigrationSummary> {
   const summary = {
     orders: 0,
     menuItems: 0,
-    inventory: 0,
-    staff: 0,
     errors,
   };
 
@@ -278,16 +217,6 @@ export async function runAutomaticMigration(): Promise<MigrationSummary> {
 
     summary.menuItems = await migrateMenuItems().catch((e) => {
       errors.push(`Menu items migration failed: ${e.message}`);
-      return 0;
-    });
-
-    summary.inventory = await migrateInventory().catch((e) => {
-      errors.push(`Inventory migration failed: ${e.message}`);
-      return 0;
-    });
-
-    summary.staff = await migrateStaff().catch((e) => {
-      errors.push(`Staff migration failed: ${e.message}`);
       return 0;
     });
 
@@ -315,8 +244,6 @@ export async function runAutomaticMigration(): Promise<MigrationSummary> {
       summary: {
         orders: 0,
         menuItems: 0,
-        inventory: 0,
-        staff: 0,
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       },
       timestamp: state.timestamp,

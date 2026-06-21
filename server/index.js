@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db, dbPath, mapUserRow, getNextOrderNumber } from './db.js';
@@ -16,14 +18,43 @@ const rootDir = path.resolve(__dirname, '..');
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
-const JWT_SECRET = process.env.JWT_SECRET || 'shawarma-inn-local-dev-secret';
+const JWT_SECRET = String(process.env.JWT_SECRET || '').trim();
 
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required and must not be empty.');
+  process.exit(1);
+}
+
+const allowedOrigins = String(process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length === 0) {
+  allowedOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
+}
+
+app.use(helmet());
 app.use(
   cors({
-    origin: true,
+    origin(origin, callback) {
+      // Allow same-origin/non-browser requests (no Origin header) and listed origins.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
   }),
 );
 app.use(express.json({ limit: '1mb' }));
+
+const loginRateLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please try again later.' },
+});
 
 function sanitizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -242,7 +273,7 @@ app.post('/api/auth/signup', (req, res) => {
   return res.status(201).json({ token, user });
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', loginRateLimiter, (req, res) => {
   const email = sanitizeEmail(req.body.email);
   const password = String(req.body.password || '');
 
@@ -264,7 +295,7 @@ app.post('/api/auth/login', (req, res) => {
   return res.json({ token, user });
 });
 
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', loginRateLimiter, (req, res) => {
   const email = sanitizeEmail(req.body.email);
   const password = String(req.body.password || '');
 
@@ -323,16 +354,43 @@ app.put('/api/users/profile', authRequired, (req, res) => {
   return res.json({ profile: user, user });
 });
 
+const CATEGORY_ORDER = [
+  'Shawarma',
+  'Burgers',
+  'Pizza',
+  'Momos',
+  'Toasts',
+  'Starters',
+  'Loaded Fries',
+  'Bring Your Own Chips',
+  'Mojitos',
+  'Milkshakes',
+  'Waffles',
+  'Desserts',
+  'Combo Deals',
+];
+
+function categoryRank(category) {
+  const index = CATEGORY_ORDER.findIndex(
+    (c) => c.toLowerCase() === String(category || '').toLowerCase()
+  );
+  return index === -1 ? CATEGORY_ORDER.length : index;
+}
+
+function sortByCategoryOrder(rows) {
+  return [...rows].sort((a, b) => categoryRank(a.category) - categoryRank(b.category));
+}
+
 app.get('/api/menu-items', (_req, res) => {
   const rows = db.prepare(
     `SELECT id, name, price, category, is_active
      FROM menu_items
      WHERE deleted_at IS NULL
        AND is_active = 1
-     ORDER BY category ASC, name ASC`
+     ORDER BY name ASC`
   ).all();
 
-  return res.json({ items: rows });
+  return res.json({ items: sortByCategoryOrder(rows) });
 });
 
 app.get('/api/admin/menu-items', adminRequired, (_req, res) => {
@@ -762,6 +820,14 @@ if (fs.existsSync(distPath)) {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
+
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ error: 'Origin not allowed.' });
+  }
+  return res.status(err.status || 500).json({ error: 'Something went wrong. Please try again.' });
+});
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

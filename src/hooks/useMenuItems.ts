@@ -4,6 +4,7 @@ import localMenuData from '../data/menu.json';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../lib/runtime';
 import { categoryFallbackImage } from '../utils/categoryImages';
+import { sortByCategoryOrder } from '../utils/categoryOrder';
 
 const localMenuByName = new Map(
   (localMenuData as MenuItem[]).map((item) => [item.name.trim().toLowerCase(), item]),
@@ -72,12 +73,12 @@ export const useMenuItems = () => {
         }
 
         if (!menuItems.length) {
-          setItems(localMenuData as MenuItem[]);
+          setItems(sortByCategoryOrder(localMenuData as MenuItem[]));
         } else {
-          setItems(menuItems);
+          setItems(sortByCategoryOrder(menuItems));
         }
       } catch (err) {
-        setItems(localMenuData as MenuItem[]);
+        setItems(sortByCategoryOrder(localMenuData as MenuItem[]));
         setError(err instanceof Error ? err.message : 'Failed to load menu');
       }
 

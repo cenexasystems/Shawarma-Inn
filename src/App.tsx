@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import Loader from './components/Loader';
 import Navbar from './components/Navbar';
@@ -10,15 +10,16 @@ import Home from './pages/Home';
 import Menu from './pages/Menu';
 import Checkout from './pages/Checkout';
 import Branches from './pages/Branches';
-import Profile from './pages/Profile';
-import ProfileSetup from './pages/ProfileSetup';
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import PosBilling from './pages/PosBilling';
-import Analytics from './pages/Analytics';
 import { useCart } from './hooks/useCart';
 import { useAuth } from './hooks/useAuth';
 import { runAutomaticMigration, initializeWithHealthCheck } from './lib/supabaseMigration';
+
+const Profile = lazy(() => import('./pages/Profile'));
+const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const PosBilling = lazy(() => import('./pages/PosBilling'));
+const Analytics = lazy(() => import('./pages/Analytics'));
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -109,27 +110,75 @@ export default function App() {
         <Route path="/branches" element={<Branches />} />
         <Route
           path="/profile"
-          element={user?.role === 'user' ? <Profile /> : <Navigate to="/" replace />}
+          element={
+            user?.role === 'user' ? (
+              <Suspense fallback={<Loader />}>
+                <Profile />
+              </Suspense>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
         />
         <Route
           path="/profile-setup"
-          element={user?.role === 'user' ? <ProfileSetup /> : <Navigate to="/" replace />}
+          element={
+            user?.role === 'user' ? (
+              <Suspense fallback={<Loader />}>
+                <ProfileSetup />
+              </Suspense>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
         />
         <Route
           path="/admin/login"
-          element={user?.role === 'admin' ? <Navigate to="/admin" replace /> : <AdminLogin />}
+          element={
+            user?.role === 'admin' ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Suspense fallback={<Loader />}>
+                <AdminLogin />
+              </Suspense>
+            )
+          }
         />
         <Route
           path="/admin"
-          element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/admin/login" replace />}
+          element={
+            user?.role === 'admin' ? (
+              <Suspense fallback={<Loader />}>
+                <AdminDashboard />
+              </Suspense>
+            ) : (
+              <Navigate to="/admin/login" replace />
+            )
+          }
         />
         <Route
           path="/pos"
-          element={user?.role === 'admin' ? <PosBilling /> : <Navigate to="/admin/login" replace />}
+          element={
+            user?.role === 'admin' ? (
+              <Suspense fallback={<Loader />}>
+                <PosBilling />
+              </Suspense>
+            ) : (
+              <Navigate to="/admin/login" replace />
+            )
+          }
         />
         <Route
           path="/analytics"
-          element={user?.role === 'admin' ? <Analytics /> : <Navigate to="/admin/login" replace />}
+          element={
+            user?.role === 'admin' ? (
+              <Suspense fallback={<Loader />}>
+                <Analytics />
+              </Suspense>
+            ) : (
+              <Navigate to="/admin/login" replace />
+            )
+          }
         />
       </Routes>
 

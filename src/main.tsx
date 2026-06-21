@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 const GOOGLE_CLIENT_ID =
@@ -14,16 +15,18 @@ const GOOGLE_CLIENT_ID =
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <CartProvider>
-          <FavoritesProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </FavoritesProvider>
-        </CartProvider>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+    <ErrorBoundary>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <AuthProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </FavoritesProvider>
+          </CartProvider>
+        </AuthProvider>
+      </GoogleOAuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

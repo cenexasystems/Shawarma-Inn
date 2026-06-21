@@ -1,19 +1,6 @@
-const CATEGORIES = [
-  'All',
-  'Shawarma',
-  'Burgers',
-  'Pizza',
-  'Momos',
-  'Toasts',
-  'Starters',
-  'Loaded Fries',
-  'Bring Your Own Chips',
-  'Mojitos',
-  'Milkshakes',
-  'Waffles',
-  'Desserts',
-  'Combo Deals',
-];
+import { CATEGORY_ORDER } from '../utils/categoryOrder';
+
+const CATEGORIES = ['All', ...CATEGORY_ORDER];
 
 interface MenuTabsProps {
   active: string;
