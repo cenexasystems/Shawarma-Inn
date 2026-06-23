@@ -10,8 +10,27 @@ const localMenuByName = new Map(
   (localMenuData as MenuItem[]).map((item) => [item.name.trim().toLowerCase(), item]),
 );
 
-function resolveMenuImage(name: string, category: string) {
-  return localMenuByName.get(name.trim().toLowerCase())?.image || categoryFallbackImage(category);
+/**
+ * The backend only stores id/name/price/category/is_active — slug, description,
+ * isVeg, bestseller, and rating live in the curated local catalogue. Every
+ * DB-sourced row must be enriched from there or those fields silently end up
+ * undefined for the whole menu (breaking the veg filter and bestseller badge).
+ */
+function enrichMenuRow(row: { id: string | number; name: string; price: number; category: string }): MenuItem {
+  const local = localMenuByName.get(row.name.trim().toLowerCase());
+  return {
+    id: row.id,
+    slug: local?.slug,
+    name: row.name,
+    desc: local?.desc || '',
+    description: local?.desc || '',
+    price: Number(row.price),
+    category: row.category,
+    rating: local?.rating ?? 4.6,
+    image: local?.image || categoryFallbackImage(row.category),
+    isVeg: local?.isVeg,
+    bestseller: local?.bestseller ?? false,
+  };
 }
 
 export const useMenuItems = () => {
@@ -43,16 +62,7 @@ export const useMenuItems = () => {
             name: string;
             price: number;
             category: string;
-          }>).map((row) => ({
-            id: row.id,
-            name: row.name,
-            desc: '',
-            description: '',
-            price: Number(row.price),
-            category: row.category,
-            rating: 4.8,
-            image: resolveMenuImage(row.name, row.category),
-          }));
+          }>).map(enrichMenuRow);
         } else {
           const response = await fetch('/api/menu-items');
           if (!response.ok) {
@@ -60,16 +70,7 @@ export const useMenuItems = () => {
           }
 
           const payload = await response.json();
-          menuItems = (payload.items || []).map((row: any) => ({
-            id: row.id,
-            name: row.name,
-            desc: '',
-            description: '',
-            price: Number(row.price),
-            category: row.category,
-            rating: 4.8,
-            image: resolveMenuImage(row.name, row.category),
-          })) as MenuItem[];
+          menuItems = (payload.items || []).map(enrichMenuRow);
         }
 
         if (!menuItems.length) {

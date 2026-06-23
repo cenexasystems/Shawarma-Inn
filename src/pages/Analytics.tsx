@@ -127,11 +127,7 @@ export default function Analytics() {
   // Revenue over time (last 7 days or 30 days)
   const revenueChartData = useMemo(() => {
     if (filteredOrders.length === 0) {
-      // Mock data for empty state
-      return Array.from({ length: 7 }, (_, i) => ({
-        date: `Day ${i + 1}`,
-        revenue: Math.floor(Math.random() * 5000 + 2000),
-      }));
+      return [];
     }
 
     // Group orders by day
@@ -153,11 +149,7 @@ export default function Analytics() {
   // Orders by category/order type
   const categoryChartData = useMemo(() => {
     if (filteredOrders.length === 0) {
-      return [
-        { name: 'Dine In', value: 8 },
-        { name: 'Takeaway', value: 12 },
-        { name: 'Delivery', value: 5 },
-      ];
+      return [];
     }
 
     const byType: Record<string, number> = { 'Dine In': 0, 'Takeaway': 0, 'Delivery': 0 };
@@ -172,18 +164,7 @@ export default function Analytics() {
   // Top 10 selling items
   const topItemsData = useMemo(() => {
     if (filteredOrders.length === 0) {
-      return [
-        { name: 'Chicken Shawarma', sold: 240 },
-        { name: 'Lamb Shawarma', sold: 198 },
-        { name: 'Mixed Grill', sold: 165 },
-        { name: 'Falafel Wrap', sold: 152 },
-        { name: 'Hummus Plate', sold: 128 },
-        { name: 'Tabbouleh', sold: 98 },
-        { name: 'Garlic Sauce', sold: 87 },
-        { name: 'Shawarma Fries', sold: 76 },
-        { name: 'Kebab Mix', sold: 65 },
-        { name: 'Grilled Veggies', sold: 54 },
-      ];
+      return [];
     }
 
     const itemCounts: Record<string, number> = {};
@@ -211,26 +192,20 @@ export default function Analytics() {
     days.forEach((day) => {
       heatmap[day] = {};
       hours.forEach((hour) => {
-        if (filteredOrders.length === 0) {
-          heatmap[day][hour] = Math.floor(Math.random() * 1000 + 200);
-        } else {
-          heatmap[day][hour] = 0;
-        }
+        heatmap[day][hour] = 0;
       });
     });
 
-    if (filteredOrders.length > 0) {
-      filteredOrders.forEach((order) => {
-        const date = new Date(order.timestamp);
-        const dayIndex = date.getDay() || 6; // Sunday is 0, make it 6
-        const day = days[(dayIndex + 1) % 7]; // Adjust to Mon-Sun
-        const hour = date.getHours();
+    filteredOrders.forEach((order) => {
+      const date = new Date(order.timestamp);
+      const dayIndex = date.getDay() || 6; // Sunday is 0, make it 6
+      const day = days[(dayIndex + 1) % 7]; // Adjust to Mon-Sun
+      const hour = date.getHours();
 
-        if (hours.includes(hour)) {
-          heatmap[day][hour] += order.total;
-        }
-      });
-    }
+      if (hours.includes(hour)) {
+        heatmap[day][hour] += order.total;
+      }
+    });
 
     return { days, hours, heatmap };
   }, [filteredOrders]);
@@ -238,12 +213,7 @@ export default function Analytics() {
   // Order status over time (stacked area)
   const statusTimelineData = useMemo(() => {
     if (filteredOrders.length === 0) {
-      return Array.from({ length: 7 }, (_, i) => ({
-        day: `Day ${i + 1}`,
-        'Dine In': Math.floor(Math.random() * 3000 + 500),
-        'Takeaway': Math.floor(Math.random() * 3000 + 500),
-        'Delivery': Math.floor(Math.random() * 2000 + 300),
-      }));
+      return [];
     }
 
     const byDayAndType: Record<string, Record<string, number>> = {};

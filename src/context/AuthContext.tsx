@@ -16,7 +16,7 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  signup: (input: { email: string; password: string; name?: string }) => Promise<AuthUser>;
+  signup: (input: { email: string; password: string; name?: string; phone?: string }) => Promise<AuthUser>;
   login: (input: { email: string; password: string }) => Promise<AuthUser>;
   adminLogin: (input: { email: string; password: string }) => Promise<AuthUser>;
   signInWithGoogle: (idToken: string) => Promise<AuthUser>;
@@ -196,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initialize();
   }, [refreshUser, syncSupabaseSession]);
 
-  const signup = useCallback(async (input: { email: string; password: string; name?: string }) => {
+  const signup = useCallback(async (input: { email: string; password: string; name?: string; phone?: string }) => {
     if (useSupabaseAuth) {
       const { data, error } = await supabase.auth.signUp({
         email: input.email,
@@ -205,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: input.name || null,
             name: input.name || null,
+            phone: input.phone || null,
           },
         },
       });
@@ -227,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const payload = {
             id: activeSession.user.id,
             name: input.name || null,
-            phone: null,
+            phone: input.phone || null,
             avatar_url: null,
             provider: 'email',
             updated_at: new Date().toISOString(),

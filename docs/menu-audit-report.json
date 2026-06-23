@@ -1,0 +1,720 @@
+{
+  "sourceDocument": "docs/01 Mathur-menu-front copy Combine.pdf",
+  "extractedAt": "2026-06-23",
+  "totalProducts": 167,
+  "totalCategories": 13,
+  "categories": {
+    "Shawarma": 58,
+    "Burgers": 20,
+    "Pizza": 7,
+    "Momos": 7,
+    "Toasts": 20,
+    "Starters": 13,
+    "Loaded Fries": 3,
+    "Bring Your Own Chips": 3,
+    "Mojitos": 12,
+    "Milkshakes": 8,
+    "Waffles": 8,
+    "Desserts": 3,
+    "Combo Deals": 5
+  },
+  "totalCombos": 5,
+  "totalBeverages": 20,
+  "totalDesserts": 3,
+  "productsByCategory": {
+    "Shawarma": [
+      {
+        "name": "BBQ Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "BBQ Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "BBQ Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "BBQ Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Cheesy Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Cheesy Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Cheesy Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Cheesy Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Chilli Garlic Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Chilli Garlic Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Chilli Garlic Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Chilli Garlic Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Chipotle Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Chipotle Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Chipotle Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Chipotle Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Classic Shawarma Plate",
+        "price": 180
+      },
+      {
+        "name": "Classic Shawarma Plate (Large)",
+        "price": 220
+      },
+      {
+        "name": "Classic Shawarma Roll",
+        "price": 90
+      },
+      {
+        "name": "Classic Shawarma Roll (Large)",
+        "price": 130
+      },
+      {
+        "name": "Jalapeno Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Jalapeno Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Jalapeno Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Jalapeno Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Mexican Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Mexican Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Mexican Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Mexican Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Paneer Platter",
+        "price": 170
+      },
+      {
+        "name": "Paneer Shawarma",
+        "price": 100
+      },
+      {
+        "name": "Peri Peri Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Peri Peri Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Peri Peri Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Peri Peri Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Plate Shawarma Add on Cheese (Reg)",
+        "price": 20
+      },
+      {
+        "name": "Plate Shawarma Add on Cheese (Spl)",
+        "price": 20
+      },
+      {
+        "name": "Plate Shawarma Add on Kuboos (Reg)",
+        "price": 10
+      },
+      {
+        "name": "Plate Shawarma Add on Kuboos (Spl)",
+        "price": 10
+      },
+      {
+        "name": "Roll Shawarma Add on Cheese (Reg)",
+        "price": 20
+      },
+      {
+        "name": "Roll Shawarma Add on Cheese (Spl)",
+        "price": 20
+      },
+      {
+        "name": "Schezwan Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Schezwan Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Schezwan Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Schezwan Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Sweet Chilli Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Sweet Chilli Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Sweet Chilli Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Sweet Chilli Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Tandoori Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Tandoori Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Tandoori Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Tandoori Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Thousand Island Shawarma Plate",
+        "price": 190
+      },
+      {
+        "name": "Thousand Island Shawarma Plate (Large)",
+        "price": 240
+      },
+      {
+        "name": "Thousand Island Shawarma Roll",
+        "price": 100
+      },
+      {
+        "name": "Thousand Island Shawarma Roll (Large)",
+        "price": 150
+      },
+      {
+        "name": "Veg Platter",
+        "price": 140
+      },
+      {
+        "name": "Veg Shawarma",
+        "price": 70
+      }
+    ],
+    "Burgers": [
+      {
+        "name": "BBQ Chicken Burger",
+        "price": 115
+      },
+      {
+        "name": "Burger Add on Cheese",
+        "price": 20
+      },
+      {
+        "name": "Chicken Burger",
+        "price": 100
+      },
+      {
+        "name": "Chipotle Chicken Burger",
+        "price": 120
+      },
+      {
+        "name": "Chipotle Veg Burger",
+        "price": 110
+      },
+      {
+        "name": "Double Chicken Burger",
+        "price": 160
+      },
+      {
+        "name": "Double Paneer Burger",
+        "price": 170
+      },
+      {
+        "name": "Double Veg Burger",
+        "price": 140
+      },
+      {
+        "name": "Hot Glaze Chicken Burger",
+        "price": 110
+      },
+      {
+        "name": "Hot Glaze Veg Burger",
+        "price": 100
+      },
+      {
+        "name": "Jalapeno Chicken Burger",
+        "price": 120
+      },
+      {
+        "name": "Jalapeno Veg Burger",
+        "price": 110
+      },
+      {
+        "name": "Paneer Burger",
+        "price": 120
+      },
+      {
+        "name": "Popcorn Chicken Burger",
+        "price": 115
+      },
+      {
+        "name": "Sweet Chilli Chicken Burger",
+        "price": 120
+      },
+      {
+        "name": "Sweet Chilli Veg Burger",
+        "price": 110
+      },
+      {
+        "name": "Thousand Island Chicken Burger",
+        "price": 120
+      },
+      {
+        "name": "Thousand Island Veg Burger",
+        "price": 110
+      },
+      {
+        "name": "Veg Burger",
+        "price": 90
+      },
+      {
+        "name": "Zinger Chicken Burger",
+        "price": 150
+      }
+    ],
+    "Pizza": [
+      {
+        "name": "BBQ Chicken Pizza",
+        "price": 130
+      },
+      {
+        "name": "Cheese Pizza",
+        "price": 80
+      },
+      {
+        "name": "Chicken Pizza",
+        "price": 110
+      },
+      {
+        "name": "Naked Chicken Pizza",
+        "price": 150
+      },
+      {
+        "name": "Paneer Pizza",
+        "price": 100
+      },
+      {
+        "name": "Sweet Corn Pizza",
+        "price": 90
+      },
+      {
+        "name": "Veg Pizza",
+        "price": 80
+      }
+    ],
+    "Momos": [
+      {
+        "name": "Cheese Corn Momos",
+        "price": 90
+      },
+      {
+        "name": "Chicken Momos",
+        "price": 90
+      },
+      {
+        "name": "Chicken Tikka Momos",
+        "price": 100
+      },
+      {
+        "name": "Mix Veg Momos",
+        "price": 80
+      },
+      {
+        "name": "Paneer Tikka Momos",
+        "price": 100
+      },
+      {
+        "name": "Peri Peri Chicken Momos",
+        "price": 100
+      },
+      {
+        "name": "Schezwan Chicken Momos",
+        "price": 100
+      }
+    ],
+    "Toasts": [
+      {
+        "name": "BBQ Chicken Cheese Toast",
+        "price": 90
+      },
+      {
+        "name": "BBQ Chicken Club Cheese Toast",
+        "price": 140
+      },
+      {
+        "name": "BBQ Paneer Cheese Toast",
+        "price": 90
+      },
+      {
+        "name": "BBQ Paneer Club Cheese Toast",
+        "price": 130
+      },
+      {
+        "name": "BBQ Sausage Chicken Cheese Toast",
+        "price": 110
+      },
+      {
+        "name": "Chocolate Toast",
+        "price": 50
+      },
+      {
+        "name": "Fried Chicken Cheese Toast",
+        "price": 90
+      },
+      {
+        "name": "Fried Chicken Club Cheese Toast",
+        "price": 140
+      },
+      {
+        "name": "Grill Chicken Cheese Toast",
+        "price": 90
+      },
+      {
+        "name": "Grill Chicken Club Cheese Toast",
+        "price": 140
+      },
+      {
+        "name": "Paneer Cheese Club Toast",
+        "price": 120
+      },
+      {
+        "name": "Paneer Cheese Toast",
+        "price": 80
+      },
+      {
+        "name": "Sweet Corn Cheese Club Toast",
+        "price": 100
+      },
+      {
+        "name": "Sweet Corn Cheese Toast",
+        "price": 70
+      },
+      {
+        "name": "Toast Chicken Add On Cheese",
+        "price": 20
+      },
+      {
+        "name": "Toast Chicken Add On Flavour",
+        "price": 20
+      },
+      {
+        "name": "Toast Veg Add On Flavour",
+        "price": 20
+      },
+      {
+        "name": "Veg Cheese Toast",
+        "price": 60
+      },
+      {
+        "name": "Veg Club Cheese Toast",
+        "price": 90
+      },
+      {
+        "name": "White Chocolate Toast",
+        "price": 60
+      }
+    ],
+    "Starters": [
+      {
+        "name": "Cheese Corn Nuggets (8pc)",
+        "price": 95
+      },
+      {
+        "name": "Chicken Cheese Balls (8pc)",
+        "price": 130
+      },
+      {
+        "name": "Chicken Fingers (8pc)",
+        "price": 130
+      },
+      {
+        "name": "Chicken Nuggets (6pc)",
+        "price": 95
+      },
+      {
+        "name": "Chicken Popcorn (130gms)",
+        "price": 130
+      },
+      {
+        "name": "Chicken Roll",
+        "price": 35
+      },
+      {
+        "name": "Chicken Wings (4pc)",
+        "price": 150
+      },
+      {
+        "name": "French Fries",
+        "price": 80
+      },
+      {
+        "name": "Masala Chicken Popcorn (130gms)",
+        "price": 140
+      },
+      {
+        "name": "Masala Fries",
+        "price": 90
+      },
+      {
+        "name": "Paneer Roll",
+        "price": 35
+      },
+      {
+        "name": "Sweet Chilli Chicken Popcorn (130gms)",
+        "price": 160
+      },
+      {
+        "name": "Veg Roll",
+        "price": 25
+      }
+    ],
+    "Loaded Fries": [
+      {
+        "name": "Chicken Loaded French Fries",
+        "price": 140
+      },
+      {
+        "name": "Paneer Loaded French Fries",
+        "price": 140
+      },
+      {
+        "name": "Veg Loaded French Fries",
+        "price": 120
+      }
+    ],
+    "Bring Your Own Chips": [
+      {
+        "name": "Bring Your Own Chips Chicken",
+        "price": 120
+      },
+      {
+        "name": "Bring Your Own Chips Paneer",
+        "price": 120
+      },
+      {
+        "name": "Bring Your Own Chips Veg",
+        "price": 80
+      }
+    ],
+    "Mojitos": [
+      {
+        "name": "Blue Berry Mojito",
+        "price": 70
+      },
+      {
+        "name": "Blue Curacao Mojito",
+        "price": 70
+      },
+      {
+        "name": "Grape Mojito",
+        "price": 70
+      },
+      {
+        "name": "Green Apple Mojito",
+        "price": 70
+      },
+      {
+        "name": "Guava Mojito",
+        "price": 70
+      },
+      {
+        "name": "Mango Mojito",
+        "price": 70
+      },
+      {
+        "name": "Mint Mojito",
+        "price": 70
+      },
+      {
+        "name": "Orange Mojito",
+        "price": 70
+      },
+      {
+        "name": "Pineapple Mojito",
+        "price": 70
+      },
+      {
+        "name": "Pomegranate Mojito",
+        "price": 70
+      },
+      {
+        "name": "Strawberry Mojito",
+        "price": 70
+      },
+      {
+        "name": "Watermelon Mojito",
+        "price": 70
+      }
+    ],
+    "Milkshakes": [
+      {
+        "name": "Black Currant Milkshake",
+        "price": 120
+      },
+      {
+        "name": "Brownie Milkshake",
+        "price": 140
+      },
+      {
+        "name": "Butterscotch Milkshake",
+        "price": 100
+      },
+      {
+        "name": "Chocolate Milkshake",
+        "price": 110
+      },
+      {
+        "name": "Kitkat Milkshake",
+        "price": 120
+      },
+      {
+        "name": "Oreo Milkshake",
+        "price": 120
+      },
+      {
+        "name": "Strawberry Milkshake",
+        "price": 80
+      },
+      {
+        "name": "Vanilla Milkshake",
+        "price": 80
+      }
+    ],
+    "Waffles": [
+      {
+        "name": "Dark Chocolate Waffle",
+        "price": 80
+      },
+      {
+        "name": "Kit-Kat Chocolate Waffle",
+        "price": 100
+      },
+      {
+        "name": "Milk Chocolate Waffle",
+        "price": 80
+      },
+      {
+        "name": "Nutella Waffle",
+        "price": 90
+      },
+      {
+        "name": "Oreo Chocolate Waffle",
+        "price": 100
+      },
+      {
+        "name": "Triple Chocolate Waffle",
+        "price": 100
+      },
+      {
+        "name": "White & Dark Chocolate Waffle",
+        "price": 90
+      },
+      {
+        "name": "White Chocolate Waffle",
+        "price": 80
+      }
+    ],
+    "Desserts": [
+      {
+        "name": "Brownie With Ice Cream",
+        "price": 100
+      },
+      {
+        "name": "Chocolava With Ice Cream",
+        "price": 100
+      },
+      {
+        "name": "Ice Cream Scoop",
+        "price": 35
+      }
+    ],
+    "Combo Deals": [
+      {
+        "name": "Chicken Burger Combo",
+        "price": 200
+      },
+      {
+        "name": "Combo Offer 1",
+        "price": 400
+      },
+      {
+        "name": "Mega Chicken Combo Offer",
+        "price": 610
+      },
+      {
+        "name": "Special Chicken Combo Offer",
+        "price": 560
+      },
+      {
+        "name": "Super Delicious Burger Combo",
+        "price": 350
+      }
+    ]
+  }
+}

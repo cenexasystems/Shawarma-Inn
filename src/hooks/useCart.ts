@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { CheckoutTotals } from '../config/pricing';
 
 export interface CartItem {
   id: string | number;
@@ -30,24 +31,48 @@ export const useCart = () => {
     const ex = prev.find(i => i.id === item.id);
     return ex ? prev.map(i => i.id === item.id ? {...i, qty: i.qty+1} : i) : [...prev, {...item, qty:1}];
   });
-  
+
   const removeItem = (id: string | number) => setCart(prev => prev.filter(i => i.id !== id));
-  
-  const updateQty = (id: string | number, qty: number) => qty <= 0 
-    ? removeItem(id) 
+
+  const updateQty = (id: string | number, qty: number) => qty <= 0
+    ? removeItem(id)
     : setCart(prev => prev.map(i => i.id === id ? {...i, qty} : i));
-  
+
   const clearCart = () => setCart([]);
-  
-  const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
-  const gst = subtotal * 0.05;
-  const total = subtotal + gst;
-  const count = cart.reduce((s,i) => s + i.qty, 0);
-  
-  const buildWhatsAppUrl = (phone: string) => {
-    const text = `New Order!\n${cart.map(c => `${c.qty}x ${c.name}`).join('\n')}\nTotal: ₹${total}`;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+
+  // Cart-only total: sum of actual product prices. No GST/fees here — those are checkout-only.
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+
+  const buildWhatsAppUrl = (phone: string, totals: CheckoutTotals) => {
+    const itemLines = cart.map(c => `${c.name} x${c.qty} = ₹${(c.price * c.qty).toFixed(2)}`);
+
+    const lines = [
+      'Order Summary',
+      '',
+      ...itemLines,
+      '',
+      `Subtotal = ₹${totals.itemsTotal.toFixed(2)}`,
+    ];
+
+    if (totals.discount > 0) {
+      lines.push(`Coupon (${totals.couponCode}) = -₹${totals.discount.toFixed(2)}`);
+    }
+
+    lines.push(`Delivery = ₹${totals.deliveryCharge.toFixed(2)}`);
+
+    if (totals.packingCharge > 0) {
+      lines.push(`Packing = ₹${totals.packingCharge.toFixed(2)}`);
+    }
+
+    if (totals.gstEnabled) {
+      lines.push(`GST = ₹${totals.gst.toFixed(2)}`);
+    }
+
+    lines.push('', `Grand Total = ₹${totals.grandTotal.toFixed(2)}`);
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
   };
-  
-  return { cart, addItem, removeItem, updateQty, clearCart, subtotal, gst, total, count, buildWhatsAppUrl };
+
+  return { cart, addItem, removeItem, updateQty, clearCart, subtotal, count, buildWhatsAppUrl };
 };

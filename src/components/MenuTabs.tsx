@@ -5,9 +5,10 @@ const CATEGORIES = ['All', ...CATEGORY_ORDER];
 interface MenuTabsProps {
   active: string;
   onChange: (cat: string) => void;
+  counts?: Record<string, number>;
 }
 
-export default function MenuTabs({ active, onChange }: MenuTabsProps) {
+export default function MenuTabs({ active, onChange, counts }: MenuTabsProps) {
   return (
     <section className="sticky top-[64px] z-40 bg-[var(--black)]/90 backdrop-blur-md py-4 border-b border-[var(--border)] overflow-hidden">
       <div className="max-w-7xl mx-auto px-8">
@@ -23,6 +24,9 @@ export default function MenuTabs({ active, onChange }: MenuTabsProps) {
               }`}
             >
               {cat}
+              {counts?.[cat] !== undefined && (
+                <span className="ml-1 opacity-60">({counts[cat]})</span>
+              )}
             </button>
           ))}
         </div>

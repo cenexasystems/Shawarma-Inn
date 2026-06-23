@@ -60,8 +60,6 @@ export interface CartContextType {
   items: CartItem[];
   itemCount: number;
   subtotal: number;
-  gst: number;
-  total: number;
   addItem: (item: MenuItem) => void;
   removeItem: (id: string | number) => void;
   updateQty: (id: string | number, qty: number) => void;

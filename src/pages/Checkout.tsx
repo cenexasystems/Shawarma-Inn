@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { useSupabaseAuth } from '../lib/runtime';
+import { computeCheckoutTotals } from '../config/pricing';
+import { applyCoupon } from '../config/coupons';
+import { playCheckoutSound } from '../utils/playCheckoutSound';
+import type { CartItem } from '../hooks/useCart';
 
 interface CheckoutProps {
   cartData?: any;
@@ -13,7 +17,7 @@ interface CheckoutProps {
 const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '919003195805';
 
 export default function Checkout({ cartData }: CheckoutProps) {
-  const { cart, subtotal, gst, total, buildWhatsAppUrl, clearCart } = cartData;
+  const { cart, subtotal, buildWhatsAppUrl, clearCart } = cartData;
   const { user, login, signup, signInWithGoogle } = useAuth();
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
@@ -24,9 +28,35 @@ export default function Checkout({ cartData }: CheckoutProps) {
   const [address, setAddress] = useState('');
   const [placed, setPlaced] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState<'cart' | 'details' | 'review'>('cart');
+  const [detailsError, setDetailsError] = useState('');
   
   // New State for Task 4
   const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery');
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMessage, setCouponMessage] = useState('');
+  const totals = useMemo(
+    () => computeCheckoutTotals(subtotal, deliveryMethod, appliedCoupon?.discount ?? 0, appliedCoupon?.code),
+    [subtotal, deliveryMethod, appliedCoupon]
+  );
+
+  const handleApplyCoupon = () => {
+    const result = applyCoupon(couponInput, subtotal);
+    if (!result.valid || !result.coupon) {
+      setAppliedCoupon(null);
+      setCouponMessage(result.error || 'Invalid coupon code.');
+      return;
+    }
+    setAppliedCoupon({ code: result.coupon.code, discount: result.discount });
+    setCouponMessage(`"${result.coupon.code}" applied — ₹${result.discount.toFixed(2)} off.`);
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponMessage('');
+  };
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authName, setAuthName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
@@ -85,6 +115,25 @@ export default function Checkout({ cartData }: CheckoutProps) {
     }
   };
 
+  const handleContinueFromDetails = () => {
+    setDetailsError('');
+
+    if (!isCustomerLoggedIn) {
+      setDetailsError('Please sign in to continue.');
+      return;
+    }
+    if (!name || !phone) {
+      setDetailsError('Name and phone number are required.');
+      return;
+    }
+    if (deliveryMethod === 'delivery' && !address) {
+      setDetailsError('Please enter your delivery address.');
+      return;
+    }
+
+    setStep('review');
+  };
+
   const handlePlaceOrder = async () => {
     if (!isCustomerLoggedIn) {
       setAuthError('Please sign in to place your order.');
@@ -103,9 +152,9 @@ export default function Checkout({ cartData }: CheckoutProps) {
     setSaving(true);
     const result = await placeOrder({
       cartItems: cart,
-      subtotal,
-      gst,
-      total,
+      subtotal: totals.itemsTotal,
+      gst: totals.gst,
+      total: totals.grandTotal,
       customerName: name,
       customerPhone: phone,
       deliveryAddress: deliveryMethod === 'delivery' ? address : 'STORE PICKUP',
@@ -116,9 +165,10 @@ export default function Checkout({ cartData }: CheckoutProps) {
       alert(result.error || 'Could not place order. Please try again.');
       return;
     }
-    
+
     setSaving(false);
-    window.open(buildWhatsAppUrl(WHATSAPP_PHONE), '_blank');
+    playCheckoutSound();
+    window.open(buildWhatsAppUrl(WHATSAPP_PHONE, totals), '_blank');
     setPlaced(true);
     clearCart();
     setTimeout(() => navigate('/'), 3000);
@@ -173,8 +223,61 @@ export default function Checkout({ cartData }: CheckoutProps) {
         </div>
       </div>
 
+      <div className="flex items-center justify-center gap-3 mb-8">
+        {([
+          ['cart', 'Cart'],
+          ['details', 'Address'],
+          ['review', 'Summary'],
+        ] as const).map(([key, label], index) => (
+          <div key={key} className="flex items-center gap-3">
+            {index > 0 && <div className="h-[1px] w-6 bg-white/10" />}
+            <span
+              className={`font-bebas text-xs uppercase tracking-[2px] px-3 py-1 rounded-full ${
+                step === key
+                  ? 'bg-[var(--red)] text-white'
+                  : 'text-white/30'
+              }`}
+            >
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 gap-7">
-        {/* Step 1: Authentication (Inline) */}
+        {/* Step: Cart */}
+        {step === 'cart' && (
+          <div className="bg-[#111111] border border-white/5 rounded-[24px] p-5 md:p-6 shadow-2xl">
+            <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6 pb-4 border-b border-white/5">
+              YOUR CART
+            </h2>
+            <div className="space-y-3 mb-6">
+              {cart.map((ci: CartItem) => (
+                <div key={ci.id} className="flex items-center justify-between p-3.5 bg-black/20 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[var(--red)] font-bebas text-lg">×{ci.qty}</span>
+                    <span className="font-bebas text-base md:text-lg tracking-wide text-white/80">{ci.name}</span>
+                  </div>
+                  <span className="font-bebas text-base md:text-lg tracking-wider text-white">₹{ci.price * ci.qty}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between items-center mb-6 px-1">
+              <span className="font-bebas text-lg text-white/60 uppercase tracking-[2px]">Subtotal</span>
+              <span className="font-bebas text-3xl text-[var(--red)] tracking-wider">₹{subtotal.toFixed(2)}</span>
+            </div>
+            <button
+              onClick={() => setStep('details')}
+              className="w-full bg-[var(--red)] text-white font-bebas text-xl py-4 rounded-2xl tracking-[2px] uppercase hover:scale-[1.01] active:scale-[0.99] transition-all"
+            >
+              Continue
+            </button>
+          </div>
+        )}
+
+        {/* Step: Address & Delivery (Authentication + Destination & Logistics) */}
+        {step === 'details' && (
+          <>
         {!isCustomerLoggedIn && (
           <div className="bg-[#111111] border border-white/5 rounded-[24px] p-5 md:p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
@@ -345,16 +448,38 @@ export default function Checkout({ cartData }: CheckoutProps) {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Step 3: Order Review & Payment */}
+          {detailsError && (
+            <p className="text-xs text-red-400 mt-5 text-center">{detailsError}</p>
+          )}
+
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={() => setStep('cart')}
+              className="flex-1 bg-black/40 border border-white/10 text-white/70 font-bebas text-lg py-3.5 rounded-2xl tracking-[2px] uppercase hover:border-white/20 transition-all"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleContinueFromDetails}
+              className="flex-[2] bg-[var(--red)] text-white font-bebas text-lg py-3.5 rounded-2xl tracking-[2px] uppercase hover:scale-[1.01] active:scale-[0.99] transition-all"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+          </>
+        )}
+
+        {/* Step: Order Summary & Payment */}
+        {step === 'review' && (
         <div className="bg-[#111111] border border-white/5 rounded-[24px] p-5 md:p-6 shadow-2xl">
           <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6 pb-4 border-b border-white/5">
             ORDER SUMMARY
           </h2>
-          
+
           <div className="space-y-3 mb-6">
-            {cart.map((ci: any) => (
+            {cart.map((ci: CartItem) => (
               <div key={ci.id} className="flex items-center justify-between p-3.5 bg-black/20 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-4">
                   <span className="text-[var(--red)] font-bebas text-lg">×{ci.qty}</span>
@@ -365,23 +490,77 @@ export default function Checkout({ cartData }: CheckoutProps) {
             ))}
           </div>
 
+          {/* Coupon code */}
+          <div className="bg-black/40 border border-white/5 rounded-2xl p-5 mb-6">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-bebas text-lg text-white tracking-wide">{appliedCoupon.code} applied</p>
+                  <p className="text-[10px] text-emerald-400/80 uppercase tracking-[2px] mt-1">
+                    You saved ₹{appliedCoupon.discount.toFixed(2)}
+                  </p>
+                </div>
+                <button
+                  onClick={handleRemoveCoupon}
+                  className="text-[10px] font-bold uppercase tracking-[2px] text-white/40 hover:text-[var(--red)] transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Coupon code"
+                  className="flex-1 bg-black/50 border border-white/5 rounded-2xl p-4 text-sm uppercase tracking-wider text-white outline-none focus:border-[var(--red)] transition-all font-body"
+                />
+                <button
+                  onClick={handleApplyCoupon}
+                  className="bg-white text-black font-bebas text-sm px-6 rounded-2xl uppercase tracking-[2px] hover:bg-white/90 transition-all"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+            {!appliedCoupon && couponMessage && (
+              <p className="text-[10px] text-red-400 uppercase tracking-[2px] mt-3">{couponMessage}</p>
+            )}
+          </div>
+
           <div className="bg-black/60 rounded-3xl p-6 border border-white/5 space-y-3">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-white/40">
-              <span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span>
+              <span>Items Total</span><span>₹{totals.itemsTotal.toFixed(2)}</span>
             </div>
+            {totals.discount > 0 && (
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-emerald-400/80">
+                <span>Coupon ({totals.couponCode})</span><span>-₹{totals.discount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-white/40">
-              <span>GST (5%)</span><span>₹{gst.toFixed(2)}</span>
+              <span>Delivery Charge</span><span>₹{totals.deliveryCharge.toFixed(2)}</span>
             </div>
+            {totals.packingCharge > 0 && (
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-white/40">
+                <span>Packing Charge</span><span>₹{totals.packingCharge.toFixed(2)}</span>
+              </div>
+            )}
+            {totals.gstEnabled && (
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-[3px] text-white/40">
+                <span>GST ({totals.gstPercentage}%)</span><span>₹{totals.gst.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-end pt-5 border-t border-white/5 mt-3">
               <span className="font-bebas text-lg text-white/60">GRAND TOTAL</span>
-              <span className="font-bebas text-4xl md:text-5xl text-[var(--red)] tracking-wider">₹{total.toFixed(0)}</span>
+              <span className="font-bebas text-4xl md:text-5xl text-[var(--red)] tracking-wider">₹{totals.grandTotal.toFixed(2)}</span>
             </div>
           </div>
 
           <div className="bg-black/40 border border-white/5 rounded-2xl p-6 mt-8 mb-6">
             <div className="flex justify-between items-center">
               <span className="font-bebas text-2xl uppercase tracking-[2px] text-white/60">Amount to Pay</span>
-              <span className="font-bebas text-5xl md:text-6xl text-[var(--red)] tracking-wider">₹{total.toFixed(0)}</span>
+              <span className="font-bebas text-5xl md:text-6xl text-[var(--red)] tracking-wider">₹{totals.grandTotal.toFixed(2)}</span>
             </div>
           </div>
 
@@ -401,10 +580,18 @@ export default function Checkout({ cartData }: CheckoutProps) {
               </>
             )}
           </button>
-          <p className="text-[9px] text-white/20 text-center uppercase tracking-[2px] mt-6 leading-relaxed">
+          <p className="text-[9px] text-white text-center uppercase tracking-[2px] mt-6 leading-relaxed">
             * Direct WhatsApp integration ensures real-time updates and manual customization for your order.
           </p>
+          <button
+            onClick={() => setStep('details')}
+            disabled={saving}
+            className="w-full mt-4 bg-black/40 border border-white/10 text-white/70 font-bebas text-base py-3 rounded-2xl tracking-[2px] uppercase hover:border-white/20 transition-all disabled:opacity-40"
+          >
+            Back
+          </button>
         </div>
+        )}
       </div>
       </div>
       <Footer />

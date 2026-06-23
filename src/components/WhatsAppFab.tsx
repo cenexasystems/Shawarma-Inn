@@ -2,7 +2,12 @@ import { MessageCircle } from 'lucide-react';
 
 const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '919003195805';
 
-export default function WhatsAppFab() {
+interface WhatsAppFabProps {
+  /** Lifts the button above the floating "CHECKOUT" bar so they never overlap. */
+  liftedUp?: boolean;
+}
+
+export default function WhatsAppFab({ liftedUp = false }: WhatsAppFabProps) {
   const targetUrl = WHATSAPP_PHONE
     ? `https://wa.me/${WHATSAPP_PHONE}`
     : undefined;
@@ -19,7 +24,9 @@ export default function WhatsAppFab() {
           window.alert('WhatsApp contact is coming soon.');
         }
       }}
-      className="fixed right-4 bottom-4 md:right-6 md:bottom-6 z-[70] flex items-center gap-2 rounded-full bg-[#25D366] text-white px-4 py-3 shadow-[0_10px_25px_rgba(37,211,102,0.35)] hover:scale-[1.03] active:scale-[0.98] transition-transform"
+      className={`fixed right-4 md:right-6 z-[70] flex items-center gap-2 rounded-full bg-[#25D366] text-white px-4 py-3 shadow-[0_10px_25px_rgba(37,211,102,0.35)] hover:scale-[1.03] active:scale-[0.98] transition-transform ${
+        liftedUp ? 'bottom-28 md:bottom-24' : 'bottom-4 md:bottom-6'
+      }`}
       aria-label="Contact us on WhatsApp"
     >
       <MessageCircle className="w-5 h-5" />

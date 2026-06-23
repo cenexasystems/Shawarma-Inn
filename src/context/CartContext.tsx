@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer } from 'react';
 import type { ReactNode } from 'react';
 import type { MenuItem, CartItem, CartContextType } from '../types';
+import { computeCheckoutTotals } from '../config/pricing';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 interface CartState {
@@ -63,12 +64,11 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
+  // Cart-only total: sum of actual product prices. GST/delivery/packing are checkout-only.
   const subtotal = state.items.reduce(
     (sum, ci) => sum + ci.price * ci.qty,
     0
   );
-  const gst = Math.round(subtotal * 0.05 * 100) / 100;
-  const total = subtotal + gst;
   const itemCount = state.items.reduce((sum, ci) => sum + ci.qty, 0);
 
   const addItem = (item: MenuItem) => dispatch({ type: 'ADD_ITEM', item });
@@ -79,6 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Supabase-ready: auth/data calls can be wired here
   const buildWhatsAppUrl = (phone: string): string => {
+    const totals = computeCheckoutTotals(subtotal);
     const lines = state.items.map(
       ci => `• ${ci.name} x${ci.qty} — ₹${ci.price * ci.qty}`
     );
@@ -87,9 +88,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       '',
       ...lines,
       '',
-      `Subtotal: ₹${subtotal}`,
-      `GST (5%): ₹${gst}`,
-      `*Total: ₹${total}*`,
+      `Subtotal: ₹${totals.itemsTotal.toFixed(2)}`,
+      `Delivery: ₹${totals.deliveryCharge.toFixed(2)}`,
+      ...(totals.packingCharge > 0 ? [`Packing: ₹${totals.packingCharge.toFixed(2)}`] : []),
+      ...(totals.gstEnabled ? [`GST (${totals.gstPercentage}%): ₹${totals.gst.toFixed(2)}`] : []),
+      `*Total: ₹${totals.grandTotal.toFixed(2)}*`,
     ].join('\n');
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   };
@@ -100,8 +103,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items: state.items,
         itemCount,
         subtotal,
-        gst,
-        total,
         addItem,
         removeItem,
         updateQty,

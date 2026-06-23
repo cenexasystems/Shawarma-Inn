@@ -7,7 +7,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProps) {
-  const { cart, subtotal, total, updateQty, removeItem } = cartData;
+  const { cart, updateQty, removeItem } = cartData;
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -71,10 +71,12 @@ export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProp
                       alt={ci.name}
                       className="w-full h-full object-cover"
                       onError={({ currentTarget }) => {
+                        const parent = currentTarget.parentElement;
                         currentTarget.style.display = 'none';
-                        currentTarget.parentElement!.textContent = '🌯';
-                        currentTarget.parentElement!.className =
-                          'w-full h-full flex items-center justify-center text-2xl';
+                        if (parent) {
+                          parent.textContent = '🌯';
+                          parent.className = 'w-full h-full flex items-center justify-center text-2xl';
+                        }
                       }}
                     />
                   ) : (
@@ -85,7 +87,8 @@ export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProp
                   <h4 className="font-bebas text-lg text-[var(--white)] uppercase tracking-wide truncate">
                     {ci.name}
                   </h4>
-                  <p className="text-[var(--red)] font-bebas text-lg leading-none">₹{ci.price}</p>
+                  <p className="text-[var(--white)]/40 text-xs font-body">₹{ci.price} each</p>
+                  <p className="text-[var(--red)] font-bebas text-lg leading-none">₹{(ci.price * ci.qty).toFixed(2)}</p>
                 </div>
                 <div className="flex items-center bg-white/5 rounded-full px-2 py-1 gap-3 flex-shrink-0">
                   <button
@@ -117,20 +120,12 @@ export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProp
           )}
         </div>
 
-        {/* Footer totals + actions */}
+        {/* Footer actions */}
         {cart.length > 0 && (
-          <div className="p-8 pb-12 md:p-8 bg-[var(--charcoal)] border-t border-[var(--border)] space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between text-[var(--white)]/60 text-sm">
-                <span>Subtotal</span>
-                <span>₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between text-[var(--white)] font-bebas text-2xl pt-2 border-t border-[var(--border)]">
-                <span>TOTAL</span>
-                <span>₹{total.toFixed(2)}</span>
-              </div>
-            </div>
-
+          <div
+            className="p-8 bg-[var(--charcoal)] border-t border-[var(--border)] space-y-4 flex-shrink-0"
+            style={{ paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+          >
             <button
               id="cart-checkout-btn"
               onClick={handleCheckout}

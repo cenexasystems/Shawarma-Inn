@@ -146,6 +146,7 @@ export const useOrders = () => {
 
         const { error: insertItemsError } = await supabase.from('order_items').insert(itemsPayload);
         if (insertItemsError) {
+          await supabase.from('orders').delete().eq('id', insertedOrder.id);
           return {
             success: false,
             error: insertItemsError.message,

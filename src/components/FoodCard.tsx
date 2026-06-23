@@ -12,7 +12,7 @@ interface FoodCardProps {
 export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(item.id);
-  const fallbackImage = categoryFallbackImage(item.category);
+  const fallbackImage = categoryFallbackImage(item.category, item.id);
 
   return (
     <div className="group bg-[var(--card-bg)] border-[0.5px] border-[var(--border)] rounded-[16px] overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.01] hover:border-[var(--red)]">
@@ -64,7 +64,15 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCard
         </p>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="font-bebas text-[24px] text-[var(--red)] tracking-wider">₹{item.price}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-bebas text-[24px] text-[var(--red)] tracking-wider">₹{item.price}</span>
+            {item.rating != null && (
+              <span className="flex items-center gap-1 text-white/50 text-xs">
+                <span className="text-[#d62b2b]">★</span>
+                {item.rating}
+              </span>
+            )}
+          </div>
 
           {qty > 0 && updateQty ? (
             <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1.5 shadow-md">

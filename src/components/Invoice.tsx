@@ -3,6 +3,7 @@ import type { CartItem } from '../types';
 import type { Order } from './RecentOrders';
 import { shouldUseSupabase, checkSupabaseHealth } from '../lib/supabaseMigration';
 import { supabase } from '../lib/supabaseClient';
+import { GST_ACTIVE, GST_PERCENTAGE } from '../config/pricing';
 
 interface InvoiceProps {
   items: CartItem[];
@@ -59,7 +60,7 @@ export default function Invoice({
       '----------------------------------------',
       `Subtotal: Rs ${subtotal.toFixed(2)}`,
       `Discount (${discount}%): -Rs ${(subtotal * (discount / 100)).toFixed(2)}`,
-      `Tax (5%): Rs ${tax.toFixed(2)}`,
+      ...(GST_ACTIVE ? [`Tax (${GST_PERCENTAGE}%): Rs ${tax.toFixed(2)}`] : []),
       `TOTAL: Rs ${total.toFixed(2)}`,
       '----------------------------------------',
       'Thank you for dining with us!',
@@ -206,10 +207,12 @@ export default function Invoice({
                 <span className="font-bold">-₹{(subtotal * (discount / 100)).toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-white/70 print:text-black/70">
-              <span>Tax (5%)</span>
-              <span className="font-bold">₹{tax.toFixed(2)}</span>
-            </div>
+            {GST_ACTIVE && (
+              <div className="flex justify-between text-white/70 print:text-black/70">
+                <span>Tax ({GST_PERCENTAGE}%)</span>
+                <span className="font-bold">₹{tax.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bebas text-[var(--red)] print:text-red-600 py-2 border-t border-white/10 print:border-black/10">
               <span className="uppercase tracking-wider">Total</span>
               <span>₹{total.toFixed(2)}</span>

@@ -39,21 +39,19 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   };
 
   const addFavorite = (item: MenuItem) => {
-    if (!isFavorite(item.id)) {
-      setFavorites([...favorites, item]);
-    }
+    setFavorites(prev => (prev.some(fav => fav.id === item.id) ? prev : [...prev, item]));
   };
 
   const removeFavorite = (id: string | number) => {
-    setFavorites(favorites.filter(fav => fav.id !== id));
+    setFavorites(prev => prev.filter(fav => fav.id !== id));
   };
 
   const toggleFavorite = (item: MenuItem) => {
-    if (isFavorite(item.id)) {
-      removeFavorite(item.id);
-    } else {
-      addFavorite(item);
-    }
+    setFavorites(prev =>
+      prev.some(fav => fav.id === item.id)
+        ? prev.filter(fav => fav.id !== item.id)
+        : [...prev, item]
+    );
   };
 
   return (

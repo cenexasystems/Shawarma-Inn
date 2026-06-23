@@ -5,18 +5,20 @@ import { useAuth } from '../hooks/useAuth';
 interface NavbarProps {
   onCartClick: () => void;
   onAuthClick: () => void;
+  onSupportClick: () => void;
   cartCount: number;
+  cartSubtotal?: number;
 }
 
 const navLinks = [
   { label: 'HOME', to: '/' },
   { label: 'MENU', to: '/menu' },
-  { label: 'REVIEWS', to: '/#reviews' },
-  { label: 'CONTACT', to: '/#branch' },
-  { label: 'ORDER ONLINE', to: '/#order-online' },
+  { label: 'FRANCHISE', to: '/#franchise' },
+  { label: 'BRANCHES', to: '/#branch' },
+  { label: 'CHECKOUT', to: '/checkout' },
 ];
 
-export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarProps) {
+export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartCount, cartSubtotal = 0 }: NavbarProps) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -63,22 +65,33 @@ export default function Navbar({ onCartClick, onAuthClick, cartCount }: NavbarPr
             </Link>
           );
         })}
+        <button
+          onClick={onSupportClick}
+          className="font-body font-semibold text-[11px] uppercase tracking-[0.14em] transition-colors duration-200 mt-1 text-[var(--white)] hover:text-[var(--red)] pb-[6px]"
+        >
+          SUPPORT
+        </button>
       </div>
 
       {/* Actions RIGHT: cart icon with badge, user avatar or sign-in button */}
       <div className="flex items-center gap-6 z-10">
         <button
           onClick={onCartClick}
-          className="relative text-[var(--white)] hover:text-[var(--red)] transition-colors"
+          className="flex items-center gap-2 text-[var(--white)] hover:text-[var(--red)] transition-colors"
           aria-label="Open cart"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-[var(--red)] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-              {cartCount}
-            </span>
+          <span className="relative">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-[var(--red)] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                {cartCount}
+              </span>
+            )}
+          </span>
+          {cartSubtotal > 0 && (
+            <span className="font-bebas text-sm tracking-wider">₹{cartSubtotal.toFixed(0)}</span>
           )}
         </button>
 

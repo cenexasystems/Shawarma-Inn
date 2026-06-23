@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import CartDrawer from './components/CartDrawer';
 import AuthModal from './components/AuthModal';
+import SupportModal from './components/SupportModal';
 import WhatsAppFab from './components/WhatsAppFab';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
@@ -25,6 +26,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [cartOpen, setCartOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -76,6 +78,13 @@ export default function App() {
   }, [authLoading, user, location.pathname, navigate]);
 
   useEffect(() => {
+    if (location.hash) {
+      return;
+    }
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!location.hash) {
       return;
     }
@@ -96,7 +105,9 @@ export default function App() {
         <Navbar
           onCartClick={() => setCartOpen(true)}
           onAuthClick={() => setAuthOpen(true)}
+          onSupportClick={() => setSupportOpen(true)}
           cartCount={cartData.count}
+          cartSubtotal={cartData.subtotal}
         />
       )}
 
@@ -193,7 +204,7 @@ export default function App() {
             <div className="flex items-center gap-3">
               <div className="text-right leading-tight">
                 <div className="text-white/45 text-[10px]">{cartData.count} ITEMS</div>
-                <div className="text-white text-[12px] tracking-[1px]">₹{cartData.total.toFixed(0)}</div>
+                <div className="text-white text-[12px] tracking-[1px]">₹{cartData.subtotal.toFixed(0)}</div>
               </div>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -215,7 +226,11 @@ export default function App() {
             isOpen={authOpen}
             onClose={() => setAuthOpen(false)}
           />
-          {!isCheckoutPage && <WhatsAppFab />}
+          <SupportModal
+            isOpen={supportOpen}
+            onClose={() => setSupportOpen(false)}
+          />
+          {!isCheckoutPage && <WhatsAppFab liftedUp={cartData.count > 0} />}
         </>
       )}
     </div>

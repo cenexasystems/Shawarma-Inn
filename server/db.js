@@ -68,10 +68,49 @@ function runMigrations() {
       name TEXT NOT NULL,
       price REAL NOT NULL,
       category TEXT NOT NULL,
+      image_url TEXT,
+      is_bestseller INTEGER NOT NULL DEFAULT 0,
       is_active INTEGER NOT NULL DEFAULT 1,
       deleted_at TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS coupons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,
+      discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+      discount_value REAL NOT NULL,
+      min_order_value REAL NOT NULL DEFAULT 0,
+      max_discount REAL,
+      expiry_date TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      usage_limit INTEGER,
+      usage_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS order_status_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      changed_by INTEGER,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+      FOREIGN KEY (changed_by) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS notification_outbox (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      channel TEXT NOT NULL DEFAULT 'customer_dashboard',
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+      payload TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      sent_at TEXT,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS orders (
@@ -79,12 +118,20 @@ function runMigrations() {
       order_number INTEGER NOT NULL UNIQUE,
       user_id INTEGER,
       total REAL NOT NULL,
-      status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN ('generated', 'paid', 'cancelled', 'pending', 'unpaid')),
+      status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN (
+        'generated', 'paid', 'cancelled', 'pending', 'unpaid',
+        'processing', 'in_transit', 'completed'
+      )),
       customer_name TEXT,
       customer_phone TEXT,
+      customer_email TEXT,
+      delivery_type TEXT NOT NULL DEFAULT 'store_pickup' CHECK (delivery_type IN ('home_delivery', 'store_pickup')),
       delivery_address TEXT,
+      coupon_code TEXT,
+      discount_amount REAL NOT NULL DEFAULT 0,
       source TEXT NOT NULL DEFAULT 'checkout',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       paid_at TEXT,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
@@ -122,6 +169,7 @@ function runMigrations() {
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
       email TEXT NOT NULL,
+      city TEXT,
       message TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -142,6 +190,95 @@ function runMigrations() {
   if (!reviewColumns.includes('phone')) {
     db.exec('ALTER TABLE reviews ADD COLUMN phone TEXT');
   }
+
+  const franchiseColumns = db.prepare('PRAGMA table_info(franchise_leads)').all().map((col) => col.name);
+  if (!franchiseColumns.includes('city')) {
+    db.exec('ALTER TABLE franchise_leads ADD COLUMN city TEXT');
+  }
+
+  const menuColumns = db.prepare('PRAGMA table_info(menu_items)').all().map((col) => col.name);
+  if (!menuColumns.includes('image_url')) {
+    db.exec('ALTER TABLE menu_items ADD COLUMN image_url TEXT');
+  }
+  if (!menuColumns.includes('is_bestseller')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN is_bestseller INTEGER NOT NULL DEFAULT 0");
+  }
+
+  migrateOrdersTable();
+}
+
+// Pre-existing databases were created with a narrower `status` CHECK and are
+// missing the order-management columns below. SQLite can't ALTER a CHECK
+// constraint in place, so when an old schema is detected we rebuild the
+// table (rename -> create -> copy -> drop) inside a single transaction.
+function migrateOrdersTable() {
+  const tableSql = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'orders'")
+    .get();
+  const needsRebuild = !tableSql || !tableSql.sql.includes('completed');
+
+  const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map((col) => col.name);
+  const hasAllColumns = ['customer_email', 'delivery_type', 'coupon_code', 'discount_amount', 'updated_at']
+    .every((col) => orderColumns.includes(col));
+
+  if (!needsRebuild && hasAllColumns) {
+    return;
+  }
+
+  const rebuild = db.transaction(() => {
+    db.exec('ALTER TABLE orders RENAME TO orders_legacy');
+
+    db.exec(`
+      CREATE TABLE orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_number INTEGER NOT NULL UNIQUE,
+        user_id INTEGER,
+        total REAL NOT NULL,
+        status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN (
+          'generated', 'paid', 'cancelled', 'pending', 'unpaid',
+          'processing', 'in_transit', 'completed'
+        )),
+        customer_name TEXT,
+        customer_phone TEXT,
+        customer_email TEXT,
+        delivery_type TEXT NOT NULL DEFAULT 'store_pickup' CHECK (delivery_type IN ('home_delivery', 'store_pickup')),
+        delivery_address TEXT,
+        coupon_code TEXT,
+        discount_amount REAL NOT NULL DEFAULT 0,
+        source TEXT NOT NULL DEFAULT 'checkout',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        paid_at TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `);
+
+    const legacyColumns = db.prepare('PRAGMA table_info(orders_legacy)').all().map((col) => col.name);
+    const deliveryTypeSelect = legacyColumns.includes('delivery_type')
+      ? `CASE WHEN delivery_type IN ('home_delivery','store_pickup') THEN delivery_type ELSE 'store_pickup' END`
+      : `'store_pickup'`;
+    const emailSelect = legacyColumns.includes('customer_email') ? 'customer_email' : 'NULL';
+    const couponSelect = legacyColumns.includes('coupon_code') ? 'coupon_code' : 'NULL';
+    const discountSelect = legacyColumns.includes('discount_amount') ? 'discount_amount' : '0';
+    const updatedAtSelect = legacyColumns.includes('updated_at') ? 'updated_at' : 'created_at';
+
+    db.exec(`
+      INSERT INTO orders (
+        id, order_number, user_id, total, status, customer_name, customer_phone,
+        customer_email, delivery_type, delivery_address, coupon_code, discount_amount,
+        source, created_at, updated_at, paid_at
+      )
+      SELECT
+        id, order_number, user_id, total, status, customer_name, customer_phone,
+        ${emailSelect}, ${deliveryTypeSelect}, delivery_address, ${couponSelect}, ${discountSelect},
+        source, created_at, ${updatedAtSelect}, paid_at
+      FROM orders_legacy;
+    `);
+
+    db.exec('DROP TABLE orders_legacy');
+  });
+
+  rebuild();
 }
 
 function seedAdmin() {
@@ -246,11 +383,46 @@ function seedInventory() {
   tx();
 }
 
+function seedCoupons() {
+  const count = db.prepare('SELECT COUNT(*) AS total FROM coupons').get();
+  if (count.total > 0) {
+    return;
+  }
+
+  const now = nowIso();
+  db.prepare(
+    `INSERT INTO coupons (code, discount_type, discount_value, min_order_value, max_discount, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
+  ).run('WELCOME10', 'percentage', 10, 0, 100, now, now);
+
+  db.prepare(
+    `INSERT INTO coupons (code, discount_type, discount_value, min_order_value, max_discount, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
+  ).run('FLAT50', 'fixed', 50, 300, null, now, now);
+}
+
+// Records a status transition for audit history and queues a row that a
+// future notification worker (SMS/WhatsApp/push) can poll and deliver.
+export function recordOrderStatusChange(orderId, status, changedBy, note) {
+  const createdAt = nowIso();
+
+  db.prepare(
+    `INSERT INTO order_status_history (order_id, status, changed_by, note, created_at)
+     VALUES (?, ?, ?, ?, ?)`
+  ).run(orderId, status, changedBy ?? null, note ?? null, createdAt);
+
+  db.prepare(
+    `INSERT INTO notification_outbox (order_id, channel, status, payload, created_at)
+     VALUES (?, 'customer_dashboard', 'pending', ?, ?)`
+  ).run(orderId, JSON.stringify({ status }), createdAt);
+}
+
 export function initializeDatabase() {
   runMigrations();
   seedAdmin();
   seedMenuItems();
   seedInventory();
+  seedCoupons();
 }
 
 initializeDatabase();

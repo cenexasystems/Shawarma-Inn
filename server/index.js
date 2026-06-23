@@ -8,7 +8,8 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { db, dbPath, mapUserRow, getNextOrderNumber } from './db.js';
+import * as XLSX from 'xlsx';
+import { db, dbPath, mapUserRow, getNextOrderNumber, recordOrderStatusChange } from './db.js';
 
 dotenv.config({ override: true });
 
@@ -160,7 +161,11 @@ function createOrderWithItems({
   userId,
   customerName,
   customerPhone,
+  customerEmail,
+  deliveryType,
   deliveryAddress,
+  couponCode,
+  discountAmount,
   source,
   status,
   items,
@@ -173,10 +178,15 @@ function createOrderWithItems({
       status,
       customer_name,
       customer_phone,
+      customer_email,
+      delivery_type,
       delivery_address,
+      coupon_code,
+      discount_amount,
       source,
-      created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
   const insertOrderItem = db.prepare(
@@ -190,7 +200,8 @@ function createOrderWithItems({
   );
 
   const runTx = db.transaction((payload) => {
-    const total = payload.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const itemsTotal = payload.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = Math.max(0, itemsTotal - (payload.discountAmount || 0));
     const createdAt = new Date().toISOString();
     const orderNumber = getNextOrderNumber();
 
@@ -201,8 +212,13 @@ function createOrderWithItems({
       payload.status,
       payload.customerName || null,
       payload.customerPhone || null,
+      payload.customerEmail || null,
+      payload.deliveryType === 'home_delivery' ? 'home_delivery' : 'store_pickup',
       payload.deliveryAddress || null,
+      payload.couponCode || null,
+      payload.discountAmount || 0,
       payload.source,
+      createdAt,
       createdAt,
     );
 
@@ -218,11 +234,62 @@ function createOrderWithItems({
       );
     }
 
+    recordOrderStatusChange(orderId, payload.status, payload.userId ?? null, 'Order created');
+
     const orderRow = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
     return orderRow;
   });
 
-  return runTx({ userId, customerName, customerPhone, deliveryAddress, source, status, items });
+  return runTx({
+    userId, customerName, customerPhone, customerEmail, deliveryType,
+    deliveryAddress, couponCode, discountAmount, source, status, items,
+  });
+}
+
+const ADMIN_ORDER_STATUSES = ['pending', 'processing', 'in_transit', 'completed', 'cancelled'];
+const REVENUE_COUNTED_STATUS = 'completed';
+
+function validateCouponForOrder(rawCode, itemsTotal) {
+  const code = String(rawCode || '').trim().toUpperCase();
+  if (!code) {
+    return { valid: false, error: 'Enter a coupon code.' };
+  }
+
+  const coupon = db.prepare('SELECT * FROM coupons WHERE code = ? AND is_active = 1').get(code);
+  if (!coupon) {
+    return { valid: false, error: 'Invalid or inactive coupon code.' };
+  }
+
+  if (coupon.expiry_date && new Date(coupon.expiry_date) < new Date()) {
+    return { valid: false, error: 'This coupon has expired.' };
+  }
+
+  if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) {
+    return { valid: false, error: 'Coupon usage limit has been reached.' };
+  }
+
+  if (coupon.min_order_value && itemsTotal < coupon.min_order_value) {
+    return { valid: false, error: `Minimum order of ₹${coupon.min_order_value} required for this coupon.` };
+  }
+
+  let discount = coupon.discount_type === 'percentage'
+    ? (itemsTotal * coupon.discount_value) / 100
+    : coupon.discount_value;
+
+  if (coupon.max_discount) {
+    discount = Math.min(discount, coupon.max_discount);
+  }
+  discount = Math.round(Math.min(discount, itemsTotal) * 100) / 100;
+
+  return {
+    valid: true,
+    coupon: {
+      code: coupon.code,
+      discount_type: coupon.discount_type,
+      discount_value: coupon.discount_value,
+    },
+    discount,
+  };
 }
 
 app.get('/api/health', (_req, res) => {
@@ -393,13 +460,24 @@ app.get('/api/menu-items', (_req, res) => {
   return res.json({ items: sortByCategoryOrder(rows) });
 });
 
-app.get('/api/admin/menu-items', adminRequired, (_req, res) => {
+app.get('/api/admin/menu-items', adminRequired, (req, res) => {
+  const category = String(req.query.category || '').trim();
+  const availability = String(req.query.availability || '').trim();
+  const bestseller = String(req.query.bestseller || '').trim();
+
+  const where = ['deleted_at IS NULL'];
+  const params = [];
+  if (category) { where.push('category = ?'); params.push(category); }
+  if (availability === 'available') where.push('is_active = 1');
+  if (availability === 'unavailable') where.push('is_active = 0');
+  if (bestseller === 'true') where.push('is_bestseller = 1');
+
   const rows = db.prepare(
-    `SELECT id, name, price, category, is_active, created_at, updated_at
+    `SELECT id, name, price, category, image_url, is_bestseller, is_active, created_at, updated_at
      FROM menu_items
-     WHERE deleted_at IS NULL
+     WHERE ${where.join(' AND ')}
      ORDER BY category ASC, name ASC`
-  ).all();
+  ).all(...params);
 
   return res.json({ items: rows });
 });
@@ -408,6 +486,8 @@ app.post('/api/admin/menu-items', adminRequired, (req, res) => {
   const name = String(req.body.name || '').trim();
   const price = Number(req.body.price);
   const category = String(req.body.category || '').trim();
+  const imageUrl = req.body.image_url ? String(req.body.image_url).trim() : null;
+  const isBestseller = Number(Boolean(req.body.is_bestseller));
   const isActive = req.body.is_active === undefined ? 1 : Number(Boolean(req.body.is_active));
 
   if (!name) {
@@ -424,12 +504,12 @@ app.post('/api/admin/menu-items', adminRequired, (req, res) => {
 
   const now = new Date().toISOString();
   const result = db.prepare(
-    `INSERT INTO menu_items (name, price, category, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(name, price, category, isActive, now, now);
+    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(name, price, category, imageUrl, isBestseller, isActive, now, now);
 
   const item = db
-    .prepare('SELECT id, name, price, category, is_active FROM menu_items WHERE id = ?')
+    .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
     .get(result.lastInsertRowid);
 
   return res.status(201).json({ item });
@@ -449,6 +529,8 @@ app.put('/api/admin/menu-items/:id', adminRequired, (req, res) => {
   const name = String(req.body.name || '').trim();
   const price = Number(req.body.price);
   const category = String(req.body.category || '').trim();
+  const imageUrl = req.body.image_url ? String(req.body.image_url).trim() : null;
+  const isBestseller = Number(Boolean(req.body.is_bestseller));
   const isActive = Number(Boolean(req.body.is_active));
 
   if (!name) {
@@ -465,12 +547,12 @@ app.put('/api/admin/menu-items/:id', adminRequired, (req, res) => {
 
   db.prepare(
     `UPDATE menu_items
-     SET name = ?, price = ?, category = ?, is_active = ?, updated_at = ?
+     SET name = ?, price = ?, category = ?, image_url = ?, is_bestseller = ?, is_active = ?, updated_at = ?
      WHERE id = ?`
-  ).run(name, price, category, isActive, new Date().toISOString(), id);
+  ).run(name, price, category, imageUrl, isBestseller, isActive, new Date().toISOString(), id);
 
   const item = db
-    .prepare('SELECT id, name, price, category, is_active FROM menu_items WHERE id = ?')
+    .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
     .get(id);
 
   return res.json({ item });
@@ -508,25 +590,70 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
 
   const customerName = String(req.body.customerName || '').trim();
   const customerPhone = String(req.body.customerPhone || '').trim();
+  const customerEmail = sanitizeEmail(req.body.customerEmail || '');
   const deliveryAddress = String(req.body.deliveryAddress || '').trim();
+  const deliveryType = req.body.deliveryType === 'home_delivery' ? 'home_delivery' : 'store_pickup';
+  const rawCouponCode = String(req.body.couponCode || '').trim();
+
+  const itemsTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  let couponCode = null;
+  let discountAmount = 0;
+  if (rawCouponCode) {
+    const couponResult = validateCouponForOrder(rawCouponCode, itemsTotal);
+    if (!couponResult.valid) {
+      return res.status(400).json({ error: couponResult.error });
+    }
+    couponCode = couponResult.coupon.code;
+    discountAmount = couponResult.discount;
+  }
+
+  if (deliveryType === 'home_delivery' && !deliveryAddress) {
+    return res.status(400).json({ error: 'Delivery address is required for home delivery.' });
+  }
 
   const order = createOrderWithItems({
     userId: req.user?.id ?? null,
     customerName,
     customerPhone,
+    customerEmail,
+    deliveryType,
     deliveryAddress,
+    couponCode,
+    discountAmount,
     source: 'checkout',
     status: 'pending',
     items,
   });
 
+  if (couponCode) {
+    db.prepare('UPDATE coupons SET usage_count = usage_count + 1 WHERE code = ?').run(couponCode);
+  }
+
   return res.status(201).json({ order });
+});
+
+app.post('/api/coupons/validate', (req, res) => {
+  const code = String(req.body.code || '').trim();
+  const subtotal = Number(req.body.subtotal || 0);
+
+  if (!Number.isFinite(subtotal) || subtotal < 0) {
+    return res.status(400).json({ error: 'Invalid order subtotal.' });
+  }
+
+  const result = validateCouponForOrder(code, subtotal);
+  if (!result.valid) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  return res.json({ coupon: result.coupon, discount: result.discount });
 });
 
 app.post('/api/franchise-leads', (req, res) => {
   const name = String(req.body.name || '').trim();
   const phone = String(req.body.phone || '').trim();
   const email = sanitizeEmail(req.body.email);
+  const city = String(req.body.city || '').trim();
   const message = String(req.body.message || '').trim();
 
   if (!name) {
@@ -543,9 +670,9 @@ app.post('/api/franchise-leads', (req, res) => {
 
   const createdAt = new Date().toISOString();
   const result = db.prepare(
-    `INSERT INTO franchise_leads (name, phone, email, message, created_at)
-     VALUES (?, ?, ?, ?, ?)`
-  ).run(name, phone, email, message || null, createdAt);
+    `INSERT INTO franchise_leads (name, phone, email, city, message, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(name, phone, email, city || null, message || null, createdAt);
 
   return res.status(201).json({
     lead: {
@@ -553,6 +680,7 @@ app.post('/api/franchise-leads', (req, res) => {
       name,
       phone,
       email,
+      city: city || null,
       message: message || null,
       created_at: createdAt,
     },
@@ -811,6 +939,518 @@ app.get('/api/admin/reports/daily', adminRequired, (_req, res) => {
         : null,
     },
   });
+});
+
+function getOrderWithItems(orderId) {
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  if (!order) return null;
+  const items = db.prepare(
+    'SELECT id, name, quantity, price FROM order_items WHERE order_id = ?'
+  ).all(orderId);
+  return { ...order, items };
+}
+
+// ── Order Management ──────────────────────────────────────────────────────
+
+app.get('/api/admin/orders', adminRequired, (req, res) => {
+  const search = String(req.query.search || '').trim();
+  const status = String(req.query.status || '').trim();
+  const deliveryType = String(req.query.deliveryType || '').trim();
+  const dateFrom = String(req.query.dateFrom || '').trim();
+  const dateTo = String(req.query.dateTo || '').trim();
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 25));
+
+  const where = [];
+  const params = [];
+
+  if (search) {
+    where.push('(CAST(order_number AS TEXT) LIKE ? OR customer_phone LIKE ? OR customer_name LIKE ?)');
+    const like = `%${search}%`;
+    params.push(like, like, like);
+  }
+  if (status) {
+    where.push('status = ?');
+    params.push(status);
+  }
+  if (deliveryType) {
+    where.push('delivery_type = ?');
+    params.push(deliveryType);
+  }
+  if (dateFrom) {
+    where.push("date(created_at, 'localtime') >= date(?)");
+    params.push(dateFrom);
+  }
+  if (dateTo) {
+    where.push("date(created_at, 'localtime') <= date(?)");
+    params.push(dateTo);
+  }
+
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+
+  const total = db.prepare(`SELECT COUNT(*) AS count FROM orders ${whereSql}`).get(...params).count;
+
+  const rows = db.prepare(
+    `SELECT * FROM orders ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  ).all(...params, pageSize, (page - 1) * pageSize);
+
+  const orderIds = rows.map((r) => r.id);
+  const itemsByOrder = new Map();
+  if (orderIds.length > 0) {
+    const placeholders = orderIds.map(() => '?').join(',');
+    const itemRows = db.prepare(
+      `SELECT order_id, id, name, quantity, price FROM order_items WHERE order_id IN (${placeholders})`
+    ).all(...orderIds);
+    for (const item of itemRows) {
+      if (!itemsByOrder.has(item.order_id)) itemsByOrder.set(item.order_id, []);
+      itemsByOrder.get(item.order_id).push(item);
+    }
+  }
+
+  const orders = rows.map((order) => ({ ...order, items: itemsByOrder.get(order.id) || [] }));
+
+  return res.json({ orders, total, page, pageSize });
+});
+
+app.get('/api/admin/orders/:id', adminRequired, (req, res) => {
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId)) {
+    return res.status(400).json({ error: 'Invalid order id.' });
+  }
+
+  const order = getOrderWithItems(orderId);
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  const history = db.prepare(
+    'SELECT status, note, created_at FROM order_status_history WHERE order_id = ? ORDER BY created_at ASC'
+  ).all(orderId);
+
+  return res.json({ order, history });
+});
+
+app.patch('/api/admin/orders/:id/status', adminRequired, (req, res) => {
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId)) {
+    return res.status(400).json({ error: 'Invalid order id.' });
+  }
+
+  const nextStatus = String(req.body.status || '').trim();
+  if (!ADMIN_ORDER_STATUSES.includes(nextStatus)) {
+    return res.status(400).json({ error: `Status must be one of: ${ADMIN_ORDER_STATUSES.join(', ')}` });
+  }
+
+  const existing = db.prepare('SELECT id FROM orders WHERE id = ?').get(orderId);
+  if (!existing) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  const now = new Date().toISOString();
+  db.prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?').run(nextStatus, now, orderId);
+  recordOrderStatusChange(orderId, nextStatus, req.user.id, req.body.note ? String(req.body.note) : null);
+
+  const order = getOrderWithItems(orderId);
+  return res.json({ order });
+});
+
+// ── Admin Dashboard ────────────────────────────────────────────────────────
+
+app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
+  const countByDate = (sqlDateExpr) => db.prepare(
+    `SELECT COUNT(*) AS count FROM orders WHERE date(created_at, 'localtime') = date(${sqlDateExpr}, 'localtime')`
+  ).get().count;
+
+  const todaysOrders = countByDate("'now'");
+  const yesterdayOrders = countByDate("'now', '-1 day'");
+
+  const statusCounts = db.prepare(
+    `SELECT status, COUNT(*) AS count FROM orders GROUP BY status`
+  ).all().reduce((acc, row) => ({ ...acc, [row.status]: row.count }), {});
+
+  const revenueSince = (sqlDateExpr) => db.prepare(
+    `SELECT COALESCE(SUM(total), 0) AS revenue
+     FROM orders
+     WHERE status = ? AND date(created_at, 'localtime') >= date(${sqlDateExpr}, 'localtime')`
+  ).get(REVENUE_COUNTED_STATUS).revenue;
+
+  const todaysRevenue = revenueSince("'now'");
+  const weeklyRevenue = revenueSince("'now', '-6 days'");
+  const monthlyRevenue = revenueSince("'now', 'start of month'");
+
+  const recentOrders = db.prepare(
+    `SELECT id, order_number, customer_name, customer_phone, delivery_type, status, total, created_at
+     FROM orders ORDER BY created_at DESC LIMIT 10`
+  ).all();
+
+  return res.json({
+    cards: {
+      todaysOrders,
+      yesterdayOrders,
+      pendingOrders: statusCounts.pending || 0,
+      processingOrders: statusCounts.processing || 0,
+      inTransitOrders: statusCounts.in_transit || 0,
+      completedOrders: statusCounts.completed || 0,
+      todaysRevenue,
+      weeklyRevenue,
+      monthlyRevenue,
+    },
+    recentOrders,
+    generatedAt: new Date().toISOString(),
+  });
+});
+
+// ── Customer Management ────────────────────────────────────────────────────
+
+app.get('/api/admin/customers', adminRequired, (req, res) => {
+  const search = String(req.query.search || '').trim();
+
+  const where = [];
+  const params = [];
+  where.push("(customer_phone IS NOT NULL AND customer_phone != '')");
+  if (search) {
+    where.push('(customer_phone LIKE ? OR customer_email LIKE ? OR customer_name LIKE ?)');
+    const like = `%${search}%`;
+    params.push(like, like, like);
+  }
+
+  const rows = db.prepare(
+    `SELECT
+      customer_phone AS phone,
+      MAX(customer_name) AS name,
+      MAX(customer_email) AS email,
+      COUNT(*) AS order_count,
+      COALESCE(SUM(CASE WHEN status = '${REVENUE_COUNTED_STATUS}' THEN total ELSE 0 END), 0) AS total_spend,
+      MAX(created_at) AS last_order_date
+     FROM orders
+     WHERE ${where.join(' AND ')}
+     GROUP BY customer_phone
+     ORDER BY last_order_date DESC`
+  ).all(...params);
+
+  return res.json({ customers: rows });
+});
+
+// ── Menu Management (visibility + bestseller) ──────────────────────────────
+
+app.patch('/api/admin/menu-items/:id/hide', adminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: 'Invalid item id.' });
+  }
+
+  const existing = db.prepare('SELECT id, is_active FROM menu_items WHERE id = ? AND deleted_at IS NULL').get(id);
+  if (!existing) {
+    return res.status(404).json({ error: 'Menu item not found.' });
+  }
+
+  const nextActive = existing.is_active ? 0 : 1;
+  db.prepare('UPDATE menu_items SET is_active = ?, updated_at = ? WHERE id = ?')
+    .run(nextActive, new Date().toISOString(), id);
+
+  const item = db.prepare(
+    'SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?'
+  ).get(id);
+
+  return res.json({ item });
+});
+
+// ── Coupon Management ──────────────────────────────────────────────────────
+
+app.get('/api/admin/coupons', adminRequired, (_req, res) => {
+  const coupons = db.prepare('SELECT * FROM coupons ORDER BY created_at DESC').all();
+  return res.json({ coupons });
+});
+
+function validateCouponPayload(body) {
+  const code = String(body.code || '').trim().toUpperCase();
+  const discountType = body.discount_type === 'fixed' ? 'fixed' : 'percentage';
+  const discountValue = Number(body.discount_value);
+  const minOrderValue = Number(body.min_order_value || 0);
+  const maxDiscount = body.max_discount === undefined || body.max_discount === null || body.max_discount === ''
+    ? null
+    : Number(body.max_discount);
+  const expiryDate = body.expiry_date ? String(body.expiry_date) : null;
+  const usageLimit = body.usage_limit === undefined || body.usage_limit === null || body.usage_limit === ''
+    ? null
+    : Number(body.usage_limit);
+
+  if (!code) return { error: 'Coupon code is required.' };
+  if (!Number.isFinite(discountValue) || discountValue <= 0) return { error: 'Discount value must be greater than 0.' };
+  if (discountType === 'percentage' && discountValue > 100) return { error: 'Percentage discount cannot exceed 100.' };
+  if (!Number.isFinite(minOrderValue) || minOrderValue < 0) return { error: 'Minimum order value must be 0 or more.' };
+
+  return { value: { code, discountType, discountValue, minOrderValue, maxDiscount, expiryDate, usageLimit } };
+}
+
+app.post('/api/admin/coupons', adminRequired, (req, res) => {
+  const { value, error } = validateCouponPayload(req.body);
+  if (error) return res.status(400).json({ error });
+
+  const existing = db.prepare('SELECT id FROM coupons WHERE code = ?').get(value.code);
+  if (existing) {
+    return res.status(409).json({ error: `Coupon code "${value.code}" already exists.` });
+  }
+
+  const now = new Date().toISOString();
+  const result = db.prepare(
+    `INSERT INTO coupons (code, discount_type, discount_value, min_order_value, max_discount, expiry_date, usage_limit, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
+  ).run(value.code, value.discountType, value.discountValue, value.minOrderValue, value.maxDiscount, value.expiryDate, value.usageLimit, now, now);
+
+  const coupon = db.prepare('SELECT * FROM coupons WHERE id = ?').get(result.lastInsertRowid);
+  return res.status(201).json({ coupon });
+});
+
+app.put('/api/admin/coupons/:id', adminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid coupon id.' });
+
+  const existing = db.prepare('SELECT id FROM coupons WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Coupon not found.' });
+
+  const { value, error } = validateCouponPayload(req.body);
+  if (error) return res.status(400).json({ error });
+
+  const duplicate = db.prepare('SELECT id FROM coupons WHERE code = ? AND id != ?').get(value.code, id);
+  if (duplicate) {
+    return res.status(409).json({ error: `Coupon code "${value.code}" already exists.` });
+  }
+
+  db.prepare(
+    `UPDATE coupons SET code = ?, discount_type = ?, discount_value = ?, min_order_value = ?,
+      max_discount = ?, expiry_date = ?, usage_limit = ?, updated_at = ? WHERE id = ?`
+  ).run(value.code, value.discountType, value.discountValue, value.minOrderValue, value.maxDiscount, value.expiryDate, value.usageLimit, new Date().toISOString(), id);
+
+  const coupon = db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+  return res.json({ coupon });
+});
+
+app.patch('/api/admin/coupons/:id/disable', adminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid coupon id.' });
+
+  const existing = db.prepare('SELECT id, is_active FROM coupons WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Coupon not found.' });
+
+  const nextActive = existing.is_active ? 0 : 1;
+  db.prepare('UPDATE coupons SET is_active = ?, updated_at = ? WHERE id = ?')
+    .run(nextActive, new Date().toISOString(), id);
+
+  const coupon = db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+  return res.json({ coupon });
+});
+
+app.delete('/api/admin/coupons/:id', adminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid coupon id.' });
+
+  const existing = db.prepare('SELECT id FROM coupons WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Coupon not found.' });
+
+  db.prepare('DELETE FROM coupons WHERE id = ?').run(id);
+  return res.json({ success: true });
+});
+
+// ── Franchise Leads (admin) ────────────────────────────────────────────────
+
+app.get('/api/admin/franchise-leads', adminRequired, (req, res) => {
+  const search = String(req.query.search || '').trim();
+  const where = [];
+  const params = [];
+  if (search) {
+    where.push('(name LIKE ? OR phone LIKE ? OR email LIKE ? OR city LIKE ?)');
+    const like = `%${search}%`;
+    params.push(like, like, like, like);
+  }
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+
+  const leads = db.prepare(
+    `SELECT id, name, phone, email, city, message, created_at FROM franchise_leads ${whereSql} ORDER BY created_at DESC`
+  ).all(...params);
+
+  return res.json({ leads });
+});
+
+app.get('/api/admin/franchise-leads/export', adminRequired, (req, res) => {
+  const format = req.query.format === 'excel' ? 'excel' : 'csv';
+  const leads = db.prepare(
+    'SELECT name, phone, email, city, message, created_at FROM franchise_leads ORDER BY created_at DESC'
+  ).all();
+
+  const rows = leads.map((lead) => ({
+    Name: lead.name,
+    Phone: lead.phone,
+    Email: lead.email,
+    City: lead.city || '',
+    Message: lead.message || '',
+    Date: lead.created_at,
+  }));
+
+  return sendExport(res, rows, 'franchise-leads', format);
+});
+
+// ── Analytics ───────────────────────────────────────────────────────────────
+
+app.get('/api/admin/analytics', adminRequired, (req, res) => {
+  const dateFrom = String(req.query.dateFrom || '').trim();
+  const dateTo = String(req.query.dateTo || '').trim();
+
+  const where = [`status = '${REVENUE_COUNTED_STATUS}'`];
+  const params = [];
+  if (dateFrom) { where.push("date(created_at, 'localtime') >= date(?)"); params.push(dateFrom); }
+  if (dateTo) { where.push("date(created_at, 'localtime') <= date(?)"); params.push(dateTo); }
+  const whereSql = `WHERE ${where.join(' AND ')}`;
+
+  const revenueByDay = db.prepare(
+    `SELECT date(created_at, 'localtime') AS day, SUM(total) AS revenue, COUNT(*) AS orders
+     FROM orders ${whereSql} GROUP BY day ORDER BY day ASC`
+  ).all(...params);
+
+  const revenueByWeek = db.prepare(
+    `SELECT strftime('%Y-W%W', created_at, 'localtime') AS week, SUM(total) AS revenue, COUNT(*) AS orders
+     FROM orders ${whereSql} GROUP BY week ORDER BY week ASC`
+  ).all(...params);
+
+  const revenueByMonth = db.prepare(
+    `SELECT strftime('%Y-%m', created_at, 'localtime') AS month, SUM(total) AS revenue, COUNT(*) AS orders
+     FROM orders ${whereSql} GROUP BY month ORDER BY month ASC`
+  ).all(...params);
+
+  const ordersByHour = db.prepare(
+    `SELECT strftime('%H', created_at, 'localtime') AS hour, COUNT(*) AS orders, SUM(total) AS revenue
+     FROM orders ${whereSql} GROUP BY hour ORDER BY hour ASC`
+  ).all(...params);
+
+  const topProducts = db.prepare(
+    `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
+     FROM order_items oi
+     INNER JOIN orders o ON o.id = oi.order_id
+     ${whereSql.replace('created_at', 'o.created_at').replace('status', 'o.status')}
+     GROUP BY oi.name ORDER BY qty DESC LIMIT 10`
+  ).all(...params);
+
+  const totalCustomers = db.prepare(
+    `SELECT customer_phone, COUNT(*) AS orders FROM orders ${whereSql} AND customer_phone IS NOT NULL AND customer_phone != '' GROUP BY customer_phone`
+  ).all(...params);
+  const returningCustomers = totalCustomers.filter((c) => c.orders > 1).length;
+  const newCustomers = totalCustomers.filter((c) => c.orders === 1).length;
+  const repeatOrderRate = totalCustomers.length > 0
+    ? Math.round((returningCustomers / totalCustomers.length) * 1000) / 10
+    : 0;
+
+  const couponStats = db.prepare(
+    `SELECT coupon_code, COUNT(*) AS uses, SUM(discount_amount) AS total_discount, SUM(total) AS revenue_with_coupon
+     FROM orders ${whereSql} AND coupon_code IS NOT NULL GROUP BY coupon_code ORDER BY uses DESC`
+  ).all(...params);
+
+  return res.json({
+    revenueByDay,
+    revenueByWeek,
+    revenueByMonth,
+    ordersByHour,
+    topProducts,
+    customerAnalytics: { returningCustomers, newCustomers, repeatOrderRate, totalCustomers: totalCustomers.length },
+    couponAnalytics: couponStats,
+  });
+});
+
+// ── Reports & Exports ───────────────────────────────────────────────────────
+
+function sendExport(res, rows, filename, format) {
+  if (rows.length === 0) {
+    return res.status(404).json({ error: 'No data available to export for this range.' });
+  }
+
+  if (format === 'excel') {
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
+    return res.send(buffer);
+  }
+
+  const headers = Object.keys(rows[0]);
+  const csvLines = [headers.join(',')];
+  for (const row of rows) {
+    csvLines.push(headers.map((h) => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(','));
+  }
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
+  return res.send('﻿' + csvLines.join('\n'));
+}
+
+app.get('/api/admin/reports/export', adminRequired, (req, res) => {
+  const type = String(req.query.type || 'orders');
+  const format = req.query.format === 'excel' ? 'excel' : 'csv';
+  const dateFrom = String(req.query.dateFrom || '').trim();
+  const dateTo = String(req.query.dateTo || '').trim();
+
+  const dateWhere = [];
+  const dateParams = [];
+  if (dateFrom) { dateWhere.push("date(created_at, 'localtime') >= date(?)"); dateParams.push(dateFrom); }
+  if (dateTo) { dateWhere.push("date(created_at, 'localtime') <= date(?)"); dateParams.push(dateTo); }
+  const dateWhereSql = dateWhere.length > 0 ? `WHERE ${dateWhere.join(' AND ')}` : '';
+
+  if (type === 'orders') {
+    const rows = db.prepare(
+      `SELECT order_number, customer_name, customer_phone, delivery_type, status, total, discount_amount, coupon_code, created_at
+       FROM orders ${dateWhereSql} ORDER BY created_at DESC`
+    ).all(...dateParams).map((o) => ({
+      'Order #': o.order_number,
+      Customer: o.customer_name,
+      Phone: o.customer_phone,
+      'Delivery Type': o.delivery_type,
+      Status: o.status,
+      Total: o.total,
+      Discount: o.discount_amount,
+      Coupon: o.coupon_code || '',
+      Date: o.created_at,
+    }));
+    return sendExport(res, rows, 'orders-report', format);
+  }
+
+  if (type === 'revenue') {
+    const completedWhere = dateWhereSql
+      ? `${dateWhereSql} AND status = '${REVENUE_COUNTED_STATUS}'`
+      : `WHERE status = '${REVENUE_COUNTED_STATUS}'`;
+    const rows = db.prepare(
+      `SELECT date(created_at, 'localtime') AS day, COUNT(*) AS orders, SUM(total) AS revenue
+       FROM orders ${completedWhere} GROUP BY day ORDER BY day DESC`
+    ).all(...dateParams).map((r) => ({ Date: r.day, Orders: r.orders, Revenue: r.revenue }));
+    return sendExport(res, rows, 'revenue-report', format);
+  }
+
+  if (type === 'products') {
+    const completedWhere = dateWhereSql
+      ? `${dateWhereSql.replace('created_at', 'o.created_at')} AND o.status = '${REVENUE_COUNTED_STATUS}'`
+      : `WHERE o.status = '${REVENUE_COUNTED_STATUS}'`;
+    const rows = db.prepare(
+      `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
+       FROM order_items oi INNER JOIN orders o ON o.id = oi.order_id
+       ${completedWhere} GROUP BY oi.name ORDER BY revenue DESC`
+    ).all(...dateParams).map((r) => ({ Product: r.name, 'Quantity Sold': r.qty, Revenue: r.revenue }));
+    return sendExport(res, rows, 'products-report', format);
+  }
+
+  if (type === 'customers') {
+    const rows = db.prepare(
+      `SELECT customer_phone AS phone, MAX(customer_name) AS name, MAX(customer_email) AS email,
+        COUNT(*) AS order_count, SUM(CASE WHEN status = '${REVENUE_COUNTED_STATUS}' THEN total ELSE 0 END) AS total_spend,
+        MAX(created_at) AS last_order_date
+       FROM orders
+       WHERE customer_phone IS NOT NULL AND customer_phone != ''
+       GROUP BY customer_phone ORDER BY total_spend DESC`
+    ).all().map((c) => ({
+      Phone: c.phone, Name: c.name || '', Email: c.email || '',
+      'Order Count': c.order_count, 'Total Spend': c.total_spend, 'Last Order': c.last_order_date,
+    }));
+    return sendExport(res, rows, 'customers-report', format);
+  }
+
+  return res.status(400).json({ error: 'type must be one of: orders, revenue, products, customers' });
 });
 
 const distPath = path.join(rootDir, 'dist');

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { useSupabaseAuth } from '../lib/runtime';
+import { supabase } from '../lib/supabaseClient';
 
 export interface Profile {
   id: string | number;
@@ -67,6 +68,27 @@ export const useProfile = () => {
   }, [user?.id, token]);
 
   const fetchAddresses = useCallback(async () => {
+    if (useSupabaseAuth) {
+      if (!user?.id) {
+        setAddresses([]);
+        return;
+      }
+
+      const { data, error: supabaseError } = await supabase
+        .from('saved_addresses')
+        .select('id, label, address, is_default')
+        .eq('user_id', String(user.id))
+        .order('created_at', { ascending: true });
+
+      if (supabaseError) {
+        setAddresses([]);
+        return;
+      }
+
+      setAddresses((data || []) as SavedAddress[]);
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(addressStorageKey);
       if (!raw) {
@@ -77,7 +99,7 @@ export const useProfile = () => {
     } catch {
       setAddresses([]);
     }
-  }, [addressStorageKey]);
+  }, [addressStorageKey, user?.id]);
 
   const persistAddresses = useCallback((nextAddresses: SavedAddress[]) => {
     setAddresses(nextAddresses);
@@ -109,6 +131,25 @@ export const useProfile = () => {
   };
 
   const addAddress = async (label: string, address: string, isDefault = false) => {
+    if (useSupabaseAuth && user?.id) {
+      if (isDefault) {
+        await supabase.from('saved_addresses').update({ is_default: false }).eq('user_id', String(user.id));
+      }
+
+      const { error: supabaseError } = await supabase
+        .from('saved_addresses')
+        .insert({ user_id: String(user.id), label, address, is_default: isDefault })
+        .select('id, label, address, is_default')
+        .single();
+
+      if (supabaseError) {
+        return supabaseError.message;
+      }
+
+      await fetchAddresses();
+      return null;
+    }
+
     const nextAddress: SavedAddress = {
       id: `${Date.now()}`,
       label,
@@ -125,11 +166,33 @@ export const useProfile = () => {
   };
 
   const deleteAddress = async (id: string) => {
+    if (useSupabaseAuth && user?.id) {
+      const { error: supabaseError } = await supabase
+        .from('saved_addresses')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', String(user.id));
+
+      if (supabaseError) {
+        return supabaseError.message;
+      }
+
+      await fetchAddresses();
+      return null;
+    }
+
     persistAddresses(addresses.filter((address) => address.id !== id));
     return null;
   };
 
   const setDefaultAddress = async (id: string) => {
+    if (useSupabaseAuth && user?.id) {
+      await supabase.from('saved_addresses').update({ is_default: false }).eq('user_id', String(user.id));
+      await supabase.from('saved_addresses').update({ is_default: true }).eq('id', id);
+      await fetchAddresses();
+      return;
+    }
+
     persistAddresses(addresses.map((entry) => ({ ...entry, is_default: entry.id === id })));
   };
 

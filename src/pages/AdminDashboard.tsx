@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../lib/api';
+import { useAdminOrders, ADMIN_ORDER_STATUSES, type AdminOrderStatus } from '../hooks/useAdminOrders';
 
 interface AdminMenuItem {
   id: number;
@@ -26,6 +27,9 @@ const emptyForm = {
 
 export default function AdminDashboard() {
   const { user, token, logout } = useAuth();
+  const { orders, loading: ordersLoading, error: ordersError, updateOrderStatus } = useAdminOrders();
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('');
 
   const [items, setItems] = useState<AdminMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +69,26 @@ export default function AdminDashboard() {
   }, []);
 
   const activeCount = useMemo(() => items.filter((item) => Boolean(item.is_active)).length, [items]);
+
+  const filteredOrders = useMemo(() => {
+    const query = orderSearch.trim().toLowerCase();
+
+    return orders.filter((order) => {
+      if (orderStatusFilter && order.status !== orderStatusFilter) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      return (
+        order.id.toLowerCase().includes(query) ||
+        (order.customer_name || '').toLowerCase().includes(query) ||
+        (order.customer_phone || '').toLowerCase().includes(query)
+      );
+    });
+  }, [orders, orderSearch, orderStatusFilter]);
 
   const submitForm = async () => {
     if (!form.name.trim()) {
@@ -203,6 +227,82 @@ export default function AdminDashboard() {
               <p className="text-white/60">Top Item Qty</p>
               <p className="font-bebas text-3xl mt-2">{report?.topSellingItem?.quantity || 0}</p>
             </div>
+          </div>
+        </section>
+
+        <section className="bg-[#181818] border border-white/10 rounded-2xl p-6 space-y-4">
+          <h2 className="font-bebas text-4xl tracking-[3px] uppercase">Orders</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+              type="text"
+              value={orderSearch}
+              onChange={(event) => setOrderSearch(event.target.value)}
+              placeholder="Search by order id, name, or phone"
+              className="bg-black/30 border border-white/10 rounded-xl p-3 text-sm md:col-span-2"
+            />
+            <select
+              value={orderStatusFilter}
+              onChange={(event) => setOrderStatusFilter(event.target.value)}
+              className="bg-black/30 border border-white/10 rounded-xl p-3 text-sm"
+            >
+              <option value="">All statuses</option>
+              {ADMIN_ORDER_STATUSES.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+
+          {ordersError && <p className="text-sm text-red-400">{ordersError}</p>}
+
+          <div className="overflow-auto rounded-xl border border-white/10">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="bg-black/40 text-left uppercase tracking-[2px] text-[11px] text-white/60">
+                <tr>
+                  <th className="p-3">Customer</th>
+                  <th className="p-3">Items</th>
+                  <th className="p-3">Total</th>
+                  <th className="p-3">Placed</th>
+                  <th className="p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordersLoading && (
+                  <tr>
+                    <td className="p-4" colSpan={5}>Loading orders...</td>
+                  </tr>
+                )}
+                {!ordersLoading && filteredOrders.length === 0 && (
+                  <tr>
+                    <td className="p-4" colSpan={5}>No orders found.</td>
+                  </tr>
+                )}
+                {!ordersLoading && filteredOrders.map((order) => (
+                  <tr key={order.id} className="border-t border-white/10 align-top">
+                    <td className="p-3">
+                      <p className="font-semibold">{order.customer_name || 'Unknown'}</p>
+                      <p className="text-white/50 text-xs">{order.customer_phone}</p>
+                    </td>
+                    <td className="p-3 text-white/70">
+                      {order.order_items.map((item) => `${item.name} x${item.quantity}`).join(', ')}
+                    </td>
+                    <td className="p-3">₹{order.total.toFixed(0)}</td>
+                    <td className="p-3 text-white/60">{new Date(order.created_at).toLocaleString()}</td>
+                    <td className="p-3">
+                      <select
+                        value={order.status}
+                        onChange={(event) => void updateOrderStatus(order.id, event.target.value as AdminOrderStatus)}
+                        className="bg-black/30 border border-white/10 rounded-lg p-2 text-xs"
+                      >
+                        {ADMIN_ORDER_STATUSES.map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 

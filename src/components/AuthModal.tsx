@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 import { useSupabaseAuth } from '../lib/runtime';
+import { isValidIndianPhone } from '../utils/phone';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { login, signup, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -55,14 +57,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setError('Please enter your name.');
         return;
       }
+      if (!phone?.trim() || !isValidIndianPhone(phone)) {
+        setError('Please enter a valid 10-digit phone number.');
+        return;
+      }
     }
 
     try {
       setSaving(true);
       if (mode === 'signup') {
-        await signup({ email, password, name: name?.trim() });
+        await signup({ email, password, name: name?.trim(), phone: phone?.trim() });
         // Clear form and close on success
         setName('');
+        setPhone('');
         setEmail('');
         setPassword('');
         onClose();
@@ -195,6 +202,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Your name"
+                className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm text-white focus:border-[var(--red)] outline-none transition-all placeholder:text-white/10 font-body shadow-inner"
+              />
+              <label className="block text-[10px] font-bold uppercase tracking-[3px] font-body text-[var(--red)]">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="9876543210"
                 className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm text-white focus:border-[var(--red)] outline-none transition-all placeholder:text-white/10 font-body shadow-inner"
               />
             </div>

@@ -812,7 +812,7 @@
     "desc": "Juicy chicken patty stacked with fresh toppings in a soft bun.",
     "image": "/images/menu/burgers/chicken-burger.webp",
     "isVeg": false,
-    "bestseller": false,
+    "bestseller": true,
     "rating": 4.6
   },
   {

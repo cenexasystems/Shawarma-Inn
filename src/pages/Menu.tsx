@@ -22,6 +22,11 @@ export default function Menu({ cartData }: MenuProps) {
 
   const base = showFavoritesOnly ? favorites : menu;
 
+  const categoryCounts = base.reduce<Record<string, number>>((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + 1;
+    return acc;
+  }, { All: base.length });
+
   const filtered = base
     .filter(item =>
       activeCategory === 'All' || item.category.toLowerCase() === activeCategory.toLowerCase()
@@ -32,14 +37,20 @@ export default function Menu({ cartData }: MenuProps) {
       return true;
     })
     .filter(item => !bestsellerOnly || item.bestseller)
-    .filter(item =>
-      search.trim() === '' || item.name.toLowerCase().includes(search.trim().toLowerCase())
-    );
+    .filter(item => {
+      const query = search.trim().toLowerCase();
+      if (query === '') return true;
+      return (
+        item.name.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        (item.desc || item.description || '').toLowerCase().includes(query)
+      );
+    });
 
   return (
     <main className="pt-[64px] min-h-screen bg-[var(--black)]">
       {/* Sticky category tabs */}
-      <MenuTabs active={activeCategory} onChange={setActiveCategory} />
+      <MenuTabs active={activeCategory} onChange={setActiveCategory} counts={categoryCounts} />
 
       {/* Page title with Favorites toggle */}
       <header className="max-w-7xl mx-auto px-8 pt-12 pb-8">
@@ -116,28 +127,54 @@ export default function Menu({ cartData }: MenuProps) {
 
       {/* Menu grid */}
       <section className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
-        {loading && (
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 py-24 text-center text-[var(--white)]/40 font-bebas uppercase text-2xl tracking-widest">
-            Loading menu...
-          </div>
-        )}
-        {filtered.map(item => {
-          const cartItem = cartData?.cart?.find((ci: any) => ci.id === item.id);
-          return (
-            <FoodCard
-              key={item.id}
-              item={item}
-              addItem={cartData?.addItem}
-              qty={cartItem?.qty ?? 0}
-              updateQty={cartData?.updateQty}
-            />
-          );
-        })}
+        {loading &&
+          Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-[var(--card-bg)] border-[0.5px] border-[var(--border)] rounded-[16px] overflow-hidden animate-pulse"
+            >
+              <div className="w-full aspect-[4/3] bg-white/5" />
+              <div className="p-4 pt-3 space-y-3">
+                <div className="h-3 bg-white/5 rounded-full w-3/4" />
+                <div className="h-3 bg-white/5 rounded-full w-1/2" />
+                <div className="h-8 bg-white/5 rounded-full w-1/3 mt-4" />
+              </div>
+            </div>
+          ))}
+        {!loading &&
+          filtered.map(item => {
+            const cartItem = cartData?.cart?.find((ci: any) => ci.id === item.id);
+            return (
+              <FoodCard
+                key={item.id}
+                item={item}
+                addItem={cartData?.addItem}
+                qty={cartItem?.qty ?? 0}
+                updateQty={cartData?.updateQty}
+              />
+            );
+          })}
         {!loading && filtered.length === 0 && (
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 py-24 text-center">
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 py-24 text-center space-y-5">
             <p className="text-[var(--white)]/40 font-bebas uppercase text-2xl tracking-widest">
-              {showFavoritesOnly ? 'No favorite items yet. Start adding! ❤️' : 'No items match your search or filters.'}
+              {showFavoritesOnly
+                ? 'No favorite items yet. Start adding! ❤️'
+                : search.trim()
+                ? `No results for "${search.trim()}".`
+                : 'No items match your filters.'}
             </p>
+            <button
+              onClick={() => {
+                setSearch('');
+                setActiveCategory('All');
+                setDietFilter('all');
+                setBestsellerOnly(false);
+                setShowFavoritesOnly(false);
+              }}
+              className="px-6 py-2 rounded-full font-bebas text-sm tracking-widest uppercase border border-white/20 text-white/60 hover:border-white/40 transition-all"
+            >
+              Clear filters
+            </button>
           </div>
         )}
       </section>

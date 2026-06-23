@@ -5,6 +5,7 @@ import { apiRequest } from '../lib/api';
 import Invoice from '../components/Invoice';
 import RecentOrders from '../components/RecentOrders';
 import type { CartItem } from '../types';
+import { computeGst, GST_ACTIVE, GST_PERCENTAGE } from '../config/pricing';
 
 interface PosMenuItem {
   id: number;
@@ -96,7 +97,7 @@ export default function PosBilling() {
 
   const taxableAmount = subtotal - discountAmount;
   const tax = useMemo(
-    () => Math.round(taxableAmount * 0.05 * 100) / 100,
+    () => computeGst(taxableAmount),
     [taxableAmount],
   );
 
@@ -310,10 +311,12 @@ export default function PosBilling() {
                 <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-white/70">
-              <span>Tax (5%)</span>
-              <span className="font-bold text-[#4ade80]">₹{tax.toFixed(2)}</span>
-            </div>
+            {GST_ACTIVE && (
+              <div className="flex justify-between text-white/70">
+                <span>Tax ({GST_PERCENTAGE}%)</span>
+                <span className="font-bold text-[#4ade80]">₹{tax.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-end border-t border-white/10 pt-2">
               <p className="font-bebas text-2xl tracking-[2px]">TOTAL</p>
               <p className="font-bebas text-5xl text-[#ef8f2f]">₹{total.toFixed(2)}</p>

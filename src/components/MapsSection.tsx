@@ -21,7 +21,7 @@ export default function MapsSection() {
         <div className="mb-12 text-center">
           <p className="text-[11px] uppercase tracking-[3px] text-[#d62b2b]">Find Us</p>
           <h2 className="mt-3 text-4xl md:text-5xl font-bebas text-white tracking-[3px] uppercase">
-            OUR NOCTURNE <span className="text-[#d62b2b]">DOMAINS</span>
+            OUR <span className="text-[#d62b2b]">BRANCHES</span>
           </h2>
         </div>
 

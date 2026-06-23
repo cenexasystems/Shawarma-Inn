@@ -39,7 +39,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 }
 
 export const authApi = {
-  signup: (input: { email: string; password: string; name?: string }) =>
+  signup: (input: { email: string; password: string; name?: string; phone?: string }) =>
     apiRequest<{ token: string; user: AuthUser }>('/auth/signup', {
       method: 'POST',
       body: input,
