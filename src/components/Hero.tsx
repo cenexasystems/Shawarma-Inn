@@ -118,9 +118,14 @@ export default function Hero() {
           </div>
 
           {/* EST. 2018 Badge */}
-          <div className="inline-flex items-center gap-2 bg-[rgba(214,43,43,0.15)] text-[var(--red)] border border-[var(--red)]/20 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[3px] mb-8 font-bebas backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 bg-[rgba(214,43,43,0.15)] text-[var(--red)] border border-[var(--red)]/20 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[3px] mb-3 font-bebas backdrop-blur-md">
             EST. 2018 · MATHUR
           </div>
+
+          {/* Exclusivity callout */}
+          <p className="text-white/40 text-[11px] font-bold tracking-[2px] uppercase mb-8 font-body">
+            Official website of our Mathur branch only
+          </p>
 
           {/* ── Main Headline ── */}
           <h1

@@ -43,8 +43,11 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
   return (
     <nav className={`fixed top-0 w-full z-50 h-[64px] border-b-[0.5px] flex justify-between items-center px-8 transition-all ${navClass}`}>
       {/* Logo LEFT: "SHAWARMA INN" with .logo-shimmer class */}
-      <Link to="/" className="text-2xl font-black uppercase logo-shimmer">
-        SHAWARMA INN
+      <Link to="/" className="flex items-baseline gap-2">
+        <span className="text-2xl font-black uppercase logo-shimmer">SHAWARMA INN</span>
+        <span className="hidden sm:inline text-[10px] font-bold tracking-[2px] uppercase text-[var(--red)] border border-[var(--red)]/40 rounded-full px-2 py-0.5">
+          Mathur Branch
+        </span>
       </Link>
 
       {/* Links CENTER: HOME · MENU · BRANCHES · CHECKOUT — Sora 600, 11px, uppercase, letter-spacing 0.14em */}

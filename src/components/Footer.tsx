@@ -115,6 +115,10 @@ export default function Footer() {
         <p className="text-white text-[11px] font-body tracking-[2px] uppercase">
           © 2026 SHAWARMA INN. ALL RIGHTS RESERVED.
         </p>
+        <p className="text-white/40 text-[10px] font-body tracking-[1.5px] uppercase max-w-2xl">
+          This is the official website of Shawarma Inn's Mathur branch only. Other Shawarma Inn outlets
+          are independently operated and not affiliated with this website.
+        </p>
         <p className="text-white text-[11px] font-body tracking-[2px] uppercase">
           Powered by Cenexa Systems © 2026
         </p>
