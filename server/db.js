@@ -190,6 +190,9 @@ function runMigrations() {
   if (!reviewColumns.includes('phone')) {
     db.exec('ALTER TABLE reviews ADD COLUMN phone TEXT');
   }
+  if (!reviewColumns.includes('is_hidden')) {
+    db.exec('ALTER TABLE reviews ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0');
+  }
 
   const franchiseColumns = db.prepare('PRAGMA table_info(franchise_leads)').all().map((col) => col.name);
   if (!franchiseColumns.includes('city')) {
