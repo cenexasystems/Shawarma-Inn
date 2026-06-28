@@ -2,9 +2,14 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import menuData from '../data/menu.json';
 import type { MenuItem } from '../types';
-import { categoryFallbackImage } from '../utils/categoryImages';
+import { resolveMenuImage, getRecoveryImage } from '../utils/menuImages';
 
-const trending = (menuData as MenuItem[]).filter((item) => item.bestseller).slice(0, 8);
+// Map local JSON items so resolveMenuImage picks up the semantic engine
+// (local `item.image` paths are /images/menu/… which don't exist in public/)
+const trending = (menuData as MenuItem[])
+  .filter((item) => item.bestseller)
+  .slice(0, 8)
+  .map((item) => ({ ...item, image: resolveMenuImage({ name: item.name, category: item.category, image_url: null }) }));
 
 export default function TrendingProducts() {
   const navigate = useNavigate();
@@ -40,13 +45,13 @@ export default function TrendingProducts() {
             >
               <div className="relative aspect-square overflow-hidden">
                 <img
-                  src={item.image || categoryFallbackImage(item.category)}
+                  src={item.image}
                   alt={item.name}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   onError={({ currentTarget }) => {
                     currentTarget.onerror = null;
-                    currentTarget.src = categoryFallbackImage(item.category);
+                    currentTarget.src = getRecoveryImage(item);
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />

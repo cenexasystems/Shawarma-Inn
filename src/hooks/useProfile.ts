@@ -25,8 +25,6 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const addressStorageKey = user?.id ? `si_addresses_${user.id}` : 'si_addresses_guest';
-
   const fetchProfile = useCallback(async () => {
     if (!user?.id || !token) {
       setProfile(null);
@@ -68,12 +66,12 @@ export const useProfile = () => {
   }, [user?.id, token]);
 
   const fetchAddresses = useCallback(async () => {
-    if (useSupabaseAuth) {
-      if (!user?.id) {
-        setAddresses([]);
-        return;
-      }
+    if (!user?.id) {
+      setAddresses([]);
+      return;
+    }
 
+    if (useSupabaseAuth) {
       const { data, error: supabaseError } = await supabase
         .from('saved_addresses')
         .select('id, label, address, is_default')
@@ -90,21 +88,23 @@ export const useProfile = () => {
     }
 
     try {
-      const raw = localStorage.getItem(addressStorageKey);
-      if (!raw) {
-        setAddresses([]);
-        return;
-      }
-      setAddresses(JSON.parse(raw) as SavedAddress[]);
+      const response = await fetch('/api/users/addresses', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) { setAddresses([]); return; }
+      const payload = await response.json() as { addresses: Array<{ id: number; label: string; address_line: string; is_default: number }> };
+      setAddresses(
+        (payload.addresses || []).map((a) => ({
+          id: String(a.id),
+          label: a.label,
+          address: a.address_line,
+          is_default: Boolean(a.is_default),
+        }))
+      );
     } catch {
       setAddresses([]);
     }
-  }, [addressStorageKey, user?.id]);
-
-  const persistAddresses = useCallback((nextAddresses: SavedAddress[]) => {
-    setAddresses(nextAddresses);
-    localStorage.setItem(addressStorageKey, JSON.stringify(nextAddresses));
-  }, [addressStorageKey]);
+  }, [user?.id, token]);
 
   useEffect(() => {
     if (user?.id) {
@@ -150,19 +150,19 @@ export const useProfile = () => {
       return null;
     }
 
-    const nextAddress: SavedAddress = {
-      id: `${Date.now()}`,
-      label,
-      address,
-      is_default: isDefault,
-    };
-
-    const nextAddresses = isDefault
-      ? [...addresses.map((entry) => ({ ...entry, is_default: false })), nextAddress]
-      : [...addresses, nextAddress];
-
-    persistAddresses(nextAddresses);
-    return null;
+    try {
+      const response = await fetch('/api/users/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ label, address_line: address, is_default: isDefault }),
+      });
+      const payload = await response.json();
+      if (!response.ok) return (payload as { error?: string }).error || 'Failed to save address.';
+      await fetchAddresses();
+      return null;
+    } catch {
+      return 'Failed to save address.';
+    }
   };
 
   const deleteAddress = async (id: string) => {
@@ -181,8 +181,20 @@ export const useProfile = () => {
       return null;
     }
 
-    persistAddresses(addresses.filter((address) => address.id !== id));
-    return null;
+    try {
+      const response = await fetch(`/api/users/addresses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const payload = await response.json();
+        return (payload as { error?: string }).error || 'Failed to delete address.';
+      }
+      await fetchAddresses();
+      return null;
+    } catch {
+      return 'Failed to delete address.';
+    }
   };
 
   const setDefaultAddress = async (id: string) => {
@@ -193,7 +205,15 @@ export const useProfile = () => {
       return;
     }
 
-    persistAddresses(addresses.map((entry) => ({ ...entry, is_default: entry.id === id })));
+    try {
+      await fetch(`/api/users/addresses/${id}/default`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await fetchAddresses();
+    } catch {
+      // non-fatal
+    }
   };
 
   return {

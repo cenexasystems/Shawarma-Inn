@@ -1,0 +1,902 @@
+[
+  {
+    "id": 3,
+    "slug": "peri-peri-shawarma-roll",
+    "name": "Peri Peri Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 4,
+    "slug": "peri-peri-shawarma-roll-large",
+    "name": "Peri Peri Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 5,
+    "slug": "schezwan-shawarma-roll",
+    "name": "Schezwan Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 6,
+    "slug": "schezwan-shawarma-roll-large",
+    "name": "Schezwan Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 7,
+    "slug": "bbq-shawarma-roll",
+    "name": "BBQ Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 8,
+    "slug": "bbq-shawarma-roll-large",
+    "name": "BBQ Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 9,
+    "slug": "tandoori-shawarma-roll",
+    "name": "Tandoori Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 10,
+    "slug": "tandoori-shawarma-roll-large",
+    "name": "Tandoori Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 11,
+    "slug": "chilli-garlic-shawarma-roll",
+    "name": "Chilli Garlic Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 12,
+    "slug": "chilli-garlic-shawarma-roll-large",
+    "name": "Chilli Garlic Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 13,
+    "slug": "mexican-shawarma-roll",
+    "name": "Mexican Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 14,
+    "slug": "mexican-shawarma-roll-large",
+    "name": "Mexican Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 15,
+    "slug": "cheesy-shawarma-roll",
+    "name": "Cheesy Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 16,
+    "slug": "cheesy-shawarma-roll-large",
+    "name": "Cheesy Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 17,
+    "slug": "jalapeno-shawarma-roll",
+    "name": "Jalapeno Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 18,
+    "slug": "jalapeno-shawarma-roll-large",
+    "name": "Jalapeno Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 19,
+    "slug": "thousand-island-shawarma-roll",
+    "name": "Thousand Island Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 20,
+    "slug": "thousand-island-shawarma-roll-large",
+    "name": "Thousand Island Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 21,
+    "slug": "chipotle-shawarma-roll",
+    "name": "Chipotle Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 22,
+    "slug": "chipotle-shawarma-roll-large",
+    "name": "Chipotle Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 23,
+    "slug": "sweet-chilli-shawarma-roll",
+    "name": "Sweet Chilli Shawarma Roll",
+    "category": "Shawarma"
+  },
+  {
+    "id": 24,
+    "slug": "sweet-chilli-shawarma-roll-large",
+    "name": "Sweet Chilli Shawarma Roll (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 25,
+    "slug": "roll-shawarma-add-on-cheese-reg",
+    "name": "Roll Shawarma Add on Cheese (Reg)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 26,
+    "slug": "roll-shawarma-add-on-cheese-spl",
+    "name": "Roll Shawarma Add on Cheese (Spl)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 29,
+    "slug": "peri-peri-shawarma-plate",
+    "name": "Peri Peri Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 30,
+    "slug": "peri-peri-shawarma-plate-large",
+    "name": "Peri Peri Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 31,
+    "slug": "schezwan-shawarma-plate",
+    "name": "Schezwan Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 32,
+    "slug": "schezwan-shawarma-plate-large",
+    "name": "Schezwan Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 33,
+    "slug": "bbq-shawarma-plate",
+    "name": "BBQ Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 34,
+    "slug": "bbq-shawarma-plate-large",
+    "name": "BBQ Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 35,
+    "slug": "tandoori-shawarma-plate",
+    "name": "Tandoori Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 36,
+    "slug": "tandoori-shawarma-plate-large",
+    "name": "Tandoori Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 37,
+    "slug": "chilli-garlic-shawarma-plate",
+    "name": "Chilli Garlic Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 38,
+    "slug": "chilli-garlic-shawarma-plate-large",
+    "name": "Chilli Garlic Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 39,
+    "slug": "mexican-shawarma-plate",
+    "name": "Mexican Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 40,
+    "slug": "mexican-shawarma-plate-large",
+    "name": "Mexican Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 41,
+    "slug": "cheesy-shawarma-plate",
+    "name": "Cheesy Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 42,
+    "slug": "cheesy-shawarma-plate-large",
+    "name": "Cheesy Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 43,
+    "slug": "jalapeno-shawarma-plate",
+    "name": "Jalapeno Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 44,
+    "slug": "jalapeno-shawarma-plate-large",
+    "name": "Jalapeno Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 45,
+    "slug": "thousand-island-shawarma-plate",
+    "name": "Thousand Island Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 46,
+    "slug": "thousand-island-shawarma-plate-large",
+    "name": "Thousand Island Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 47,
+    "slug": "chipotle-shawarma-plate",
+    "name": "Chipotle Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 48,
+    "slug": "chipotle-shawarma-plate-large",
+    "name": "Chipotle Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 49,
+    "slug": "sweet-chilli-shawarma-plate",
+    "name": "Sweet Chilli Shawarma Plate",
+    "category": "Shawarma"
+  },
+  {
+    "id": 50,
+    "slug": "sweet-chilli-shawarma-plate-large",
+    "name": "Sweet Chilli Shawarma Plate (Large)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 55,
+    "slug": "plate-shawarma-add-on-cheese-reg",
+    "name": "Plate Shawarma Add on Cheese (Reg)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 56,
+    "slug": "plate-shawarma-add-on-cheese-spl",
+    "name": "Plate Shawarma Add on Cheese (Spl)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 57,
+    "slug": "plate-shawarma-add-on-kuboos-reg",
+    "name": "Plate Shawarma Add on Kuboos (Reg)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 58,
+    "slug": "plate-shawarma-add-on-kuboos-spl",
+    "name": "Plate Shawarma Add on Kuboos (Spl)",
+    "category": "Shawarma"
+  },
+  {
+    "id": 60,
+    "slug": "hot-glaze-veg-burger",
+    "name": "Hot Glaze Veg Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 61,
+    "slug": "chipotle-veg-burger",
+    "name": "Chipotle Veg Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 62,
+    "slug": "jalapeno-veg-burger",
+    "name": "Jalapeno Veg Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 63,
+    "slug": "thousand-island-veg-burger",
+    "name": "Thousand Island Veg Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 64,
+    "slug": "sweet-chilli-veg-burger",
+    "name": "Sweet Chilli Veg Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 68,
+    "slug": "chicken-burger",
+    "name": "Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 69,
+    "slug": "hot-glaze-chicken-burger",
+    "name": "Hot Glaze Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 70,
+    "slug": "bbq-chicken-burger",
+    "name": "BBQ Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 71,
+    "slug": "chipotle-chicken-burger",
+    "name": "Chipotle Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 72,
+    "slug": "jalapeno-chicken-burger",
+    "name": "Jalapeno Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 73,
+    "slug": "thousand-island-chicken-burger",
+    "name": "Thousand Island Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 74,
+    "slug": "sweet-chilli-chicken-burger",
+    "name": "Sweet Chilli Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 75,
+    "slug": "popcorn-chicken-burger",
+    "name": "Popcorn Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 76,
+    "slug": "zinger-chicken-burger",
+    "name": "Zinger Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 77,
+    "slug": "double-chicken-burger",
+    "name": "Double Chicken Burger",
+    "category": "Burgers"
+  },
+  {
+    "id": 78,
+    "slug": "burger-add-on-cheese",
+    "name": "Burger Add on Cheese",
+    "category": "Burgers"
+  },
+  {
+    "id": 79,
+    "slug": "veg-pizza",
+    "name": "Veg Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 80,
+    "slug": "cheese-pizza",
+    "name": "Cheese Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 81,
+    "slug": "sweet-corn-pizza",
+    "name": "Sweet Corn Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 82,
+    "slug": "paneer-pizza",
+    "name": "Paneer Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 83,
+    "slug": "chicken-pizza",
+    "name": "Chicken Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 84,
+    "slug": "bbq-chicken-pizza",
+    "name": "BBQ Chicken Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 85,
+    "slug": "naked-chicken-pizza",
+    "name": "Naked Chicken Pizza",
+    "category": "Pizza"
+  },
+  {
+    "id": 86,
+    "slug": "mix-veg-momos",
+    "name": "Mix Veg Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 87,
+    "slug": "cheese-corn-momos",
+    "name": "Cheese Corn Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 88,
+    "slug": "paneer-tikka-momos",
+    "name": "Paneer Tikka Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 89,
+    "slug": "chicken-momos",
+    "name": "Chicken Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 90,
+    "slug": "peri-peri-chicken-momos",
+    "name": "Peri Peri Chicken Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 91,
+    "slug": "schezwan-chicken-momos",
+    "name": "Schezwan Chicken Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 92,
+    "slug": "chicken-tikka-momos",
+    "name": "Chicken Tikka Momos",
+    "category": "Momos"
+  },
+  {
+    "id": 93,
+    "slug": "chocolate-toast",
+    "name": "Chocolate Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 94,
+    "slug": "white-chocolate-toast",
+    "name": "White Chocolate Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 95,
+    "slug": "veg-cheese-toast",
+    "name": "Veg Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 96,
+    "slug": "sweet-corn-cheese-toast",
+    "name": "Sweet Corn Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 97,
+    "slug": "paneer-cheese-toast",
+    "name": "Paneer Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 98,
+    "slug": "bbq-paneer-cheese-toast",
+    "name": "BBQ Paneer Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 99,
+    "slug": "veg-club-cheese-toast",
+    "name": "Veg Club Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 100,
+    "slug": "sweet-corn-cheese-club-toast",
+    "name": "Sweet Corn Cheese Club Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 101,
+    "slug": "paneer-cheese-club-toast",
+    "name": "Paneer Cheese Club Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 102,
+    "slug": "bbq-paneer-club-cheese-toast",
+    "name": "BBQ Paneer Club Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 103,
+    "slug": "toast-veg-add-on-flavour",
+    "name": "Toast Veg Add On Flavour",
+    "category": "Toasts"
+  },
+  {
+    "id": 104,
+    "slug": "grill-chicken-cheese-toast",
+    "name": "Grill Chicken Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 105,
+    "slug": "fried-chicken-cheese-toast",
+    "name": "Fried Chicken Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 106,
+    "slug": "bbq-chicken-cheese-toast",
+    "name": "BBQ Chicken Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 107,
+    "slug": "bbq-sausage-chicken-cheese-toast",
+    "name": "BBQ Sausage Chicken Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 108,
+    "slug": "grill-chicken-club-cheese-toast",
+    "name": "Grill Chicken Club Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 109,
+    "slug": "bbq-chicken-club-cheese-toast",
+    "name": "BBQ Chicken Club Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 110,
+    "slug": "fried-chicken-club-cheese-toast",
+    "name": "Fried Chicken Club Cheese Toast",
+    "category": "Toasts"
+  },
+  {
+    "id": 111,
+    "slug": "toast-chicken-add-on-flavour",
+    "name": "Toast Chicken Add On Flavour",
+    "category": "Toasts"
+  },
+  {
+    "id": 112,
+    "slug": "toast-chicken-add-on-cheese",
+    "name": "Toast Chicken Add On Cheese",
+    "category": "Toasts"
+  },
+  {
+    "id": 114,
+    "slug": "masala-fries",
+    "name": "Masala Fries",
+    "category": "Starters"
+  },
+  {
+    "id": 115,
+    "slug": "cheese-corn-nuggets-8pc",
+    "name": "Cheese Corn Nuggets (8pc)",
+    "category": "Starters"
+  },
+  {
+    "id": 116,
+    "slug": "veg-roll",
+    "name": "Veg Roll",
+    "category": "Starters"
+  },
+  {
+    "id": 117,
+    "slug": "paneer-roll",
+    "name": "Paneer Roll",
+    "category": "Starters"
+  },
+  {
+    "id": 118,
+    "slug": "chicken-popcorn-130gms",
+    "name": "Chicken Popcorn (130gms)",
+    "category": "Starters"
+  },
+  {
+    "id": 119,
+    "slug": "masala-chicken-popcorn-130gms",
+    "name": "Masala Chicken Popcorn (130gms)",
+    "category": "Starters"
+  },
+  {
+    "id": 120,
+    "slug": "sweet-chilli-chicken-popcorn-130gms",
+    "name": "Sweet Chilli Chicken Popcorn (130gms)",
+    "category": "Starters"
+  },
+  {
+    "id": 121,
+    "slug": "chicken-nuggets-6pc",
+    "name": "Chicken Nuggets (6pc)",
+    "category": "Starters"
+  },
+  {
+    "id": 122,
+    "slug": "chicken-wings-4pc",
+    "name": "Chicken Wings (4pc)",
+    "category": "Starters"
+  },
+  {
+    "id": 123,
+    "slug": "chicken-cheese-balls-8pc",
+    "name": "Chicken Cheese Balls (8pc)",
+    "category": "Starters"
+  },
+  {
+    "id": 124,
+    "slug": "chicken-fingers-8pc",
+    "name": "Chicken Fingers (8pc)",
+    "category": "Starters"
+  },
+  {
+    "id": 125,
+    "slug": "chicken-roll",
+    "name": "Chicken Roll",
+    "category": "Starters"
+  },
+  {
+    "id": 126,
+    "slug": "veg-loaded-french-fries",
+    "name": "Veg Loaded French Fries",
+    "category": "Loaded Fries"
+  },
+  {
+    "id": 127,
+    "slug": "paneer-loaded-french-fries",
+    "name": "Paneer Loaded French Fries",
+    "category": "Loaded Fries"
+  },
+  {
+    "id": 128,
+    "slug": "chicken-loaded-french-fries",
+    "name": "Chicken Loaded French Fries",
+    "category": "Loaded Fries"
+  },
+  {
+    "id": 129,
+    "slug": "bring-your-own-chips-veg",
+    "name": "Bring Your Own Chips Veg",
+    "category": "Bring Your Own Chips"
+  },
+  {
+    "id": 130,
+    "slug": "bring-your-own-chips-paneer",
+    "name": "Bring Your Own Chips Paneer",
+    "category": "Bring Your Own Chips"
+  },
+  {
+    "id": 131,
+    "slug": "bring-your-own-chips-chicken",
+    "name": "Bring Your Own Chips Chicken",
+    "category": "Bring Your Own Chips"
+  },
+  {
+    "id": 132,
+    "slug": "ice-cream-scoop",
+    "name": "Ice Cream Scoop",
+    "category": "Desserts"
+  },
+  {
+    "id": 133,
+    "slug": "brownie-with-ice-cream",
+    "name": "Brownie With Ice Cream",
+    "category": "Desserts"
+  },
+  {
+    "id": 134,
+    "slug": "chocolava-with-ice-cream",
+    "name": "Chocolava With Ice Cream",
+    "category": "Desserts"
+  },
+  {
+    "id": 136,
+    "slug": "blue-curacao-mojito",
+    "name": "Blue Curacao Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 137,
+    "slug": "grape-mojito",
+    "name": "Grape Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 138,
+    "slug": "mango-mojito",
+    "name": "Mango Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 140,
+    "slug": "guava-mojito",
+    "name": "Guava Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 141,
+    "slug": "pineapple-mojito",
+    "name": "Pineapple Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 143,
+    "slug": "pomegranate-mojito",
+    "name": "Pomegranate Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 145,
+    "slug": "orange-mojito",
+    "name": "Orange Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 146,
+    "slug": "blue-berry-mojito",
+    "name": "Blue Berry Mojito",
+    "category": "Mojitos"
+  },
+  {
+    "id": 147,
+    "slug": "vanilla-milkshake",
+    "name": "Vanilla Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 148,
+    "slug": "strawberry-milkshake",
+    "name": "Strawberry Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 149,
+    "slug": "butterscotch-milkshake",
+    "name": "Butterscotch Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 150,
+    "slug": "chocolate-milkshake",
+    "name": "Chocolate Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 151,
+    "slug": "black-currant-milkshake",
+    "name": "Black Currant Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 152,
+    "slug": "oreo-milkshake",
+    "name": "Oreo Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 153,
+    "slug": "kitkat-milkshake",
+    "name": "Kitkat Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 154,
+    "slug": "brownie-milkshake",
+    "name": "Brownie Milkshake",
+    "category": "Milkshakes"
+  },
+  {
+    "id": 155,
+    "slug": "nutella-waffle",
+    "name": "Nutella Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 156,
+    "slug": "milk-chocolate-waffle",
+    "name": "Milk Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 157,
+    "slug": "dark-chocolate-waffle",
+    "name": "Dark Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 158,
+    "slug": "white-chocolate-waffle",
+    "name": "White Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 159,
+    "slug": "kit-kat-chocolate-waffle",
+    "name": "Kit-Kat Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 160,
+    "slug": "oreo-chocolate-waffle",
+    "name": "Oreo Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 161,
+    "slug": "white-dark-chocolate-waffle",
+    "name": "White & Dark Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 162,
+    "slug": "triple-chocolate-waffle",
+    "name": "Triple Chocolate Waffle",
+    "category": "Waffles"
+  },
+  {
+    "id": 163,
+    "slug": "combo-offer-1",
+    "name": "Combo Offer 1",
+    "category": "Combo Deals"
+  },
+  {
+    "id": 164,
+    "slug": "special-chicken-combo-offer",
+    "name": "Special Chicken Combo Offer",
+    "category": "Combo Deals"
+  },
+  {
+    "id": 165,
+    "slug": "mega-chicken-combo-offer",
+    "name": "Mega Chicken Combo Offer",
+    "category": "Combo Deals"
+  },
+  {
+    "id": 166,
+    "slug": "super-delicious-burger-combo",
+    "name": "Super Delicious Burger Combo",
+    "category": "Combo Deals"
+  },
+  {
+    "id": 167,
+    "slug": "chicken-burger-combo",
+    "name": "Chicken Burger Combo",
+    "category": "Combo Deals"
+  }
+]

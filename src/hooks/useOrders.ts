@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
 import type { CartItem } from './useCart';
 import { apiRequest } from '../lib/api';
@@ -18,8 +18,24 @@ export interface Order {
   order_number?: number;
   status: string;
   total: number;
+  delivery_type?: string;
+  delivery_address?: string;
+  coupon_code?: string | null;
+  discount_amount?: number;
+  gst_amount?: number;
+  packing_charge?: number;
+  notes?: string | null;
   created_at: string;
+  updated_at?: string;
   order_items: OrderItem[];
+}
+
+export interface OrderStatusHistory {
+  previous_status: string | null;
+  status: string;
+  note?: string | null;
+  remarks?: string | null;
+  created_at: string;
 }
 
 export const useOrders = () => {
@@ -27,6 +43,7 @@ export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sseRef = useRef<EventSource | null>(null);
 
   const fetchOrders = useCallback(async () => {
     if (!user?.id || user.role !== 'user' || !token) {
@@ -98,6 +115,49 @@ export const useOrders = () => {
     setOrders([]);
   }, [user?.id, fetchOrders]);
 
+  // Customer SSE: subscribe to order_status events for real-time tracking
+  useEffect(() => {
+    if (!user?.id || user.role !== 'user' || !token || useSupabaseAuth) return;
+
+    const es = new EventSource(`/api/events?token=${encodeURIComponent(token)}`);
+    sseRef.current = es;
+
+    es.addEventListener('order_status', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data || '{}');
+        // Update the specific order's status in state without full refetch
+        setOrders((prev) =>
+          prev.map((o) =>
+            String(o.id) === String(data.orderId)
+              ? { ...o, status: data.status }
+              : o,
+          ),
+        );
+      } catch {
+        // Fallback to full refresh on parse error
+        void fetchOrders();
+      }
+    });
+
+    return () => {
+      es.close();
+      sseRef.current = null;
+    };
+  }, [user?.id, user?.role, token, fetchOrders]);
+
+  const fetchOrderHistory = async (orderId: string): Promise<OrderStatusHistory[]> => {
+    if (!token) return [];
+    try {
+      const payload = await apiRequest<{ history: OrderStatusHistory[] }>(
+        `/orders/mine/${orderId}/history`,
+        { token },
+      );
+      return payload.history || [];
+    } catch {
+      return [];
+    }
+  };
+
   const placeOrder = async (params: {
     cartItems: CartItem[];
     subtotal: number;
@@ -105,8 +165,14 @@ export const useOrders = () => {
     total: number;
     customerName: string;
     customerPhone: string;
+    customerEmail?: string;
     deliveryAddress: string;
+    deliveryType?: 'home_delivery' | 'store_pickup';
+    couponCode?: string;
     branchId?: string;
+    notes?: string;
+    gstAmount?: number;
+    packingCharge?: number;
   }): Promise<{ success: boolean; orderId?: string; error?: string }> => {
     try {
       if (useSupabaseAuth) {
@@ -119,11 +185,15 @@ export const useOrders = () => {
           .insert({
             user_id: String(user.id),
             delivery_address: params.deliveryAddress,
+            delivery_type: params.deliveryType ?? 'store_pickup',
             customer_name: params.customerName,
             customer_phone: params.customerPhone,
+            customer_email: params.customerEmail ?? null,
+            coupon_code: params.couponCode ?? null,
             subtotal: params.subtotal,
             gst: params.gst,
             total: params.total,
+            notes: params.notes ?? null,
             status: 'pending',
           })
           .select('id')
@@ -165,7 +235,13 @@ export const useOrders = () => {
           cartItems: params.cartItems,
           customerName: params.customerName,
           customerPhone: params.customerPhone,
+          customerEmail: params.customerEmail ?? null,
           deliveryAddress: params.deliveryAddress,
+          deliveryType: params.deliveryType ?? 'store_pickup',
+          couponCode: params.couponCode ?? null,
+          notes: params.notes ?? null,
+          gstAmount: params.gstAmount ?? 0,
+          packingCharge: params.packingCharge ?? 0,
         },
       });
 
@@ -182,5 +258,5 @@ export const useOrders = () => {
     }
   };
 
-  return { orders, loading, error, placeOrder, refresh: fetchOrders };
+  return { orders, loading, error, placeOrder, refresh: fetchOrders, fetchOrderHistory };
 };

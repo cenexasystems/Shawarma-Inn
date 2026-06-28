@@ -109,10 +109,21 @@ export default function Profile() {
   ] as const;
 
   const STATUS_COLORS: Record<string, string> = {
-    pending:   'text-amber-400 bg-amber-400/10 border-amber-400/20',
-    confirmed: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-    delivered: 'text-[var(--white)] bg-white/5 border-white/10',
-    cancelled: 'text-[var(--red)] bg-[var(--red)]/10 border-[var(--red)]/20',
+    pending:     'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    accepted:    'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    processing:  'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    preparing:   'text-orange-400 bg-orange-400/10 border-orange-400/20',
+    ready:       'text-[#ef8f2f] bg-[#ef8f2f]/10 border-[#ef8f2f]/20',
+    in_transit:  'text-purple-400 bg-purple-400/10 border-purple-400/20',
+    completed:   'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    delivered:   'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    cancelled:   'text-[var(--red)] bg-[var(--red)]/10 border-[var(--red)]/20',
+  };
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: 'Pending', accepted: 'Accepted', processing: 'Processing',
+    preparing: 'Preparing', ready: 'Ready for Pickup',
+    in_transit: 'Out for Delivery', completed: 'Delivered', cancelled: 'Cancelled',
   };
 
   return (
@@ -280,11 +291,20 @@ export default function Profile() {
                     <div key={order.id} className="bg-[var(--black)] rounded-xl border border-[var(--border)] p-6 hover:border-white/10 transition-colors">
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                         <div>
+                          {order.order_number && (
+                            <p className="font-bebas text-lg text-[var(--red)] tracking-wider">Order #{order.order_number}</p>
+                          )}
                           <p className="font-body text-xs text-[var(--white)]/40 uppercase tracking-widest">{new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                          <p className="font-body text-xs text-[var(--white)]/20 mt-1">#{order.id.slice(0, 8).toUpperCase()}</p>
+                          {order.delivery_type && (
+                            <span className={`inline-block mt-1 font-body text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                              order.delivery_type === 'home_delivery'
+                                ? 'text-purple-400 bg-purple-400/10 border-purple-400/20'
+                                : 'text-white/40 bg-white/5 border-white/10'
+                            }`}>{order.delivery_type === 'home_delivery' ? '🚀 Home Delivery' : '🏪 Store Pickup'}</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`font-body text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}>{order.status}</span>
+                          <span className={`font-body text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}>{STATUS_LABELS[order.status] || order.status}</span>
                           <span className="font-bebas text-2xl text-[var(--white)]">₹{order.total.toFixed(0)}</span>
                         </div>
                       </div>
@@ -296,6 +316,25 @@ export default function Profile() {
                               <span>₹{item.subtotal}</span>
                             </div>
                           ))}
+                          {(Number(order.discount_amount) > 0 || Number(order.gst_amount) > 0) && (
+                            <div className="pt-2 mt-1 border-t border-white/5 space-y-1">
+                              {Number(order.discount_amount) > 0 && (
+                                <div className="flex justify-between text-xs text-green-400">
+                                  <span>Discount {order.coupon_code ? `(${order.coupon_code})` : ''}</span>
+                                  <span>-₹{Number(order.discount_amount).toLocaleString()}</span>
+                                </div>
+                              )}
+                              {Number(order.gst_amount) > 0 && (
+                                <div className="flex justify-between text-xs text-white/40">
+                                  <span>GST</span>
+                                  <span>₹{Number(order.gst_amount).toLocaleString()}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {order.notes && (
+                            <p className="text-xs text-yellow-400/70 pt-2 italic">"{order.notes}"</p>
+                          )}
                         </div>
                       )}
                     </div>

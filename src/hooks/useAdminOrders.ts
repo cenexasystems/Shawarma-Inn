@@ -5,10 +5,10 @@ import type { Order } from './useOrders';
 export const ADMIN_ORDER_STATUSES = ['pending', 'confirmed', 'delivered', 'cancelled'] as const;
 export type AdminOrderStatus = typeof ADMIN_ORDER_STATUSES[number];
 
-export interface AdminOrder extends Order {
+export interface AdminOrder extends Omit<Order, 'delivery_address'> {
   customer_name: string | null;
   customer_phone: string | null;
-  delivery_address: string | null;
+  delivery_address?: string | null;
 }
 
 export const useAdminOrders = () => {

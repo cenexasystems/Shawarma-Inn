@@ -120,7 +120,7 @@ function runMigrations() {
       total REAL NOT NULL,
       status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN (
         'generated', 'paid', 'cancelled', 'pending', 'unpaid',
-        'processing', 'in_transit', 'completed'
+        'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed'
       )),
       customer_name TEXT,
       customer_phone TEXT,
@@ -129,6 +129,9 @@ function runMigrations() {
       delivery_address TEXT,
       coupon_code TEXT,
       discount_amount REAL NOT NULL DEFAULT 0,
+      gst_amount REAL NOT NULL DEFAULT 0,
+      packing_charge REAL NOT NULL DEFAULT 0,
+      notes TEXT,
       source TEXT NOT NULL DEFAULT 'checkout',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -207,7 +210,145 @@ function runMigrations() {
     db.exec("ALTER TABLE menu_items ADD COLUMN is_bestseller INTEGER NOT NULL DEFAULT 0");
   }
 
+  // NOTE: a previous version backfilled image_url from menu.json local paths here.
+  // That was removed because those paths (/images/menu/…) don't exist in public/
+  // and caused 404s. image_url is now only set when an admin uploads a real URL.
+  // The semantic image engine (menuImages.ts) handles display without needing image_url.
+
+  const historyColumns = db.prepare('PRAGMA table_info(order_status_history)').all().map((col) => col.name);
+  if (!historyColumns.includes('previous_status')) {
+    db.exec('ALTER TABLE order_status_history ADD COLUMN previous_status TEXT');
+  }
+  if (!historyColumns.includes('admin_id')) {
+    db.exec('ALTER TABLE order_status_history ADD COLUMN admin_id INTEGER');
+  }
+  if (!historyColumns.includes('remarks')) {
+    db.exec('ALTER TABLE order_status_history ADD COLUMN remarks TEXT');
+  }
+
   migrateOrdersTable();
+
+  // ── New tables ────────────────────────────────────────────────────────────
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      menu_item_id INTEGER,
+      name TEXT NOT NULL,
+      price REAL NOT NULL,
+      category TEXT,
+      image_url TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE (user_id, menu_item_id)
+    );
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      is_read INTEGER NOT NULL DEFAULT 0,
+      entity_id INTEGER,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Migrate distinct categories from menu_items into the categories table if not already present
+  const existingCategories = db.prepare('SELECT DISTINCT category FROM menu_items WHERE category IS NOT NULL').all();
+  const insertCategory = db.prepare('INSERT OR IGNORE INTO categories (name) VALUES (?)');
+  existingCategories.forEach((cat) => insertCategory.run(cat.category));
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS saved_addresses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      address TEXT NOT NULL,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS branches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      address TEXT,
+      phone TEXT,
+      city TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      google_maps_url TEXT,
+      swiggy_url TEXT,
+      zomato_url TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      admin_id INTEGER,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER,
+      details TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS coupon_usage (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      coupon_id INTEGER NOT NULL,
+      order_id INTEGER NOT NULL UNIQUE,
+      user_id INTEGER,
+      discount_applied REAL NOT NULL,
+      used_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      label TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL DEFAULT 'text',
+      section TEXT NOT NULL DEFAULT 'general',
+      updated_at TEXT
+    );
+  `);
+
+  // ── Indexes ───────────────────────────────────────────────────────────────
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_orders_status       ON orders(status);
+    CREATE INDEX IF NOT EXISTS idx_orders_created_at   ON orders(created_at);
+    CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON orders(customer_phone);
+    CREATE INDEX IF NOT EXISTS idx_orders_user_id      ON orders(user_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_delivery_type ON orders(delivery_type);
+    CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email);
+    CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+    CREATE INDEX IF NOT EXISTS idx_order_items_name    ON order_items(name);
+    CREATE INDEX IF NOT EXISTS idx_reviews_is_hidden   ON reviews(is_hidden);
+    CREATE INDEX IF NOT EXISTS idx_reviews_rating      ON reviews(rating);
+    CREATE INDEX IF NOT EXISTS idx_coupons_code        ON coupons(code);
+    CREATE INDEX IF NOT EXISTS idx_coupons_is_active   ON coupons(is_active);
+    CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_id ON saved_addresses(user_id);
+    CREATE INDEX IF NOT EXISTS idx_admin_activity_log_created_at ON admin_activity_log(created_at);
+    CREATE INDEX IF NOT EXISTS idx_franchise_leads_created_at ON franchise_leads(created_at);
+    CREATE INDEX IF NOT EXISTS idx_coupon_usage_coupon_id ON coupon_usage(coupon_id);
+    CREATE INDEX IF NOT EXISTS idx_order_status_history_order_id ON order_status_history(order_id);
+  `);
 }
 
 // Pre-existing databases were created with a narrower `status` CHECK and are
@@ -218,13 +359,35 @@ function migrateOrdersTable() {
   const tableSql = db
     .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'orders'")
     .get();
-  const needsRebuild = !tableSql || !tableSql.sql.includes('completed');
+
+  // Rebuild if the status check doesn't include the new statuses or missing columns
+  const needsRebuild = !tableSql ||
+    !tableSql.sql.includes('completed') ||
+    !tableSql.sql.includes('accepted') ||
+    !tableSql.sql.includes('ready');
 
   const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map((col) => col.name);
-  const hasAllColumns = ['customer_email', 'delivery_type', 'coupon_code', 'discount_amount', 'updated_at']
-    .every((col) => orderColumns.includes(col));
+  const requiredColumns = [
+    'customer_email', 'delivery_type', 'coupon_code', 'discount_amount',
+    'updated_at', 'gst_amount', 'packing_charge', 'notes',
+  ];
+  const hasAllColumns = requiredColumns.every((col) => orderColumns.includes(col));
 
   if (!needsRebuild && hasAllColumns) {
+    return;
+  }
+
+  // If only new columns are missing (no CHECK change needed), add them directly
+  if (!needsRebuild && !hasAllColumns) {
+    if (!orderColumns.includes('gst_amount')) {
+      db.exec('ALTER TABLE orders ADD COLUMN gst_amount REAL NOT NULL DEFAULT 0');
+    }
+    if (!orderColumns.includes('packing_charge')) {
+      db.exec('ALTER TABLE orders ADD COLUMN packing_charge REAL NOT NULL DEFAULT 0');
+    }
+    if (!orderColumns.includes('notes')) {
+      db.exec('ALTER TABLE orders ADD COLUMN notes TEXT');
+    }
     return;
   }
 
@@ -239,7 +402,7 @@ function migrateOrdersTable() {
         total REAL NOT NULL,
         status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN (
           'generated', 'paid', 'cancelled', 'pending', 'unpaid',
-          'processing', 'in_transit', 'completed'
+          'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed'
         )),
         customer_name TEXT,
         customer_phone TEXT,
@@ -248,6 +411,9 @@ function migrateOrdersTable() {
         delivery_address TEXT,
         coupon_code TEXT,
         discount_amount REAL NOT NULL DEFAULT 0,
+        gst_amount REAL NOT NULL DEFAULT 0,
+        packing_charge REAL NOT NULL DEFAULT 0,
+        notes TEXT,
         source TEXT NOT NULL DEFAULT 'checkout',
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -264,16 +430,27 @@ function migrateOrdersTable() {
     const couponSelect = legacyColumns.includes('coupon_code') ? 'coupon_code' : 'NULL';
     const discountSelect = legacyColumns.includes('discount_amount') ? 'discount_amount' : '0';
     const updatedAtSelect = legacyColumns.includes('updated_at') ? 'updated_at' : 'created_at';
+    const gstSelect = legacyColumns.includes('gst_amount') ? 'gst_amount' : '0';
+    const packingSelect = legacyColumns.includes('packing_charge') ? 'packing_charge' : '0';
+    const notesSelect = legacyColumns.includes('notes') ? 'notes' : 'NULL';
+
+    // Sanitize status values to fit new CHECK constraint
+    const safeStatus = `CASE
+      WHEN status IN ('generated','paid','cancelled','pending','unpaid','accepted','processing','preparing','ready','in_transit','completed')
+        THEN status
+      ELSE 'pending'
+    END`;
 
     db.exec(`
       INSERT INTO orders (
         id, order_number, user_id, total, status, customer_name, customer_phone,
         customer_email, delivery_type, delivery_address, coupon_code, discount_amount,
-        source, created_at, updated_at, paid_at
+        gst_amount, packing_charge, notes, source, created_at, updated_at, paid_at
       )
       SELECT
-        id, order_number, user_id, total, status, customer_name, customer_phone,
+        id, order_number, user_id, total, ${safeStatus}, customer_name, customer_phone,
         ${emailSelect}, ${deliveryTypeSelect}, delivery_address, ${couponSelect}, ${discountSelect},
+        ${gstSelect}, ${packingSelect}, ${notesSelect},
         source, created_at, ${updatedAtSelect}, paid_at
       FROM orders_legacy;
     `);
@@ -339,14 +516,23 @@ function seedMenuItems() {
   const menuData = JSON.parse(raw);
 
   const insertItem = db.prepare(
-    `INSERT INTO menu_items (name, price, category, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
   const now = nowIso();
   const tx = db.transaction(() => {
     for (const item of menuData) {
-      insertItem.run(item.name, Number(item.price), item.category, 1, now, now);
+      insertItem.run(
+        item.name,
+        Number(item.price),
+        item.category,
+        null,                    // local /images/menu/… paths don't exist in public/; semantic engine handles display
+        item.bestseller ? 1 : 0,
+        1,
+        now,
+        now,
+      );
     }
   });
 
@@ -406,26 +592,142 @@ function seedCoupons() {
 
 // Records a status transition for audit history and queues a row that a
 // future notification worker (SMS/WhatsApp/push) can poll and deliver.
-export function recordOrderStatusChange(orderId, status, changedBy, note) {
+// admin_id and remarks map to the new columns added in migration.
+export function recordOrderStatusChange(orderId, status, changedBy, note, previousStatus = null, remarks = null) {
   const createdAt = nowIso();
 
   db.prepare(
-    `INSERT INTO order_status_history (order_id, status, changed_by, note, created_at)
-     VALUES (?, ?, ?, ?, ?)`
-  ).run(orderId, status, changedBy ?? null, note ?? null, createdAt);
+    `INSERT INTO order_status_history
+       (order_id, previous_status, status, changed_by, note, admin_id, remarks, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    orderId,
+    previousStatus ?? null,
+    status,
+    changedBy ?? null,
+    note ?? null,
+    changedBy ?? null,   // admin_id mirrors changed_by for now
+    remarks ?? null,
+    createdAt,
+  );
 
   db.prepare(
     `INSERT INTO notification_outbox (order_id, channel, status, payload, created_at)
      VALUES (?, 'customer_dashboard', 'pending', ?, ?)`
-  ).run(orderId, JSON.stringify({ status }), createdAt);
+  ).run(orderId, JSON.stringify({ status, previousStatus }), createdAt);
+}
+
+function migrateSavedAddresses() {
+  const cols = db.prepare('PRAGMA table_info(saved_addresses)').all().map((c) => c.name);
+  // Rename 'address' → 'address_line' if the old column name still exists
+  if (cols.includes('address') && !cols.includes('address_line')) {
+    db.exec('ALTER TABLE saved_addresses RENAME COLUMN address TO address_line');
+  }
+  if (!cols.includes('city')) {
+    db.exec('ALTER TABLE saved_addresses ADD COLUMN city TEXT');
+  }
+  if (!cols.includes('pincode')) {
+    db.exec('ALTER TABLE saved_addresses ADD COLUMN pincode TEXT');
+  }
+}
+
+function migrateCouponUsage() {
+  const cols = db.prepare('PRAGMA table_info(coupon_usage)').all().map((c) => c.name);
+  // Old schema used 'created_at'; new schema uses 'used_at' — add if missing
+  if (!cols.includes('used_at')) {
+    db.exec('ALTER TABLE coupon_usage ADD COLUMN used_at TEXT');
+    db.exec('UPDATE coupon_usage SET used_at = created_at WHERE used_at IS NULL');
+  }
+}
+
+function seedSettings() {
+  const count = db.prepare('SELECT COUNT(*) AS total FROM settings').get();
+  if (count.total > 0) return;
+
+  const defaults = [
+    { key: 'restaurant_name', value: 'Shawarma Inn', label: 'Restaurant Name', type: 'text', section: 'general' },
+    { key: 'tagline', value: 'Authentic Flavors, Every Bite', label: 'Tagline', type: 'text', section: 'general' },
+    { key: 'whatsapp_number', value: String(process.env.VITE_OWNER_WHATSAPP || ''), label: 'WhatsApp Number', type: 'text', section: 'contact' },
+    { key: 'support_phone', value: String(process.env.VITE_OWNER_WHATSAPP || ''), label: 'Support Phone', type: 'text', section: 'contact' },
+    { key: 'opening_hours', value: '11:00 AM – 11:00 PM', label: 'Opening Hours', type: 'text', section: 'hours' },
+    { key: 'days_open', value: 'Monday – Sunday', label: 'Days Open', type: 'text', section: 'hours' },
+    { key: 'gst_enabled', value: 'true', label: 'GST Enabled', type: 'boolean', section: 'pricing' },
+    { key: 'gst_percentage', value: '5', label: 'GST Percentage (%)', type: 'number', section: 'pricing' },
+    { key: 'prices_include_gst', value: 'false', label: 'Prices Include GST', type: 'boolean', section: 'pricing' },
+    { key: 'delivery_charge', value: '0', label: 'Delivery Charge (₹)', type: 'number', section: 'pricing' },
+    { key: 'packing_charge', value: '0', label: 'Packing Charge (₹)', type: 'number', section: 'pricing' },
+    { key: 'min_order_value', value: '0', label: 'Minimum Order Value (₹)', type: 'number', section: 'ordering' },
+    { key: 'order_acceptance_mode', value: 'whatsapp', label: 'Order Acceptance Mode', type: 'text', section: 'ordering' },
+    { key: 'instagram_url', value: '', label: 'Instagram URL', type: 'url', section: 'social' },
+    { key: 'youtube_url', value: '', label: 'YouTube URL', type: 'url', section: 'social' },
+    { key: 'google_maps_url', value: '', label: 'Google Maps URL', type: 'url', section: 'social' },
+    { key: 'swiggy_url', value: String(process.env.VITE_SWIGGY_URL || ''), label: 'Swiggy URL', type: 'url', section: 'social' },
+    { key: 'zomato_url', value: String(process.env.VITE_ZOMATO_URL || ''), label: 'Zomato URL', type: 'url', section: 'social' },
+  ];
+
+  const stmt = db.prepare(
+    'INSERT INTO settings (key, value, label, type, section, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  const now = nowIso();
+  const tx = db.transaction(() => {
+    for (const s of defaults) {
+      stmt.run(s.key, s.value, s.label, s.type, s.section, now);
+    }
+  });
+  tx();
+}
+
+function seedBranches() {
+  const count = db.prepare('SELECT COUNT(*) AS total FROM branches').get();
+  if (count.total > 0) return;
+
+  const now = nowIso();
+  db.prepare(
+    `INSERT INTO branches (name, address, phone, city, is_active, google_maps_url, swiggy_url, zomato_url, created_at)
+     VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`
+  ).run(
+    'Shawarma Inn — Mathur',
+    'Mathur, Chennai, Tamil Nadu',
+    String(process.env.VITE_OWNER_WHATSAPP || '918610632662'),
+    'Chennai',
+    null,
+    String(process.env.VITE_SWIGGY_URL || ''),
+    String(process.env.VITE_ZOMATO_URL || ''),
+    now,
+  );
+}
+
+function seedCategories() {
+  const count = db.prepare('SELECT COUNT(*) AS total FROM categories').get();
+  if (count.total > 0) return;
+
+  const categoryOrder = [
+    'Shawarma', 'Burgers', 'Pizza', 'Momos', 'Toasts', 'Starters',
+    'Loaded Fries', 'Bring Your Own Chips', 'Mojitos', 'Milkshakes',
+    'Waffles', 'Desserts', 'Combo Deals',
+  ];
+
+  const stmt = db.prepare(
+    'INSERT INTO categories (name, display_order, is_active, created_at) VALUES (?, ?, 1, ?)'
+  );
+  const now = nowIso();
+  const tx = db.transaction(() => {
+    categoryOrder.forEach((name, i) => stmt.run(name, i, now));
+  });
+  tx();
 }
 
 export function initializeDatabase() {
   runMigrations();
+  migrateSavedAddresses();
+  migrateCouponUsage();
   seedAdmin();
   seedMenuItems();
   seedInventory();
   seedCoupons();
+  seedBranches();
+  seedCategories();
+  seedSettings();
 }
 
 initializeDatabase();

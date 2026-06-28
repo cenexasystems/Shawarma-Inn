@@ -138,10 +138,159 @@ function optionalAuth(req, _res, next) {
 }
 
 function adminRequired(req, res, next) {
-  // Bypassed for all users
-  req.user = req.user || { id: 1, role: 'admin', email: 'admin@example.com' };
-  return next();
+
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Admin authentication required.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = getUserById(decoded.sub);
+    if (!user) return res.status(401).json({ error: 'Admin account not found.' });
+    if (user.role !== 'admin') return res.status(403).json({ error: 'Admin access required.' });
+    req.user = user;
+    return next();
+  } catch {
+    return res.status(401).json({ error: 'Admin session expired. Please log in again.' });
+  }
 }
+
+// ── SSE Realtime ──────────────────────────────────────────────────────────
+
+const sseClients = new Map(); // clientId → { res, role, userId }
+
+function broadcastSSE(event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const [id, client] of sseClients) {
+    try {
+      client.res.write(payload);
+    } catch {
+      sseClients.delete(id);
+    }
+  }
+}
+
+// Broadcast to a specific user only (for customer-scoped events)
+function broadcastSSEToUser(userId, event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const [id, client] of sseClients) {
+    if (client.userId && String(client.userId) === String(userId)) {
+      try {
+        client.res.write(payload);
+      } catch {
+        sseClients.delete(id);
+      }
+    }
+  }
+}
+
+let sseClientId = 0;
+
+// Admin SSE — supports token via Authorization header OR ?token= query param
+app.get('/api/admin/events', (req, res) => {
+  // Support token in query param (EventSource API cannot send headers)
+  let user = null;
+
+  const header = req.headers.authorization || '';
+  const queryToken = req.query.token ? String(req.query.token) : null;
+  const token = header.startsWith('Bearer ') ? header.slice(7) : queryToken;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Admin authentication required.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    user = getUserById(decoded.sub);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required.' });
+    }
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token.' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const id = ++sseClientId;
+  sseClients.set(id, { res, role: 'admin', userId: user.id });
+
+  // heartbeat
+  const hb = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch { clearInterval(hb); sseClients.delete(id); }
+  }, 25000);
+
+  req.on('close', () => { clearInterval(hb); sseClients.delete(id); });
+});
+
+// Public customer SSE — token required as ?token= query param
+app.get('/api/events', (req, res) => {
+  const queryToken = req.query.token ? String(req.query.token) : null;
+  let userId = null;
+
+  if (queryToken) {
+    try {
+      const decoded = jwt.verify(queryToken, JWT_SECRET);
+      userId = decoded.sub;
+    } catch {
+      // Invalid token — still allow connection for public events
+    }
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const id = ++sseClientId;
+  sseClients.set(id, { res, role: 'customer', userId });
+
+  const hb = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch { clearInterval(hb); sseClients.delete(id); }
+  }, 25000);
+
+  req.on('close', () => { clearInterval(hb); sseClients.delete(id); });
+});
+
+// ── Admin Activity Log ────────────────────────────────────────────────────
+
+function logActivity(adminId, action, entityType, entityId, details) {
+  try {
+    db.prepare(
+      `INSERT INTO admin_activity_log (admin_id, action, entity_type, entity_id, details, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).run(
+      adminId ?? null,
+      String(action),
+      String(entityType),
+      entityId !== undefined && entityId !== null ? String(entityId) : null,
+      details ? JSON.stringify(details) : null,
+      new Date().toISOString(),
+    );
+  } catch {
+    // non-fatal — never block the main operation
+  }
+}
+
+app.get('/api/admin/activity', adminRequired, (req, res) => {
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+  const rows = db.prepare(
+    `SELECT a.id, a.action, a.entity_type, a.entity_id, a.details, a.created_at,
+            u.email AS admin_email, u.name AS admin_name
+     FROM admin_activity_log a
+     LEFT JOIN users u ON u.id = a.admin_id
+     ORDER BY a.created_at DESC LIMIT ?`
+  ).all(limit);
+
+  return res.json({ activity: rows });
+});
 
 function normalizeCheckoutItems(cartItems) {
   return cartItems
@@ -163,6 +312,9 @@ function createOrderWithItems({
   deliveryAddress,
   couponCode,
   discountAmount,
+  gstAmount,
+  packingCharge,
+  notes,
   source,
   status,
   items,
@@ -180,10 +332,13 @@ function createOrderWithItems({
       delivery_address,
       coupon_code,
       discount_amount,
+      gst_amount,
+      packing_charge,
+      notes,
       source,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
   const insertOrderItem = db.prepare(
@@ -198,7 +353,7 @@ function createOrderWithItems({
 
   const runTx = db.transaction((payload) => {
     const itemsTotal = payload.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const total = Math.max(0, itemsTotal - (payload.discountAmount || 0));
+    const total = Math.max(0, itemsTotal - (payload.discountAmount || 0) + (payload.gstAmount || 0) + (payload.packingCharge || 0));
     const createdAt = new Date().toISOString();
     const orderNumber = getNextOrderNumber();
 
@@ -214,6 +369,9 @@ function createOrderWithItems({
       payload.deliveryAddress || null,
       payload.couponCode || null,
       payload.discountAmount || 0,
+      payload.gstAmount || 0,
+      payload.packingCharge || 0,
+      payload.notes || null,
       payload.source,
       createdAt,
       createdAt,
@@ -239,11 +397,11 @@ function createOrderWithItems({
 
   return runTx({
     userId, customerName, customerPhone, customerEmail, deliveryType,
-    deliveryAddress, couponCode, discountAmount, source, status, items,
+    deliveryAddress, couponCode, discountAmount, gstAmount, packingCharge, notes, source, status, items,
   });
 }
 
-const ADMIN_ORDER_STATUSES = ['pending', 'processing', 'in_transit', 'completed', 'cancelled'];
+const ADMIN_ORDER_STATUSES = ['pending', 'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed', 'cancelled'];
 const REVENUE_COUNTED_STATUS = 'completed';
 
 function validateCouponForOrder(rawCode, itemsTotal) {
@@ -333,6 +491,8 @@ app.post('/api/auth/signup', (req, res) => {
 
   const user = getUserById(result.lastInsertRowid);
   const token = createToken(user);
+
+  broadcastSSE('customer_registered', { email: user.email, name: user.name });
 
   return res.status(201).json({ token, user });
 });
@@ -447,7 +607,7 @@ function sortByCategoryOrder(rows) {
 
 app.get('/api/menu-items', (_req, res) => {
   const rows = db.prepare(
-    `SELECT id, name, price, category, is_active
+    `SELECT id, name, price, category, image_url, is_bestseller, is_active
      FROM menu_items
      WHERE deleted_at IS NULL
        AND is_active = 1
@@ -509,6 +669,8 @@ app.post('/api/admin/menu-items', adminRequired, (req, res) => {
     .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
     .get(result.lastInsertRowid);
 
+  logActivity(req.user?.id, 'create_menu_item', 'menu_item', item.id, { name: item.name });
+  broadcastSSE('menu_updated', { action: 'create', itemId: item.id });
   return res.status(201).json({ item });
 });
 
@@ -552,6 +714,8 @@ app.put('/api/admin/menu-items/:id', adminRequired, (req, res) => {
     .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
     .get(id);
 
+  logActivity(req.user?.id, 'update_menu_item', 'menu_item', id, { name: item.name });
+  broadcastSSE('menu_updated', { action: 'update', itemId: id });
   return res.json({ item });
 });
 
@@ -574,6 +738,66 @@ app.delete('/api/admin/menu-items/:id', adminRequired, (req, res) => {
      WHERE id = ?`
   ).run(new Date().toISOString(), new Date().toISOString(), id);
 
+  logActivity(req.user?.id, 'delete_menu_item', 'menu_item', id, {});
+  broadcastSSE('menu_updated', { action: 'delete', itemId: id });
+  return res.json({ success: true });
+});
+
+app.post('/api/admin/menu-items/:id/duplicate', adminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  const existing = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Menu item not found' });
+  
+  const result = db.prepare(
+    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(`${existing.name} (Copy)`, existing.price, existing.category, existing.image_url, existing.is_bestseller, existing.is_active, new Date().toISOString(), new Date().toISOString());
+  
+  broadcastSSE('menu_updated', { action: 'create', itemId: result.lastInsertRowid });
+  return res.json({ success: true, id: result.lastInsertRowid });
+});
+
+// ── Categories ─────────────────────────────────────────────────────────────
+
+app.get('/api/admin/categories', adminRequired, (_req, res) => {
+  const categories = db.prepare('SELECT * FROM categories ORDER BY display_order ASC, name ASC').all();
+  return res.json(categories);
+});
+
+app.post('/api/admin/categories', adminRequired, (req, res) => {
+  const { name, display_order = 0, is_active = 1 } = req.body;
+  try {
+    const result = db.prepare('INSERT INTO categories (name, display_order, is_active) VALUES (?, ?, ?)').run(name.trim(), display_order, is_active);
+    return res.json({ id: result.lastInsertRowid, name: name.trim(), display_order, is_active });
+  } catch (err) {
+    return res.status(400).json({ error: 'Category already exists or invalid data.' });
+  }
+});
+
+app.put('/api/admin/categories/:id', adminRequired, (req, res) => {
+  const { name, display_order, is_active } = req.body;
+  try {
+    db.prepare('UPDATE categories SET name = ?, display_order = ?, is_active = ? WHERE id = ?').run(name.trim(), display_order, is_active, req.params.id);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(400).json({ error: 'Failed to update category.' });
+  }
+});
+
+app.delete('/api/admin/categories/:id', adminRequired, (req, res) => {
+  db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
+  return res.json({ success: true });
+});
+
+// ── Admin Notifications ────────────────────────────────────────────────────
+
+app.get('/api/admin/notifications', adminRequired, (_req, res) => {
+  const notifications = db.prepare('SELECT * FROM admin_notifications ORDER BY created_at DESC LIMIT 50').all();
+  return res.json(notifications);
+});
+
+app.put('/api/admin/notifications/:id/read', adminRequired, (req, res) => {
+  db.prepare('UPDATE admin_notifications SET is_read = 1 WHERE id = ?').run(req.params.id);
   return res.json({ success: true });
 });
 
@@ -591,6 +815,9 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
   const deliveryAddress = String(req.body.deliveryAddress || '').trim();
   const deliveryType = req.body.deliveryType === 'home_delivery' ? 'home_delivery' : 'store_pickup';
   const rawCouponCode = String(req.body.couponCode || '').trim();
+  const notes = String(req.body.notes || '').trim();
+  const gstAmount = Number(req.body.gstAmount || 0);
+  const packingCharge = Number(req.body.packingCharge || 0);
 
   const itemsTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -618,6 +845,9 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
     deliveryAddress,
     couponCode,
     discountAmount,
+    gstAmount: Number.isFinite(gstAmount) ? gstAmount : 0,
+    packingCharge: Number.isFinite(packingCharge) ? packingCharge : 0,
+    notes: notes || null,
     source: 'checkout',
     status: 'pending',
     items,
@@ -625,7 +855,23 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
 
   if (couponCode) {
     db.prepare('UPDATE coupons SET usage_count = usage_count + 1 WHERE code = ?').run(couponCode);
+    const couponRow = db.prepare('SELECT id FROM coupons WHERE code = ?').get(couponCode);
+    if (couponRow) {
+      db.prepare(
+        `INSERT INTO coupon_usage (coupon_id, order_id, user_id, discount_applied, used_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run(couponRow.id, order.id, req.user?.id ?? null, discountAmount, new Date().toISOString());
+    }
   }
+
+  broadcastSSE('new_order', {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    status: order.status,
+    customerName: order.customer_name,
+    customerPhone: order.customer_phone,
+    total: order.total,
+  });
 
   return res.status(201).json({ order });
 });
@@ -671,6 +917,8 @@ app.post('/api/franchise-leads', (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?)`
   ).run(name, phone, email, city || null, message || null, createdAt);
 
+  broadcastSSE('franchise_lead_created', { name, email, city });
+
   return res.status(201).json({
     lead: {
       id: Number(result.lastInsertRowid),
@@ -693,10 +941,20 @@ app.get('/api/reviews', (_req, res) => {
   const rows = db.prepare(
     `SELECT id, name, location, avatar_url, phone, review_text, rating, created_at
      FROM reviews
+     WHERE is_hidden = 0 OR is_hidden IS NULL
      ORDER BY rating DESC, created_at DESC
      LIMIT ? OFFSET ?`
   ).all(limit, offset);
 
+  return res.json({ reviews: rows });
+});
+
+app.get('/api/admin/reviews', adminRequired, (_req, res) => {
+  const rows = db.prepare(
+    `SELECT id, name, location, avatar_url, phone, review_text, rating, is_hidden, created_at
+     FROM reviews
+     ORDER BY created_at DESC`
+  ).all();
   return res.json({ reviews: rows });
 });
 
@@ -752,6 +1010,8 @@ app.post('/api/reviews', (req, res) => {
     createdAt,
   );
 
+  broadcastSSE('review_submitted', { name, rating });
+
   return res.status(201).json({
     review: {
       id: Number(result.lastInsertRowid),
@@ -777,7 +1037,15 @@ app.get('/api/orders/mine', authRequired, (req, res) => {
       o.order_number,
       o.total,
       o.status,
+      o.delivery_type,
+      o.delivery_address,
+      o.coupon_code,
+      o.discount_amount,
+      o.gst_amount,
+      o.packing_charge,
+      o.notes,
       o.created_at,
+      o.updated_at,
       oi.id AS order_item_id,
       oi.name AS item_name,
       oi.quantity AS item_quantity,
@@ -796,7 +1064,15 @@ app.get('/api/orders/mine', authRequired, (req, res) => {
         order_number: row.order_number,
         total: Number(row.total),
         status: row.status,
+        delivery_type: row.delivery_type,
+        delivery_address: row.delivery_address,
+        coupon_code: row.coupon_code,
+        discount_amount: Number(row.discount_amount),
+        gst_amount: Number(row.gst_amount || 0),
+        packing_charge: Number(row.packing_charge || 0),
+        notes: row.notes,
         created_at: row.created_at,
+        updated_at: row.updated_at,
         order_items: [],
       });
     }
@@ -806,12 +1082,99 @@ app.get('/api/orders/mine', authRequired, (req, res) => {
         id: String(row.order_item_id),
         name: row.item_name,
         quantity: Number(row.item_quantity),
+        price: Number(row.item_price),
         subtotal: Number(row.item_price) * Number(row.item_quantity),
       });
     }
   }
 
   return res.json({ orders: Array.from(orderMap.values()) });
+});
+
+// Customer: status history for one of their orders
+app.get('/api/orders/mine/:id/history', authRequired, (req, res) => {
+  if (req.user.role !== 'user') {
+    return res.status(403).json({ error: 'Only customer accounts can access this endpoint.' });
+  }
+
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId)) return res.status(400).json({ error: 'Invalid order id.' });
+
+  const order = db.prepare('SELECT id FROM orders WHERE id = ? AND user_id = ?').get(orderId, req.user.id);
+  if (!order) return res.status(404).json({ error: 'Order not found.' });
+
+  const history = db.prepare(
+    `SELECT previous_status, status, note, remarks, created_at
+     FROM order_status_history
+     WHERE order_id = ?
+     ORDER BY created_at ASC`
+  ).all(orderId);
+
+  return res.json({ history });
+});
+
+// Customer: coupon usage history
+app.get('/api/users/coupons', authRequired, (req, res) => {
+  if (req.user.role !== 'user') return res.status(403).json({ error: 'Customer accounts only.' });
+
+  const rows = db.prepare(
+    `SELECT cu.id, c.code, c.discount_type, c.discount_value, cu.discount_applied, cu.used_at,
+            o.order_number, o.total
+     FROM coupon_usage cu
+     LEFT JOIN coupons c ON c.id = cu.coupon_id
+     LEFT JOIN orders o ON o.id = cu.order_id
+     WHERE cu.user_id = ?
+     ORDER BY cu.used_at DESC`
+  ).all(req.user.id);
+
+  return res.json({ coupons: rows });
+});
+
+// ── User Favorites API ────────────────────────────────────────────────────
+
+app.get('/api/users/favorites', authRequired, (req, res) => {
+  const rows = db.prepare(
+    'SELECT id, menu_item_id, name, price, category, image_url, created_at FROM user_favorites WHERE user_id = ? ORDER BY created_at DESC'
+  ).all(req.user.id);
+  return res.json({ favorites: rows });
+});
+
+app.post('/api/users/favorites', authRequired, (req, res) => {
+  const menuItemId = Number(req.body.menu_item_id);
+  const name = String(req.body.name || '').trim();
+  const price = Number(req.body.price);
+  const category = req.body.category ? String(req.body.category).trim() : null;
+  const imageUrl = req.body.image_url ? String(req.body.image_url).trim() : null;
+
+  if (!name) return res.status(400).json({ error: 'Name is required.' });
+
+  try {
+    const result = db.prepare(
+      `INSERT OR IGNORE INTO user_favorites (user_id, menu_item_id, name, price, category, image_url, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      req.user.id,
+      Number.isInteger(menuItemId) ? menuItemId : null,
+      name,
+      Number.isFinite(price) ? price : 0,
+      category,
+      imageUrl,
+      new Date().toISOString(),
+    );
+    const fav = db.prepare('SELECT * FROM user_favorites WHERE id = ?').get(result.lastInsertRowid);
+    broadcastSSE('favorite_added', { userId: req.user.id, name });
+    return res.status(201).json({ favorite: fav });
+  } catch (err) {
+    return res.status(409).json({ error: 'Already in favorites.' });
+  }
+});
+
+app.delete('/api/users/favorites/:menu_item_id', authRequired, (req, res) => {
+  const menuItemId = Number(req.params.menu_item_id);
+  if (!Number.isInteger(menuItemId)) return res.status(400).json({ error: 'Invalid menu item id.' });
+
+  db.prepare('DELETE FROM user_favorites WHERE user_id = ? AND menu_item_id = ?').run(req.user.id, menuItemId);
+  return res.json({ success: true });
 });
 
 app.get('/api/pos/next-order-number', adminRequired, (_req, res) => {
@@ -1021,10 +1384,57 @@ app.get('/api/admin/orders/:id', adminRequired, (req, res) => {
   }
 
   const history = db.prepare(
-    'SELECT status, note, created_at FROM order_status_history WHERE order_id = ? ORDER BY created_at ASC'
+    `SELECT h.previous_status, h.status, h.note, h.remarks, h.created_at,
+            u.name AS admin_name, u.email AS admin_email
+     FROM order_status_history h
+     LEFT JOIN users u ON u.id = h.admin_id
+     WHERE h.order_id = ?
+     ORDER BY h.created_at ASC`
   ).all(orderId);
 
   return res.json({ order, history });
+});
+
+// Duplicate an existing order (Phase 3 — Admin Quick Action)
+app.post('/api/admin/orders/:id/duplicate', adminRequired, (req, res) => {
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId)) return res.status(400).json({ error: 'Invalid order id.' });
+
+  const source = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  if (!source) return res.status(404).json({ error: 'Order not found.' });
+
+  const sourceItems = db.prepare('SELECT name, price, quantity, menu_item_id FROM order_items WHERE order_id = ?').all(orderId);
+  if (!sourceItems.length) return res.status(400).json({ error: 'Source order has no items.' });
+
+  const newOrder = createOrderWithItems({
+    userId: source.user_id,
+    customerName: source.customer_name,
+    customerPhone: source.customer_phone,
+    customerEmail: source.customer_email,
+    deliveryType: source.delivery_type,
+    deliveryAddress: source.delivery_address,
+    couponCode: null,
+    discountAmount: 0,
+    gstAmount: 0,
+    packingCharge: 0,
+    notes: source.notes,
+    source: 'admin_duplicate',
+    status: 'pending',
+    items: sourceItems,
+  });
+
+  logActivity(req.user.id, 'duplicate_order', 'order', newOrder.id, { sourceOrderId: orderId });
+  broadcastSSE('new_order', {
+    orderId: newOrder.id,
+    orderNumber: newOrder.order_number,
+    status: newOrder.status,
+    customerName: newOrder.customer_name,
+    customerPhone: newOrder.customer_phone,
+    total: newOrder.total,
+  });
+
+  const newOrderWithItems = getOrderWithItems(newOrder.id);
+  return res.status(201).json({ order: newOrderWithItems });
 });
 
 app.patch('/api/admin/orders/:id/status', adminRequired, (req, res) => {
@@ -1038,14 +1448,41 @@ app.patch('/api/admin/orders/:id/status', adminRequired, (req, res) => {
     return res.status(400).json({ error: `Status must be one of: ${ADMIN_ORDER_STATUSES.join(', ')}` });
   }
 
-  const existing = db.prepare('SELECT id FROM orders WHERE id = ?').get(orderId);
+  const existing = db.prepare('SELECT id, status FROM orders WHERE id = ?').get(orderId);
   if (!existing) {
     return res.status(404).json({ error: 'Order not found.' });
   }
 
+  const previousStatus = existing.status;
   const now = new Date().toISOString();
+  const remarks = req.body.remarks ? String(req.body.remarks) : null;
   db.prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?').run(nextStatus, now, orderId);
-  recordOrderStatusChange(orderId, nextStatus, req.user.id, req.body.note ? String(req.body.note) : null);
+  recordOrderStatusChange(
+    orderId, nextStatus, req.user.id,
+    req.body.note ? String(req.body.note) : null,
+    previousStatus,
+    remarks,
+  );
+  logActivity(req.user.id, 'update_order_status', 'order', orderId, { from: previousStatus, to: nextStatus });
+
+  // Broadcast to all admins
+  const orderForBroadcast = db.prepare('SELECT order_number, user_id, customer_name FROM orders WHERE id = ?').get(orderId);
+  broadcastSSE('order_status', {
+    orderId,
+    orderNumber: orderForBroadcast?.order_number,
+    status: nextStatus,
+    previousStatus,
+    customerName: orderForBroadcast?.customer_name,
+  });
+
+  // Broadcast to the specific customer if they're connected
+  if (orderForBroadcast?.user_id) {
+    broadcastSSEToUser(orderForBroadcast.user_id, 'order_status', {
+      orderId,
+      status: nextStatus,
+      previousStatus,
+    });
+  }
 
   const order = getOrderWithItems(orderId);
   return res.json({ order });
@@ -1061,8 +1498,16 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
   const todaysOrders = countByDate("'now'");
   const yesterdayOrders = countByDate("'now', '-1 day'");
 
+  // All-time status counts (for sidebar badges)
   const statusCounts = db.prepare(
     `SELECT status, COUNT(*) AS count FROM orders GROUP BY status`
+  ).all().reduce((acc, row) => ({ ...acc, [row.status]: row.count }), {});
+
+  // Today's status breakdown (for live operations strip)
+  const todayStatusCounts = db.prepare(
+    `SELECT status, COUNT(*) AS count FROM orders
+     WHERE date(created_at, 'localtime') = date('now', 'localtime')
+     GROUP BY status`
   ).all().reduce((acc, row) => ({ ...acc, [row.status]: row.count }), {});
 
   const revenueSince = (sqlDateExpr) => db.prepare(
@@ -1075,9 +1520,99 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
   const weeklyRevenue = revenueSince("'now', '-6 days'");
   const monthlyRevenue = revenueSince("'now', 'start of month'");
 
+  // Average order value for completed orders this month
+  const avgRow = db.prepare(
+    `SELECT AVG(total) AS avg FROM orders
+     WHERE status = ? AND date(created_at, 'localtime') >= date('now', 'start of month')`
+  ).get(REVENUE_COUNTED_STATUS);
+  const avgOrderValue = Math.round((avgRow?.avg || 0) * 100) / 100;
+
+  // New customers today (unique phones placing their first-ever order today)
+  const newCustomersToday = db.prepare(
+    `SELECT COUNT(DISTINCT o.customer_phone) AS count
+     FROM orders o
+     WHERE o.customer_phone IS NOT NULL
+       AND date(o.created_at, 'localtime') = date('now', 'localtime')
+       AND NOT EXISTS (
+         SELECT 1 FROM orders o2
+         WHERE o2.customer_phone = o.customer_phone
+           AND date(o2.created_at, 'localtime') < date('now', 'localtime')
+       )`
+  ).get().count;
+
+  // Returning customers today
+  const returningCustomers = db.prepare(
+    `SELECT COUNT(DISTINCT o.customer_phone) AS count
+     FROM orders o
+     WHERE o.customer_phone IS NOT NULL
+       AND date(o.created_at, 'localtime') = date('now', 'localtime')
+       AND EXISTS (
+         SELECT 1 FROM orders o2
+         WHERE o2.customer_phone = o.customer_phone
+           AND date(o2.created_at, 'localtime') < date('now', 'localtime')
+       )`
+  ).get().count;
+
+  const todayReviews = db.prepare(
+    `SELECT COUNT(*) AS count FROM reviews 
+     WHERE date(created_at, 'localtime') = date('now', 'localtime')`
+  ).get().count;
+
+  const franchiseEnquiries = db.prepare(
+    `SELECT COUNT(*) AS count FROM franchise_leads 
+     WHERE date(created_at, 'localtime') = date('now', 'localtime')`
+  ).get().count;
+
+  const couponUsageToday = db.prepare(
+    `SELECT COUNT(*) AS count FROM orders 
+     WHERE coupon_code IS NOT NULL AND coupon_code != '' 
+     AND date(created_at, 'localtime') = date('now', 'localtime')`
+  ).get().count;
+
+  const bestSellingProductRow = db.prepare(
+    `SELECT oi.name, SUM(oi.quantity) as qty
+     FROM order_items oi
+     JOIN orders o ON oi.order_id = o.id
+     WHERE date(o.created_at, 'localtime') >= date('now', 'start of month')
+     GROUP BY oi.name
+     ORDER BY qty DESC LIMIT 1`
+  ).get();
+  const bestSellingProduct = bestSellingProductRow ? bestSellingProductRow.name : 'None';
+
+  const peakOrderingTimeRow = db.prepare(
+    `SELECT strftime('%H', created_at, 'localtime') as hour, COUNT(*) as count
+     FROM orders
+     WHERE date(created_at, 'localtime') >= date('now', '-30 days')
+     GROUP BY hour
+     ORDER BY count DESC LIMIT 1`
+  ).get();
+  const peakOrderingTime = peakOrderingTimeRow ? `${peakOrderingTimeRow.hour}:00` : 'N/A';
+
+  // Recent 20 orders with their items (for live operations feed)
   const recentOrders = db.prepare(
-    `SELECT id, order_number, customer_name, customer_phone, delivery_type, status, total, created_at
-     FROM orders ORDER BY created_at DESC LIMIT 10`
+    `SELECT o.id, o.order_number, o.customer_name, o.customer_phone, o.customer_email,
+            o.delivery_type, o.delivery_address, o.status, o.total, o.discount_amount,
+            o.coupon_code, o.created_at, o.updated_at,
+            (SELECT json_group_array(
+               json_object('name', oi.name, 'quantity', oi.quantity, 'price', oi.price)
+             ) FROM order_items oi WHERE oi.order_id = o.id) AS items_json
+     FROM orders o
+     ORDER BY o.created_at DESC LIMIT 20`
+  ).all().map((o) => {
+    try { o.items = JSON.parse(o.items_json || '[]'); } catch { o.items = []; }
+    delete o.items_json;
+    return o;
+  });
+
+  // Recent 5 reviews for the overview feed
+  const recentReviews = db.prepare(
+    `SELECT id, name, rating, review_text, created_at
+     FROM reviews WHERE is_hidden = 0 ORDER BY created_at DESC LIMIT 5`
+  ).all();
+
+  // Recent 5 franchise leads for the overview feed
+  const recentLeads = db.prepare(
+    `SELECT id, name, phone, city, created_at FROM franchise_leads ORDER BY created_at DESC LIMIT 5`
   ).all();
 
   return res.json({
@@ -1091,8 +1626,20 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
       todaysRevenue,
       weeklyRevenue,
       monthlyRevenue,
+      avgOrderValue,
+      newCustomersToday,
+      returningCustomers,
+      todayReviews,
+      franchiseEnquiries,
+      couponUsageToday,
+      bestSellingProduct,
+      peakOrderingTime,
+      completedToday: todayStatusCounts.completed || 0,
+      cancelledToday: todayStatusCounts.cancelled || 0,
     },
     recentOrders,
+    recentReviews,
+    recentLeads,
     generatedAt: new Date().toISOString(),
   });
 });
@@ -1155,7 +1702,16 @@ app.patch('/api/admin/menu-items/:id/hide', adminRequired, (req, res) => {
 // ── Coupon Management ──────────────────────────────────────────────────────
 
 app.get('/api/admin/coupons', adminRequired, (_req, res) => {
-  const coupons = db.prepare('SELECT * FROM coupons ORDER BY created_at DESC').all();
+  const coupons = db.prepare(`
+    SELECT c.*,
+           COUNT(o.id) as total_usage,
+           COALESCE(SUM(o.total), 0) as revenue_generated,
+           COALESCE(SUM(o.discount_amount), 0) as discount_given
+    FROM coupons c
+    LEFT JOIN orders o ON o.coupon_code = c.code AND o.status = ?
+    GROUP BY c.id
+    ORDER BY c.created_at DESC
+  `).all(REVENUE_COUNTED_STATUS);
   return res.json({ coupons });
 });
 
@@ -1196,6 +1752,10 @@ app.post('/api/admin/coupons', adminRequired, (req, res) => {
   ).run(value.code, value.discountType, value.discountValue, value.minOrderValue, value.maxDiscount, value.expiryDate, value.usageLimit, now, now);
 
   const coupon = db.prepare('SELECT * FROM coupons WHERE id = ?').get(result.lastInsertRowid);
+  logActivity(req.user?.id, 'create_coupon', 'coupon', coupon.id, { code: coupon.code });
+  
+  broadcastSSE('coupon_created', { code: coupon.code });
+  
   return res.status(201).json({ coupon });
 });
 
@@ -1220,6 +1780,7 @@ app.put('/api/admin/coupons/:id', adminRequired, (req, res) => {
   ).run(value.code, value.discountType, value.discountValue, value.minOrderValue, value.maxDiscount, value.expiryDate, value.usageLimit, new Date().toISOString(), id);
 
   const coupon = db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+  logActivity(req.user?.id, 'update_coupon', 'coupon', id, { code: coupon.code });
   return res.json({ coupon });
 });
 
@@ -1235,6 +1796,7 @@ app.patch('/api/admin/coupons/:id/disable', adminRequired, (req, res) => {
     .run(nextActive, new Date().toISOString(), id);
 
   const coupon = db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+  logActivity(req.user?.id, coupon.is_active ? 'enable_coupon' : 'disable_coupon', 'coupon', id, { code: coupon.code });
   return res.json({ coupon });
 });
 
@@ -1246,6 +1808,7 @@ app.delete('/api/admin/coupons/:id', adminRequired, (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Coupon not found.' });
 
   db.prepare('DELETE FROM coupons WHERE id = ?').run(id);
+  logActivity(req.user?.id, 'delete_coupon', 'coupon', id, {});
   return res.json({ success: true });
 });
 
@@ -1260,6 +1823,7 @@ app.patch('/api/admin/reviews/:id/hide', adminRequired, (req, res) => {
 
   const nextHidden = existing.is_hidden ? 0 : 1;
   db.prepare('UPDATE reviews SET is_hidden = ? WHERE id = ?').run(nextHidden, id);
+  logActivity(req.user?.id, nextHidden ? 'hide_review' : 'show_review', 'review', id, {});
 
   return res.json({ success: true, is_hidden: nextHidden });
 });
@@ -1272,6 +1836,7 @@ app.delete('/api/admin/reviews/:id', adminRequired, (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Review not found.' });
 
   db.prepare('DELETE FROM reviews WHERE id = ?').run(id);
+  logActivity(req.user?.id, 'delete_review', 'review', id, {});
   return res.json({ success: true });
 });
 
@@ -1367,11 +1932,17 @@ app.get('/api/admin/analytics', adminRequired, (req, res) => {
      FROM orders ${whereSql} AND coupon_code IS NOT NULL GROUP BY coupon_code ORDER BY uses DESC`
   ).all(...params);
 
+  const ordersByType = db.prepare(
+    `SELECT delivery_type, COUNT(*) AS orders, SUM(total) AS revenue
+     FROM orders ${whereSql} GROUP BY delivery_type`
+  ).all(...params);
+
   return res.json({
     revenueByDay,
     revenueByWeek,
     revenueByMonth,
     ordersByHour,
+    ordersByType,
     topProducts,
     customerAnalytics: { returningCustomers, newCustomers, repeatOrderRate, totalCustomers: totalCustomers.length },
     couponAnalytics: couponStats,
@@ -1474,6 +2045,315 @@ app.get('/api/admin/reports/export', adminRequired, (req, res) => {
   }
 
   return res.status(400).json({ error: 'type must be one of: orders, revenue, products, customers' });
+});
+
+// ── Saved Addresses ──────────────────────────────────────────────────────
+
+app.get('/api/users/addresses', authRequired, (req, res) => {
+  const rows = db.prepare(
+    'SELECT id, label, address_line, city, pincode, is_default FROM saved_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC'
+  ).all(req.user.id);
+  return res.json({ addresses: rows });
+});
+
+app.post('/api/users/addresses', authRequired, (req, res) => {
+  const label = String(req.body.label || 'Home').trim();
+  const addressLine = String(req.body.address_line || '').trim();
+  const city = String(req.body.city || '').trim();
+  const pincode = String(req.body.pincode || '').trim();
+  const isDefault = req.body.is_default ? 1 : 0;
+
+  if (!addressLine) return res.status(400).json({ error: 'Address line is required.' });
+
+  const now = new Date().toISOString();
+  if (isDefault) {
+    db.prepare('UPDATE saved_addresses SET is_default = 0 WHERE user_id = ?').run(req.user.id);
+  }
+
+  const result = db.prepare(
+    'INSERT INTO saved_addresses (user_id, label, address_line, city, pincode, is_default, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(req.user.id, label, addressLine, city || null, pincode || null, isDefault, now);
+
+  const address = db.prepare('SELECT * FROM saved_addresses WHERE id = ?').get(result.lastInsertRowid);
+  return res.status(201).json({ address });
+});
+
+app.patch('/api/users/addresses/:id/default', authRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid address id.' });
+
+  const existing = db.prepare('SELECT id FROM saved_addresses WHERE id = ? AND user_id = ?').get(id, req.user.id);
+  if (!existing) return res.status(404).json({ error: 'Address not found.' });
+
+  db.prepare('UPDATE saved_addresses SET is_default = 0 WHERE user_id = ?').run(req.user.id);
+  db.prepare('UPDATE saved_addresses SET is_default = 1 WHERE id = ?').run(id);
+  return res.json({ success: true });
+});
+
+app.delete('/api/users/addresses/:id', authRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid address id.' });
+
+  const existing = db.prepare('SELECT id FROM saved_addresses WHERE id = ? AND user_id = ?').get(id, req.user.id);
+  if (!existing) return res.status(404).json({ error: 'Address not found.' });
+
+  db.prepare('DELETE FROM saved_addresses WHERE id = ?').run(id);
+  return res.json({ success: true });
+});
+
+// ── Branches ─────────────────────────────────────────────────────────────
+
+app.get('/api/branches', (_req, res) => {
+  const rows = db.prepare(
+    'SELECT id, name, address, phone, city, is_active, google_maps_url, swiggy_url, zomato_url FROM branches WHERE is_active = 1 ORDER BY id ASC'
+  ).all();
+  return res.json({ branches: rows });
+});
+
+app.get('/api/admin/branches', adminRequired, (_req, res) => {
+  const rows = db.prepare('SELECT * FROM branches ORDER BY id ASC').all();
+  return res.json({ branches: rows });
+});
+
+app.post('/api/admin/branches', adminRequired, (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const address = String(req.body.address || '').trim();
+  const phone = String(req.body.phone || '').trim();
+  const city = String(req.body.city || '').trim();
+  if (!name || !address) return res.status(400).json({ error: 'Name and address are required.' });
+
+  const now = new Date().toISOString();
+  const result = db.prepare(
+    `INSERT INTO branches (name, address, phone, city, is_active, google_maps_url, swiggy_url, zomato_url, created_at)
+     VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`
+  ).run(
+    name, address, phone || null, city || null,
+    req.body.google_maps_url || null, req.body.swiggy_url || null, req.body.zomato_url || null,
+    now,
+  );
+  const branch = db.prepare('SELECT * FROM branches WHERE id = ?').get(result.lastInsertRowid);
+  logActivity(req.user?.id, 'create_branch', 'branch', branch.id, { name: branch.name });
+  return res.status(201).json({ branch });
+});
+
+app.put('/api/admin/branches/:id', adminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid branch id.' });
+
+  const existing = db.prepare('SELECT id FROM branches WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Branch not found.' });
+
+  const name = String(req.body.name || '').trim();
+  const address = String(req.body.address || '').trim();
+  if (!name || !address) return res.status(400).json({ error: 'Name and address are required.' });
+
+  db.prepare(
+    `UPDATE branches SET name = ?, address = ?, phone = ?, city = ?, is_active = ?,
+     google_maps_url = ?, swiggy_url = ?, zomato_url = ?, updated_at = ? WHERE id = ?`
+  ).run(
+    name, address,
+    String(req.body.phone || '').trim() || null,
+    String(req.body.city || '').trim() || null,
+    req.body.is_active !== undefined ? Number(Boolean(req.body.is_active)) : 1,
+    req.body.google_maps_url || null, req.body.swiggy_url || null, req.body.zomato_url || null,
+    new Date().toISOString(), id,
+  );
+  const branch = db.prepare('SELECT * FROM branches WHERE id = ?').get(id);
+  logActivity(req.user?.id, 'update_branch', 'branch', id, { name: branch.name });
+  return res.json({ branch });
+});
+
+// ── Full Analytics ────────────────────────────────────────────────────────
+
+app.get('/api/admin/analytics/full', adminRequired, (req, res) => {
+  const dateFrom = String(req.query.dateFrom || '').trim();
+  const dateTo = String(req.query.dateTo || '').trim();
+
+  const allWhere = ['1=1'];
+  const revWhere = [`status = '${REVENUE_COUNTED_STATUS}'`];
+  const params = [];
+  const revParams = [];
+
+  if (dateFrom) {
+    const clause = "date(created_at, 'localtime') >= date(?)";
+    allWhere.push(clause); params.push(dateFrom);
+    revWhere.push(clause); revParams.push(dateFrom);
+  }
+  if (dateTo) {
+    const clause = "date(created_at, 'localtime') <= date(?)";
+    allWhere.push(clause); params.push(dateTo);
+    revWhere.push(clause); revParams.push(dateTo);
+  }
+
+  const allSql = `WHERE ${allWhere.join(' AND ')}`;
+  const revSql = `WHERE ${revWhere.join(' AND ')}`;
+  const revSqlO = revSql.replace(/created_at/g, 'o.created_at').replace(/status/, 'o.status');
+
+  const dailyRevenue = db.prepare(
+    `SELECT date(created_at, 'localtime') AS date, SUM(total) AS revenue, COUNT(*) AS orders
+     FROM orders ${revSql} GROUP BY date ORDER BY date ASC`
+  ).all(...revParams);
+
+  const weeklyRevenue = db.prepare(
+    `SELECT strftime('%Y-W%W', created_at, 'localtime') AS week, SUM(total) AS revenue, COUNT(*) AS orders
+     FROM orders ${revSql} GROUP BY week ORDER BY week ASC`
+  ).all(...revParams);
+
+  const monthlyRevenue = db.prepare(
+    `SELECT strftime('%Y-%m', created_at, 'localtime') AS month, SUM(total) AS revenue, COUNT(*) AS orders
+     FROM orders ${revSql} GROUP BY month ORDER BY month ASC`
+  ).all(...revParams);
+
+  const ordersByStatus = db.prepare(
+    `SELECT status, COUNT(*) AS orders, SUM(total) AS total_value
+     FROM orders ${allSql} GROUP BY status`
+  ).all(...params);
+
+  const topProducts = db.prepare(
+    `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
+     FROM order_items oi INNER JOIN orders o ON o.id = oi.order_id
+     ${revSqlO} GROUP BY oi.name ORDER BY qty DESC LIMIT 10`
+  ).all(...revParams);
+
+  const bottomProducts = db.prepare(
+    `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
+     FROM order_items oi INNER JOIN orders o ON o.id = oi.order_id
+     ${revSqlO} GROUP BY oi.name ORDER BY qty ASC LIMIT 10`
+  ).all(...revParams);
+
+  const revenueByCategory = db.prepare(
+    `SELECT mi.category, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
+     FROM order_items oi
+     INNER JOIN orders o ON o.id = oi.order_id
+     LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+     ${revSqlO} GROUP BY mi.category ORDER BY revenue DESC`
+  ).all(...revParams);
+
+  const peakHours = db.prepare(
+    `SELECT strftime('%H', created_at, 'localtime') AS hour, COUNT(*) AS orders
+     FROM orders ${allSql} GROUP BY hour ORDER BY orders DESC`
+  ).all(...params);
+
+  const avgOrderValue = db.prepare(
+    `SELECT AVG(total) AS avg FROM orders ${revSql}`
+  ).get(...revParams);
+
+  const customerStats = db.prepare(
+    `SELECT customer_phone, COUNT(*) AS order_count
+     FROM orders ${allSql} AND customer_phone IS NOT NULL AND customer_phone != ''
+     GROUP BY customer_phone`
+  ).all(...params);
+  const newCustomers = customerStats.filter((c) => c.order_count === 1).length;
+  const returningCustomers = customerStats.filter((c) => c.order_count > 1).length;
+
+  const couponUsageStats = db.prepare(
+    `SELECT cu.coupon_id, c.code, COUNT(*) AS uses, SUM(cu.discount_applied) AS total_discount
+     FROM coupon_usage cu
+     LEFT JOIN coupons c ON c.id = cu.coupon_id
+     GROUP BY cu.coupon_id ORDER BY uses DESC`
+  ).all();
+
+  const reviewDistribution = db.prepare(
+    'SELECT rating, COUNT(*) AS count FROM reviews WHERE is_hidden = 0 OR is_hidden IS NULL GROUP BY rating ORDER BY rating DESC'
+  ).all();
+
+  const franchiseLeadCount = db.prepare('SELECT COUNT(*) AS count FROM franchise_leads').get().count;
+
+  const ordersByDeliveryType = db.prepare(
+    `SELECT delivery_type, COUNT(*) AS orders, SUM(total) AS revenue
+     FROM orders ${revSql} GROUP BY delivery_type`
+  ).all(...revParams);
+
+  // Completion rate and cancelled count for analytics dashboard
+  const completedCount = db.prepare(
+    `SELECT COUNT(*) AS count FROM orders ${allSql} AND status = 'completed'`
+  ).get(...params).count;
+  const cancelledCount = db.prepare(
+    `SELECT COUNT(*) AS count FROM orders ${allSql} AND status = 'cancelled'`
+  ).get(...params).count;
+  const totalFinalisedOrders = completedCount + cancelledCount;
+  const completionRate = totalFinalisedOrders > 0
+    ? Math.round((completedCount / totalFinalisedOrders) * 100)
+    : null;
+
+  return res.json({
+    dailyRevenue,
+    weeklyRevenue,
+    monthlyRevenue,
+    ordersByStatus,
+    topProducts,
+    bottomProducts,
+    revenueByCategory,
+    ordersByDeliveryType,
+    peakHours,
+    avgOrderValue: Math.round((avgOrderValue?.avg || 0) * 100) / 100,
+    customerAnalytics: { newCustomers, returningCustomers, total: customerStats.length },
+    couponUsageStats,
+    reviewDistribution,
+    franchiseLeadCount: Number(franchiseLeadCount),
+    completionRate,
+    completedCount: Number(completedCount),
+    cancelledCount: Number(cancelledCount),
+  });
+});
+
+// ── Settings ─────────────────────────────────────────────────────────────
+
+const PUBLIC_SETTING_KEYS = [
+  'restaurant_name', 'tagline', 'whatsapp_number', 'opening_hours', 'days_open',
+  'gst_enabled', 'gst_percentage', 'prices_include_gst', 'delivery_charge',
+  'packing_charge', 'instagram_url', 'youtube_url', 'swiggy_url', 'zomato_url',
+  'min_order_value',
+];
+
+app.get('/api/settings', (_req, res) => {
+  const placeholders = PUBLIC_SETTING_KEYS.map(() => '?').join(',');
+  const rows = db.prepare(
+    `SELECT key, value FROM settings WHERE key IN (${placeholders})`
+  ).all(...PUBLIC_SETTING_KEYS);
+  const settings = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return res.json({ settings });
+});
+
+app.get('/api/admin/settings', adminRequired, (_req, res) => {
+  const rows = db.prepare(
+    'SELECT key, value, label, type, section FROM settings ORDER BY section, key'
+  ).all();
+  const sections = {};
+  for (const row of rows) {
+    if (!sections[row.section]) sections[row.section] = [];
+    sections[row.section].push(row);
+  }
+  return res.json({ settings: rows, sections });
+});
+
+app.put('/api/admin/settings', adminRequired, (req, res) => {
+  const updates = req.body.settings;
+  if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+    return res.status(400).json({ error: 'Body must include a settings object { key: value }.' });
+  }
+  const now = new Date().toISOString();
+  const stmt = db.prepare('UPDATE settings SET value = ?, updated_at = ? WHERE key = ?');
+  const tx = db.transaction(() => {
+    for (const [key, value] of Object.entries(updates)) {
+      stmt.run(value !== null && value !== undefined ? String(value) : '', now, key);
+    }
+  });
+  tx();
+  logActivity(req.user?.id, 'update_settings', 'settings', null, { keys: Object.keys(updates) });
+
+  // Notify all connected clients to refresh their settings cache
+  broadcastSSE('settings_updated', { updatedKeys: Object.keys(updates) });
+
+  const rows = db.prepare(
+    'SELECT key, value, label, type, section FROM settings ORDER BY section, key'
+  ).all();
+  const sections = {};
+  for (const row of rows) {
+    if (!sections[row.section]) sections[row.section] = [];
+    sections[row.section].push(row);
+  }
+  return res.json({ settings: rows, sections });
 });
 
 const distPath = path.join(rootDir, 'dist');

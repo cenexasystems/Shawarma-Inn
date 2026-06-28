@@ -25,7 +25,7 @@ export const useBranches = () => {
       const { data, error } = await supabase
         .from('branches')
         .select('*')
-        .order('is_flagship', { ascending: false });
+        .order('id', { ascending: true });
 
       if (error || !data?.length) {
         setBranches(localBranchData as Branch[]);

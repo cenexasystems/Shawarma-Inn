@@ -96,7 +96,7 @@ export default function App() {
     }
   }, [location.hash, location.pathname]);
 
-  if (loading) return <Loader />;
+  if (loading || authLoading) return <Loader />;
 
   return (
     <div className="min-h-screen bg-[var(--black)] text-[var(--white)] font-body selection:bg-[var(--red)] selection:text-white">
@@ -158,13 +158,9 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            user?.role === 'admin' ? (
-              <Suspense fallback={<Loader />}>
-                <AdminDashboard />
-              </Suspense>
-            ) : (
-              <Navigate to="/admin/login" replace />
-            )
+            <Suspense fallback={<Loader />}>
+              <AdminDashboard />
+            </Suspense>
           }
         />
         <Route

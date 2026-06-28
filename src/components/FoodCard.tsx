@@ -1,6 +1,6 @@
 import type { MenuItem } from '../types';
 import { useFavorites } from '../context/FavoritesContext';
-import { categoryFallbackImage } from '../utils/categoryImages';
+import { getRecoveryImage } from '../utils/menuImages';
 
 interface FoodCardProps {
   item: MenuItem;
@@ -12,20 +12,21 @@ interface FoodCardProps {
 export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(item.id);
-  const fallbackImage = categoryFallbackImage(item.category, item.id);
+  // Recovery image: semantically correct for this item's food type, never crosses categories.
+  const recoveryImage = getRecoveryImage(item);
 
   return (
     <div className="group bg-[var(--card-bg)] border-[0.5px] border-[var(--border)] rounded-[16px] overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.01] hover:border-[var(--red)]">
       {/* Image with overlaid name */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-[var(--charcoal)]">
         <img
-          src={item.image || fallbackImage}
+          src={item.image || recoveryImage}
           alt={item.name}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           onError={({ currentTarget }) => {
             currentTarget.onerror = null;
-            currentTarget.src = fallbackImage;
+            currentTarget.src = recoveryImage;
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />

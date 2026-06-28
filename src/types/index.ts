@@ -6,11 +6,14 @@ export interface MenuItem {
   desc?: string;
   description?: string; // legacy
   price: number;
-  rating: number;
+  rating?: number;
   category: string;
   image?: string;
+  image_url?: string;
   bestseller?: boolean;
   isVeg?: boolean;
+  is_active?: boolean;
+  is_bestseller?: boolean;
 }
 
 export interface Branch {

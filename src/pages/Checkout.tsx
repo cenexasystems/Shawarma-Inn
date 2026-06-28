@@ -5,8 +5,8 @@ import Footer from '../components/Footer';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { useSupabaseAuth } from '../lib/runtime';
-import { computeCheckoutTotals } from '../config/pricing';
-import { applyCoupon } from '../config/coupons';
+import { usePublicSettings } from '../hooks/usePublicSettings';
+import { apiRequest } from '../lib/api';
 import { playCheckoutSound } from '../utils/playCheckoutSound';
 import type { CartItem } from '../hooks/useCart';
 
@@ -22,6 +22,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
   const isCustomerLoggedIn = user?.role === 'user';
+  const { deliveryCharge: liveDeliveryCharge, packingCharge: livePackingCharge, gstActive, gstPercentage } = usePublicSettings();
   
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState('');
@@ -36,20 +37,45 @@ export default function Checkout({ cartData }: CheckoutProps) {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponMessage, setCouponMessage] = useState('');
-  const totals = useMemo(
-    () => computeCheckoutTotals(subtotal, deliveryMethod, appliedCoupon?.discount ?? 0, appliedCoupon?.code),
-    [subtotal, deliveryMethod, appliedCoupon]
-  );
+  const [couponLoading, setCouponLoading] = useState(false);
+  const totals = useMemo(() => {
+    // Use live DB settings (falls back to env vars while fetching)
+    const discount = appliedCoupon?.discount ?? 0;
+    const cappedDiscount = Math.max(0, Math.min(discount, subtotal));
+    const taxableAmount = subtotal - cappedDiscount;
+    const dc = deliveryMethod === 'delivery' ? liveDeliveryCharge : 0;
+    const gst = gstActive ? Math.round(taxableAmount * (gstPercentage / 100) * 100) / 100 : 0;
+    const grandTotal = Math.round((taxableAmount + dc + livePackingCharge + gst) * 100) / 100;
+    return {
+      itemsTotal: subtotal,
+      deliveryCharge: dc,
+      packingCharge: livePackingCharge,
+      gstEnabled: gstActive,
+      gstPercentage,
+      gst,
+      discount: cappedDiscount,
+      couponCode: appliedCoupon?.code,
+      grandTotal,
+    };
+  }, [subtotal, deliveryMethod, appliedCoupon, liveDeliveryCharge, livePackingCharge, gstActive, gstPercentage]);
 
-  const handleApplyCoupon = () => {
-    const result = applyCoupon(couponInput, subtotal);
-    if (!result.valid || !result.coupon) {
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponMessage('');
+    try {
+      const result = await apiRequest<{ coupon: { code: string }; discount: number }>(
+        '/coupons/validate',
+        { method: 'POST', body: { code: couponInput.trim(), subtotal } }
+      );
+      setAppliedCoupon({ code: result.coupon.code, discount: result.discount });
+      setCouponMessage(`"${result.coupon.code}" applied — ₹${result.discount.toFixed(2)} off.`);
+    } catch (err) {
       setAppliedCoupon(null);
-      setCouponMessage(result.error || 'Invalid coupon code.');
-      return;
+      setCouponMessage(err instanceof Error ? err.message : 'Invalid coupon code.');
+    } finally {
+      setCouponLoading(false);
     }
-    setAppliedCoupon({ code: result.coupon.code, discount: result.discount });
-    setCouponMessage(`"${result.coupon.code}" applied — ₹${result.discount.toFixed(2)} off.`);
   };
 
   const handleRemoveCoupon = () => {
@@ -157,7 +183,10 @@ export default function Checkout({ cartData }: CheckoutProps) {
       total: totals.grandTotal,
       customerName: name,
       customerPhone: phone,
+      customerEmail: user?.email ?? undefined,
       deliveryAddress: deliveryMethod === 'delivery' ? address : 'STORE PICKUP',
+      deliveryType: deliveryMethod === 'delivery' ? 'home_delivery' : 'store_pickup',
+      couponCode: appliedCoupon?.code ?? undefined,
     });
 
     if (!result.success) {
@@ -517,10 +546,11 @@ export default function Checkout({ cartData }: CheckoutProps) {
                   className="flex-1 bg-black/50 border border-white/5 rounded-2xl p-4 text-sm uppercase tracking-wider text-white outline-none focus:border-[var(--red)] transition-all font-body"
                 />
                 <button
-                  onClick={handleApplyCoupon}
-                  className="bg-white text-black font-bebas text-sm px-6 rounded-2xl uppercase tracking-[2px] hover:bg-white/90 transition-all"
+                  onClick={() => { void handleApplyCoupon(); }}
+                  disabled={couponLoading}
+                  className="bg-white text-black font-bebas text-sm px-6 rounded-2xl uppercase tracking-[2px] hover:bg-white/90 transition-all disabled:opacity-50"
                 >
-                  Apply
+                  {couponLoading ? '...' : 'Apply'}
                 </button>
               </div>
             )}

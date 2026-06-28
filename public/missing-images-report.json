@@ -1,0 +1,1574 @@
+{
+  "generated": "2026-06-27T08:26:25.281Z",
+  "summary": {
+    "total_items": 167,
+    "missing_local_files": 167,
+    "files_exist_locally": 0,
+    "coverage_pct": 0,
+    "by_category": {
+      "Shawarma": {
+        "total": 58,
+        "missing": 58
+      },
+      "Burgers": {
+        "total": 20,
+        "missing": 20
+      },
+      "Pizza": {
+        "total": 7,
+        "missing": 7
+      },
+      "Momos": {
+        "total": 7,
+        "missing": 7
+      },
+      "Toasts": {
+        "total": 20,
+        "missing": 20
+      },
+      "Starters": {
+        "total": 13,
+        "missing": 13
+      },
+      "Loaded Fries": {
+        "total": 3,
+        "missing": 3
+      },
+      "Bring Your Own Chips": {
+        "total": 3,
+        "missing": 3
+      },
+      "Desserts": {
+        "total": 3,
+        "missing": 3
+      },
+      "Mojitos": {
+        "total": 12,
+        "missing": 12
+      },
+      "Milkshakes": {
+        "total": 8,
+        "missing": 8
+      },
+      "Waffles": {
+        "total": 8,
+        "missing": 8
+      },
+      "Combo Deals": {
+        "total": 5,
+        "missing": 5
+      }
+    },
+    "action_required": "Upload 167 images to Supabase Storage bucket \"menu-images\" or place files in public/images/menu/"
+  },
+  "supabase_storage": {
+    "bucket": "menu-images",
+    "note": "Upload images to this Supabase Storage bucket. Object path mirrors the local /images/menu/ structure without the leading /images/menu/ prefix.",
+    "example": "shawarma/classic-shawarma-roll.webp"
+  },
+  "items": [
+    {
+      "id": 1,
+      "name": "Classic Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/classic-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/classic-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 2,
+      "name": "Classic Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/classic-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/classic-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 3,
+      "name": "Peri Peri Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/peri-peri-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/peri-peri-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 4,
+      "name": "Peri Peri Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/peri-peri-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/peri-peri-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 5,
+      "name": "Schezwan Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/schezwan-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/schezwan-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 6,
+      "name": "Schezwan Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/schezwan-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/schezwan-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 7,
+      "name": "BBQ Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/bbq-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/bbq-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 8,
+      "name": "BBQ Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/bbq-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/bbq-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 9,
+      "name": "Tandoori Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/tandoori-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/tandoori-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 10,
+      "name": "Tandoori Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/tandoori-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/tandoori-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 11,
+      "name": "Chilli Garlic Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chilli-garlic-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chilli-garlic-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 12,
+      "name": "Chilli Garlic Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chilli-garlic-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chilli-garlic-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 13,
+      "name": "Mexican Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/mexican-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/mexican-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 14,
+      "name": "Mexican Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/mexican-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/mexican-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 15,
+      "name": "Cheesy Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/cheesy-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/cheesy-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 16,
+      "name": "Cheesy Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/cheesy-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/cheesy-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 17,
+      "name": "Jalapeno Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/jalapeno-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/jalapeno-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 18,
+      "name": "Jalapeno Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/jalapeno-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/jalapeno-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 19,
+      "name": "Thousand Island Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/thousand-island-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/thousand-island-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 20,
+      "name": "Thousand Island Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/thousand-island-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/thousand-island-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 21,
+      "name": "Chipotle Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chipotle-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chipotle-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 22,
+      "name": "Chipotle Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chipotle-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chipotle-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 23,
+      "name": "Sweet Chilli Shawarma Roll",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/sweet-chilli-shawarma-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/sweet-chilli-shawarma-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 24,
+      "name": "Sweet Chilli Shawarma Roll (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/sweet-chilli-shawarma-roll-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/sweet-chilli-shawarma-roll-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 25,
+      "name": "Roll Shawarma Add on Cheese (Reg)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/roll-shawarma-add-on-cheese-reg.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/roll-shawarma-add-on-cheese-reg.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 26,
+      "name": "Roll Shawarma Add on Cheese (Spl)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/roll-shawarma-add-on-cheese-spl.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/roll-shawarma-add-on-cheese-spl.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 27,
+      "name": "Classic Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/classic-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/classic-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 28,
+      "name": "Classic Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/classic-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/classic-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 29,
+      "name": "Peri Peri Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/peri-peri-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/peri-peri-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 30,
+      "name": "Peri Peri Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/peri-peri-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/peri-peri-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 31,
+      "name": "Schezwan Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/schezwan-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/schezwan-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 32,
+      "name": "Schezwan Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/schezwan-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/schezwan-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 33,
+      "name": "BBQ Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/bbq-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/bbq-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 34,
+      "name": "BBQ Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/bbq-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/bbq-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 35,
+      "name": "Tandoori Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/tandoori-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/tandoori-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 36,
+      "name": "Tandoori Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/tandoori-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/tandoori-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 37,
+      "name": "Chilli Garlic Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chilli-garlic-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chilli-garlic-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 38,
+      "name": "Chilli Garlic Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chilli-garlic-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chilli-garlic-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 39,
+      "name": "Mexican Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/mexican-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/mexican-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 40,
+      "name": "Mexican Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/mexican-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/mexican-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 41,
+      "name": "Cheesy Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/cheesy-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/cheesy-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 42,
+      "name": "Cheesy Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/cheesy-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/cheesy-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 43,
+      "name": "Jalapeno Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/jalapeno-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/jalapeno-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 44,
+      "name": "Jalapeno Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/jalapeno-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/jalapeno-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 45,
+      "name": "Thousand Island Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/thousand-island-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/thousand-island-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 46,
+      "name": "Thousand Island Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/thousand-island-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/thousand-island-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 47,
+      "name": "Chipotle Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chipotle-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chipotle-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 48,
+      "name": "Chipotle Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/chipotle-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/chipotle-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 49,
+      "name": "Sweet Chilli Shawarma Plate",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/sweet-chilli-shawarma-plate.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/sweet-chilli-shawarma-plate.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 50,
+      "name": "Sweet Chilli Shawarma Plate (Large)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/sweet-chilli-shawarma-plate-large.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/sweet-chilli-shawarma-plate-large.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 51,
+      "name": "Veg Shawarma",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/veg-shawarma.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/veg-shawarma.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 52,
+      "name": "Paneer Shawarma",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/paneer-shawarma.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/paneer-shawarma.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 53,
+      "name": "Veg Platter",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/veg-platter.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/veg-platter.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 54,
+      "name": "Paneer Platter",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/paneer-platter.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/paneer-platter.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 55,
+      "name": "Plate Shawarma Add on Cheese (Reg)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/plate-shawarma-add-on-cheese-reg.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/plate-shawarma-add-on-cheese-reg.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 56,
+      "name": "Plate Shawarma Add on Cheese (Spl)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/plate-shawarma-add-on-cheese-spl.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/plate-shawarma-add-on-cheese-spl.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 57,
+      "name": "Plate Shawarma Add on Kuboos (Reg)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/plate-shawarma-add-on-kuboos-reg.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/plate-shawarma-add-on-kuboos-reg.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 58,
+      "name": "Plate Shawarma Add on Kuboos (Spl)",
+      "category": "Shawarma",
+      "expected_path": "/images/menu/shawarma/plate-shawarma-add-on-kuboos-spl.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "shawarma/plate-shawarma-add-on-kuboos-spl.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 59,
+      "name": "Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 60,
+      "name": "Hot Glaze Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/hot-glaze-veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/hot-glaze-veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 61,
+      "name": "Chipotle Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/chipotle-veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/chipotle-veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 62,
+      "name": "Jalapeno Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/jalapeno-veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/jalapeno-veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 63,
+      "name": "Thousand Island Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/thousand-island-veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/thousand-island-veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 64,
+      "name": "Sweet Chilli Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/sweet-chilli-veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/sweet-chilli-veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 65,
+      "name": "Paneer Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/paneer-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/paneer-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 66,
+      "name": "Double Veg Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/double-veg-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/double-veg-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 67,
+      "name": "Double Paneer Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/double-paneer-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/double-paneer-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 68,
+      "name": "Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 69,
+      "name": "Hot Glaze Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/hot-glaze-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/hot-glaze-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 70,
+      "name": "BBQ Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/bbq-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/bbq-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 71,
+      "name": "Chipotle Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/chipotle-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/chipotle-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 72,
+      "name": "Jalapeno Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/jalapeno-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/jalapeno-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 73,
+      "name": "Thousand Island Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/thousand-island-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/thousand-island-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 74,
+      "name": "Sweet Chilli Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/sweet-chilli-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/sweet-chilli-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 75,
+      "name": "Popcorn Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/popcorn-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/popcorn-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 76,
+      "name": "Zinger Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/zinger-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/zinger-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 77,
+      "name": "Double Chicken Burger",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/double-chicken-burger.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/double-chicken-burger.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 78,
+      "name": "Burger Add on Cheese",
+      "category": "Burgers",
+      "expected_path": "/images/menu/burgers/burger-add-on-cheese.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "burgers/burger-add-on-cheese.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 79,
+      "name": "Veg Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/veg-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/veg-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 80,
+      "name": "Cheese Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/cheese-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/cheese-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 81,
+      "name": "Sweet Corn Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/sweet-corn-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/sweet-corn-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 82,
+      "name": "Paneer Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/paneer-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/paneer-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 83,
+      "name": "Chicken Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/chicken-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/chicken-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 84,
+      "name": "BBQ Chicken Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/bbq-chicken-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/bbq-chicken-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 85,
+      "name": "Naked Chicken Pizza",
+      "category": "Pizza",
+      "expected_path": "/images/menu/pizza/naked-chicken-pizza.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "pizza/naked-chicken-pizza.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 86,
+      "name": "Mix Veg Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/mix-veg-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/mix-veg-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 87,
+      "name": "Cheese Corn Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/cheese-corn-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/cheese-corn-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 88,
+      "name": "Paneer Tikka Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/paneer-tikka-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/paneer-tikka-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 89,
+      "name": "Chicken Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/chicken-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/chicken-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 90,
+      "name": "Peri Peri Chicken Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/peri-peri-chicken-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/peri-peri-chicken-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 91,
+      "name": "Schezwan Chicken Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/schezwan-chicken-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/schezwan-chicken-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 92,
+      "name": "Chicken Tikka Momos",
+      "category": "Momos",
+      "expected_path": "/images/menu/momos/chicken-tikka-momos.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "momos/chicken-tikka-momos.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 93,
+      "name": "Chocolate Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/chocolate-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/chocolate-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 94,
+      "name": "White Chocolate Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/white-chocolate-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/white-chocolate-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 95,
+      "name": "Veg Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/veg-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/veg-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 96,
+      "name": "Sweet Corn Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/sweet-corn-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/sweet-corn-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 97,
+      "name": "Paneer Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/paneer-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/paneer-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 98,
+      "name": "BBQ Paneer Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/bbq-paneer-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/bbq-paneer-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 99,
+      "name": "Veg Club Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/veg-club-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/veg-club-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 100,
+      "name": "Sweet Corn Cheese Club Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/sweet-corn-cheese-club-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/sweet-corn-cheese-club-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 101,
+      "name": "Paneer Cheese Club Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/paneer-cheese-club-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/paneer-cheese-club-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 102,
+      "name": "BBQ Paneer Club Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/bbq-paneer-club-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/bbq-paneer-club-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 103,
+      "name": "Toast Veg Add On Flavour",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/toast-veg-add-on-flavour.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/toast-veg-add-on-flavour.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 104,
+      "name": "Grill Chicken Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/grill-chicken-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/grill-chicken-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 105,
+      "name": "Fried Chicken Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/fried-chicken-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/fried-chicken-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 106,
+      "name": "BBQ Chicken Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/bbq-chicken-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/bbq-chicken-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 107,
+      "name": "BBQ Sausage Chicken Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/bbq-sausage-chicken-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/bbq-sausage-chicken-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 108,
+      "name": "Grill Chicken Club Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/grill-chicken-club-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/grill-chicken-club-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 109,
+      "name": "BBQ Chicken Club Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/bbq-chicken-club-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/bbq-chicken-club-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 110,
+      "name": "Fried Chicken Club Cheese Toast",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/fried-chicken-club-cheese-toast.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/fried-chicken-club-cheese-toast.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 111,
+      "name": "Toast Chicken Add On Flavour",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/toast-chicken-add-on-flavour.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/toast-chicken-add-on-flavour.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 112,
+      "name": "Toast Chicken Add On Cheese",
+      "category": "Toasts",
+      "expected_path": "/images/menu/toasts/toast-chicken-add-on-cheese.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "toasts/toast-chicken-add-on-cheese.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 113,
+      "name": "French Fries",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/french-fries.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/french-fries.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 114,
+      "name": "Masala Fries",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/masala-fries.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/masala-fries.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 115,
+      "name": "Cheese Corn Nuggets (8pc)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/cheese-corn-nuggets-8pc.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/cheese-corn-nuggets-8pc.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 116,
+      "name": "Veg Roll",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/veg-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/veg-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 117,
+      "name": "Paneer Roll",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/paneer-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/paneer-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 118,
+      "name": "Chicken Popcorn (130gms)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/chicken-popcorn-130gms.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/chicken-popcorn-130gms.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 119,
+      "name": "Masala Chicken Popcorn (130gms)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/masala-chicken-popcorn-130gms.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/masala-chicken-popcorn-130gms.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 120,
+      "name": "Sweet Chilli Chicken Popcorn (130gms)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/sweet-chilli-chicken-popcorn-130gms.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/sweet-chilli-chicken-popcorn-130gms.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 121,
+      "name": "Chicken Nuggets (6pc)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/chicken-nuggets-6pc.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/chicken-nuggets-6pc.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 122,
+      "name": "Chicken Wings (4pc)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/chicken-wings-4pc.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/chicken-wings-4pc.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 123,
+      "name": "Chicken Cheese Balls (8pc)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/chicken-cheese-balls-8pc.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/chicken-cheese-balls-8pc.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 124,
+      "name": "Chicken Fingers (8pc)",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/chicken-fingers-8pc.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/chicken-fingers-8pc.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 125,
+      "name": "Chicken Roll",
+      "category": "Starters",
+      "expected_path": "/images/menu/starters/chicken-roll.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "starters/chicken-roll.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 126,
+      "name": "Veg Loaded French Fries",
+      "category": "Loaded Fries",
+      "expected_path": "/images/menu/loaded-fries/veg-loaded-french-fries.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "loaded-fries/veg-loaded-french-fries.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 127,
+      "name": "Paneer Loaded French Fries",
+      "category": "Loaded Fries",
+      "expected_path": "/images/menu/loaded-fries/paneer-loaded-french-fries.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "loaded-fries/paneer-loaded-french-fries.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 128,
+      "name": "Chicken Loaded French Fries",
+      "category": "Loaded Fries",
+      "expected_path": "/images/menu/loaded-fries/chicken-loaded-french-fries.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "loaded-fries/chicken-loaded-french-fries.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 129,
+      "name": "Bring Your Own Chips Veg",
+      "category": "Bring Your Own Chips",
+      "expected_path": "/images/menu/bring-your-own-chips/bring-your-own-chips-veg.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "bring-your-own-chips/bring-your-own-chips-veg.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 130,
+      "name": "Bring Your Own Chips Paneer",
+      "category": "Bring Your Own Chips",
+      "expected_path": "/images/menu/bring-your-own-chips/bring-your-own-chips-paneer.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "bring-your-own-chips/bring-your-own-chips-paneer.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 131,
+      "name": "Bring Your Own Chips Chicken",
+      "category": "Bring Your Own Chips",
+      "expected_path": "/images/menu/bring-your-own-chips/bring-your-own-chips-chicken.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "bring-your-own-chips/bring-your-own-chips-chicken.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 132,
+      "name": "Ice Cream Scoop",
+      "category": "Desserts",
+      "expected_path": "/images/menu/desserts/ice-cream-scoop.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "desserts/ice-cream-scoop.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 133,
+      "name": "Brownie With Ice Cream",
+      "category": "Desserts",
+      "expected_path": "/images/menu/desserts/brownie-with-ice-cream.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "desserts/brownie-with-ice-cream.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 134,
+      "name": "Chocolava With Ice Cream",
+      "category": "Desserts",
+      "expected_path": "/images/menu/desserts/chocolava-with-ice-cream.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "desserts/chocolava-with-ice-cream.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 135,
+      "name": "Mint Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/mint-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/mint-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 136,
+      "name": "Blue Curacao Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/blue-curacao-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/blue-curacao-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 137,
+      "name": "Grape Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/grape-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/grape-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 138,
+      "name": "Mango Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/mango-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/mango-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 139,
+      "name": "Strawberry Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/strawberry-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/strawberry-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 140,
+      "name": "Guava Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/guava-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/guava-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 141,
+      "name": "Pineapple Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/pineapple-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/pineapple-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 142,
+      "name": "Green Apple Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/green-apple-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/green-apple-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 143,
+      "name": "Pomegranate Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/pomegranate-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/pomegranate-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 144,
+      "name": "Watermelon Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/watermelon-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/watermelon-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 145,
+      "name": "Orange Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/orange-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/orange-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 146,
+      "name": "Blue Berry Mojito",
+      "category": "Mojitos",
+      "expected_path": "/images/menu/mojitos/blue-berry-mojito.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "mojitos/blue-berry-mojito.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 147,
+      "name": "Vanilla Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/vanilla-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/vanilla-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 148,
+      "name": "Strawberry Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/strawberry-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/strawberry-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 149,
+      "name": "Butterscotch Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/butterscotch-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/butterscotch-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 150,
+      "name": "Chocolate Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/chocolate-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/chocolate-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 151,
+      "name": "Black Currant Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/black-currant-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/black-currant-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 152,
+      "name": "Oreo Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/oreo-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/oreo-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 153,
+      "name": "Kitkat Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/kitkat-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/kitkat-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 154,
+      "name": "Brownie Milkshake",
+      "category": "Milkshakes",
+      "expected_path": "/images/menu/milkshakes/brownie-milkshake.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "milkshakes/brownie-milkshake.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 155,
+      "name": "Nutella Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/nutella-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/nutella-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 156,
+      "name": "Milk Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/milk-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/milk-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 157,
+      "name": "Dark Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/dark-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/dark-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 158,
+      "name": "White Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/white-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/white-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 159,
+      "name": "Kit-Kat Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/kit-kat-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/kit-kat-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 160,
+      "name": "Oreo Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/oreo-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/oreo-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 161,
+      "name": "White & Dark Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/white-dark-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/white-dark-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 162,
+      "name": "Triple Chocolate Waffle",
+      "category": "Waffles",
+      "expected_path": "/images/menu/waffles/triple-chocolate-waffle.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "waffles/triple-chocolate-waffle.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 163,
+      "name": "Combo Offer 1",
+      "category": "Combo Deals",
+      "expected_path": "/images/menu/combo-deals/combo-offer-1.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "combo-deals/combo-offer-1.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 164,
+      "name": "Special Chicken Combo Offer",
+      "category": "Combo Deals",
+      "expected_path": "/images/menu/combo-deals/special-chicken-combo-offer.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "combo-deals/special-chicken-combo-offer.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 165,
+      "name": "Mega Chicken Combo Offer",
+      "category": "Combo Deals",
+      "expected_path": "/images/menu/combo-deals/mega-chicken-combo-offer.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "combo-deals/mega-chicken-combo-offer.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 166,
+      "name": "Super Delicious Burger Combo",
+      "category": "Combo Deals",
+      "expected_path": "/images/menu/combo-deals/super-delicious-burger-combo.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "combo-deals/super-delicious-burger-combo.webp",
+      "fallback_strategy": "semantic_unsplash"
+    },
+    {
+      "id": 167,
+      "name": "Chicken Burger Combo",
+      "category": "Combo Deals",
+      "expected_path": "/images/menu/combo-deals/chicken-burger-combo.webp",
+      "file_exists_locally": false,
+      "supabase_storage_path": "combo-deals/chicken-burger-combo.webp",
+      "fallback_strategy": "semantic_unsplash"
+    }
+  ]
+}
