@@ -208,13 +208,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <label className="block text-[10px] font-bold uppercase tracking-[3px] font-body text-[var(--red)]">
                 Phone Number
               </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="9876543210"
-                className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm text-white focus:border-[var(--red)] outline-none transition-all placeholder:text-white/10 font-body shadow-inner"
-              />
+              <div className="flex items-center bg-black/50 border border-white/5 rounded-2xl focus-within:border-[var(--red)] transition-all shadow-inner overflow-hidden">
+                <span className="pl-4 pr-3 text-sm text-white/50 font-body select-none border-r border-white/10 py-4">+91</span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="9876543210"
+                  maxLength={10}
+                  className="flex-1 bg-transparent px-3 py-4 text-sm text-white outline-none placeholder:text-white/10 font-body"
+                />
+              </div>
             </div>
           )}
 

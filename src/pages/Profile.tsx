@@ -80,7 +80,7 @@ export default function Profile() {
       name: editName || profile?.name || '',
       phone: editPhone || profile?.phone || '',
       avatar_url: editAvatarUrl || profile?.avatar_url || '',
-      status: editStatus || profile?.status || '',
+      status: 'Customer',
     });
     setSaving(false);
     setSavedMsg('Saved!');
@@ -190,13 +190,17 @@ export default function Profile() {
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-[var(--white)]/50 font-body">Phone</label>
-                  <input
-                    type="tel"
-                    defaultValue={profile?.phone || ''}
-                    onChange={e => setEditPhone(e.target.value)}
-                    placeholder="+91 XXXXX XXXXX"
-                    className="w-full bg-[var(--black)] border border-[var(--border)] rounded-xl p-4 text-sm font-body text-[var(--white)] focus:border-[var(--red)] outline-none transition-all placeholder:text-white/20"
-                  />
+                  <div className="flex items-center bg-[var(--black)] border border-[var(--border)] rounded-xl focus-within:border-[var(--red)] transition-all overflow-hidden">
+                    <span className="pl-4 pr-3 text-sm text-[var(--white)]/40 font-body select-none border-r border-[var(--border)] py-4">+91</span>
+                    <input
+                      type="tel"
+                      defaultValue={profile?.phone || ''}
+                      onChange={e => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9000000000"
+                      maxLength={10}
+                      className="flex-1 bg-transparent px-3 py-4 text-sm font-body text-[var(--white)] outline-none placeholder:text-white/20"
+                    />
+                  </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-[var(--white)]/50 font-body">Email</label>
@@ -214,13 +218,12 @@ export default function Profile() {
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-[var(--white)]/50 font-body">Status</label>
-                  <input
-                    type="text"
-                    defaultValue={profile?.status || user.status || ''}
-                    onChange={e => setEditStatus(e.target.value)}
-                    placeholder="Food enthusiast"
-                    className="w-full bg-[var(--black)] border border-[var(--border)] rounded-xl p-4 text-sm font-body text-[var(--white)] focus:border-[var(--red)] outline-none transition-all placeholder:text-white/20"
-                  />
+                  <div className="w-full bg-[var(--black)]/40 border border-[var(--border)] rounded-xl p-4 text-sm font-body text-[var(--white)]/40 flex items-center gap-2 cursor-not-allowed">
+                    <svg className="w-3.5 h-3.5 text-[var(--white)]/30 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Customer
+                  </div>
                 </div>
                 <div className="flex items-center gap-4 pt-2">
                   <button onClick={handleSaveProfile} disabled={saving} className="bg-[var(--red)] text-white px-8 py-3 rounded-full font-bebas text-lg tracking-widest hover:shadow-[0_0_20px_rgba(214,43,43,0.4)] transition-all disabled:opacity-50">
