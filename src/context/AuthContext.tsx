@@ -38,6 +38,7 @@ interface ProfileRow {
   phone: string | null;
   avatar_url: string | null;
   provider: string | null;
+  role: string | null;
 }
 
 function mapSupabaseAuthError(errorMessage: string) {
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const buildSupabaseAuthUser = useCallback(async (supabaseUser: User): Promise<AuthUser> => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, phone, avatar_url, provider')
+      .select('name, phone, avatar_url, provider, role')
       .eq('id', supabaseUser.id)
       .maybeSingle<ProfileRow>();
 
@@ -104,11 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const name = profile?.name || metaName;
     const phone = profile?.phone || null;
+    const role = (profile?.role === 'admin' ? 'admin' : 'user') as 'user' | 'admin';
 
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      role: 'user',
+      role,
       name,
       phone,
       avatar_url: profile?.avatar_url || metaAvatar,
@@ -281,14 +283,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [persistSession, syncSupabaseSession]);
 
   const adminLogin = useCallback(async (input: { email: string; password: string }) => {
-    if (useSupabaseAuth && !hasExplicitApiBase && !isLocalHost) {
+    if (useSupabaseAuth) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: input.email,
+        password: input.password,
+      });
+
+      if (error) {
+        throw new Error('Invalid admin credentials.');
+      }
+
+      const user = await syncSupabaseSession(data.session);
+      if (!user) {
+        throw new Error('Could not establish session after admin login.');
+      }
+
+      if (user.role !== 'admin') {
+        await supabase.auth.signOut();
+        persistSession(null);
+        throw new Error('This account does not have admin access.');
+      }
+
+      return user;
+    }
+
+    if (!hasExplicitApiBase && !isLocalHost) {
       throw new Error('Admin login requires the local backend API deployment.');
     }
 
     const { token, user } = await authApi.adminLogin(input);
     persistSession({ token, user });
     return user;
-  }, [persistSession]);
+  }, [persistSession, syncSupabaseSession]);
 
   const signInWithGoogle = useCallback(async (idToken: string) => {
     if (!useSupabaseAuth) {

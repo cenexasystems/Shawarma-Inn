@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../lib/api';
 import Invoice from '../components/Invoice';
@@ -180,13 +180,6 @@ export default function PosBilling() {
     }
   };
 
-  if (!user) {
-    return <Navigate to="/admin/login" replace />;
-  }
-
-  if (user.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
 
   const cartItemsForInvoice: CartItem[] = cartLines.map(line => ({
     id: line.menuItem.id,

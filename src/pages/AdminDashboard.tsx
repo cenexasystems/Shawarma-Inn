@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Navigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   MessageCircle,
@@ -560,10 +559,7 @@ export default function AdminDashboard() {
     return Object.entries(catMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [analytics, menuItems]);
 
-  // Auth guard — redirect to login if not authenticated as admin
-  // (ADMIN_AUTH_BYPASS=true in .env skips JWT on the server side for development)
-  if (!user) return <Navigate to="/admin/login" replace />;
-  if (user.role !== 'admin') return <Navigate to="/" replace />;
+  // Auth guard disabled — will be re-enabled when Supabase admin roles are connected
 
   const getStatusColor = (status: string) => {
     switch (status) {

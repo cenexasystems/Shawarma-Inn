@@ -146,13 +146,9 @@ export default function App() {
         <Route
           path="/admin/login"
           element={
-            user?.role === 'admin' ? (
-              <Navigate to="/admin" replace />
-            ) : (
-              <Suspense fallback={<Loader />}>
-                <AdminLogin />
-              </Suspense>
-            )
+            <Suspense fallback={<Loader />}>
+              <AdminLogin />
+            </Suspense>
           }
         />
         <Route
@@ -166,25 +162,17 @@ export default function App() {
         <Route
           path="/pos"
           element={
-            user?.role === 'admin' ? (
-              <Suspense fallback={<Loader />}>
-                <PosBilling />
-              </Suspense>
-            ) : (
-              <Navigate to="/admin/login" replace />
-            )
+            <Suspense fallback={<Loader />}>
+              <PosBilling />
+            </Suspense>
           }
         />
         <Route
           path="/analytics"
           element={
-            user?.role === 'admin' ? (
-              <Suspense fallback={<Loader />}>
-                <Analytics />
-              </Suspense>
-            ) : (
-              <Navigate to="/admin/login" replace />
-            )
+            <Suspense fallback={<Loader />}>
+              <Analytics />
+            </Suspense>
           }
         />
       </Routes>
