@@ -176,7 +176,7 @@ CREATE POLICY "order_items_insert_own" ON public.order_items FOR INSERT
 -- TRIGGER: auto-upsert profile on new auth user
 -- ==========================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   INSERT INTO public.profiles (id, name, phone, avatar_url, provider, role)
   VALUES (
@@ -192,8 +192,14 @@ BEGIN
     avatar_url = COALESCE(EXCLUDED.avatar_url, profiles.avatar_url),
     updated_at = NOW();
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Don't block auth signup if profile sync fails.
+    -- The app upserts the profile again on first login.
+    RAISE WARNING 'handle_new_user failed for uid=%: %', NEW.id, SQLERRM;
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created

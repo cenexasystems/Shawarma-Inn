@@ -51,8 +51,11 @@ function mapSupabaseAuthError(errorMessage: string) {
     return 'Google sign-in is not enabled in Supabase Auth Providers. Use email/password for now or enable Google provider in Supabase dashboard.';
   }
 
-  if (normalized.includes('database error saving new user')) {
-    return 'Supabase could not create your user profile. Run the project SQL setup in Supabase (profiles table, RLS policies, and handle_new_user trigger), then try sign up again.';
+  if (
+    normalized.includes('database error saving new user') ||
+    normalized.includes('database error creating new user')
+  ) {
+    return 'Supabase could not create your account. Please run the SQL migrations in Supabase (supabase_migrations/001_auth.sql), then try again.';
   }
 
   return errorMessage;
@@ -213,7 +216,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        // Fallback to backend API so email signup still works even if Supabase user/profile setup is misconfigured.
+        const mapped = mapSupabaseAuthError(error.message);
+        // For database trigger errors, surface the helpful message directly — don't
+        // silently fall back to local SQLite (which is ephemeral on Vercel).
+        const isDatabaseError =
+          error.message.toLowerCase().includes('database error');
+        if (isDatabaseError) {
+          throw new Error(mapped);
+        }
+        // For other Supabase errors (outage, email taken, etc.) fall back to local API.
         const { token, user } = await authApi.signup(input);
         persistSession({ token, user });
         return user;
