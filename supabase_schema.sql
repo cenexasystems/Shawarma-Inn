@@ -64,15 +64,29 @@ CREATE TABLE IF NOT EXISTS public.orders (
   user_id          UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   branch_id        UUID REFERENCES public.branches(id),
   delivery_address TEXT,
+  delivery_type    TEXT NOT NULL DEFAULT 'store_pickup' CHECK (delivery_type IN ('home_delivery', 'store_pickup')),
   customer_name    TEXT,
   customer_phone   TEXT,
-  subtotal         NUMERIC(10,2) NOT NULL,
+  customer_email   TEXT,
+  coupon_code      TEXT,
+  discount_amount  NUMERIC(10,2) NOT NULL DEFAULT 0,
+  subtotal         NUMERIC(10,2) NOT NULL DEFAULT 0,
   gst              NUMERIC(10,2) DEFAULT 0,
+  packing_charge   NUMERIC(10,2) NOT NULL DEFAULT 0,
   total            NUMERIC(10,2) NOT NULL,
-  status           TEXT DEFAULT 'pending',
+  status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','processing','preparing','ready','in_transit','completed','cancelled')),
   notes            TEXT,
-  created_at       TIMESTAMPTZ DEFAULT NOW()
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add missing columns if orders table already existed without them
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_type   TEXT NOT NULL DEFAULT 'store_pickup';
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_email  TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS coupon_code     TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS packing_charge  NUMERIC(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS updated_at      TIMESTAMPTZ DEFAULT NOW();
 
 -- 6. ORDER ITEMS
 CREATE TABLE IF NOT EXISTS public.order_items (

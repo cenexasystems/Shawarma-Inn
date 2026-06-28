@@ -187,6 +187,9 @@ export default function Checkout({ cartData }: CheckoutProps) {
       deliveryAddress: deliveryMethod === 'delivery' ? address : 'STORE PICKUP',
       deliveryType: deliveryMethod === 'delivery' ? 'home_delivery' : 'store_pickup',
       couponCode: appliedCoupon?.code ?? undefined,
+      discountAmount: totals.discount ?? 0,
+      packingCharge: totals.packingCharge ?? 0,
+      gstAmount: totals.gst ?? 0,
     });
 
     if (!result.success) {

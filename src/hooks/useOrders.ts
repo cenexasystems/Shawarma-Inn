@@ -169,6 +169,7 @@ export const useOrders = () => {
     deliveryAddress: string;
     deliveryType?: 'home_delivery' | 'store_pickup';
     couponCode?: string;
+    discountAmount?: number;
     branchId?: string;
     notes?: string;
     gstAmount?: number;
@@ -190,8 +191,10 @@ export const useOrders = () => {
             customer_phone: params.customerPhone,
             customer_email: params.customerEmail ?? null,
             coupon_code: params.couponCode ?? null,
+            discount_amount: params.discountAmount ?? 0,
             subtotal: params.subtotal,
             gst: params.gst,
+            packing_charge: params.packingCharge ?? 0,
             total: params.total,
             notes: params.notes ?? null,
             status: 'pending',
