@@ -14,7 +14,8 @@ import {
   UserCircle,
   LogOut,
   FolderTree,
-  Video
+  Video,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { apiRequest } from '../../lib/api';

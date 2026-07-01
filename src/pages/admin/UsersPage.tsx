@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shield, User, Search, ShieldAlert } from 'lucide-react';
+import { User, Search, ShieldAlert } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 
