@@ -10,8 +10,8 @@ interface MenuTabsProps {
 
 export default function MenuTabs({ active, onChange, counts }: MenuTabsProps) {
   return (
-    <section className="sticky top-[64px] z-40 bg-[var(--black)]/90 backdrop-blur-md py-4 border-b border-[var(--border)] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-8">
+    <section className="sticky top-[64px] z-40 bg-[var(--black)]/90 backdrop-blur-md py-3 md:py-4 border-b border-[var(--border)] overflow-hidden">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8">
         <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
           {CATEGORIES.map(cat => (
             <button

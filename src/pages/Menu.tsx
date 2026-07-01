@@ -53,13 +53,13 @@ export default function Menu({ cartData }: MenuProps) {
       <MenuTabs active={activeCategory} onChange={setActiveCategory} counts={categoryCounts} />
 
       {/* Page title with Favorites toggle */}
-      <header className="max-w-7xl mx-auto px-8 pt-12 pb-8">
-        <div className="flex items-start justify-between gap-4">
+      <header className="max-w-[1600px] mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-6 md:pb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
-            <h1 className="font-bebas text-6xl md:text-8xl tracking-wide text-[var(--white)] uppercase leading-none">
+            <h1 className="font-bebas text-5xl md:text-8xl tracking-wide text-[var(--white)] uppercase leading-none">
               THE MENU
             </h1>
-            <p className="font-body text-[var(--white)]/60 mt-4 tracking-widest text-sm uppercase">
+            <p className="font-body text-[var(--white)]/60 mt-2 md:mt-4 tracking-widest text-xs md:text-sm uppercase">
               Curated heat from the heart of the grill.
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function Menu({ cartData }: MenuProps) {
       </header>
 
       {/* Menu grid */}
-      <section className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
+      <section className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 pb-24">
         {loading &&
           Array.from({ length: 9 }).map((_, i) => (
             <div
