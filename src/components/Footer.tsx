@@ -9,8 +9,8 @@ const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@shawarmainn.in
 
 export default function Footer() {
   return (
-    <footer className="w-full py-20 px-8 bg-[#0a0a0a] border-t border-[var(--border)] relative z-20">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+    <footer className="w-full py-16 md:py-20 px-4 md:px-8 xl:px-12 bg-[#0a0a0a] border-t border-[var(--border)] relative z-20">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
 
         {/* Column 1: Brand & Social */}
         <div className="space-y-6">

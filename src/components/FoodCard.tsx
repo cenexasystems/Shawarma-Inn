@@ -76,18 +76,18 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCard
           </div>
 
           {qty > 0 && updateQty ? (
-            <div className="flex items-center gap-3 bg-white rounded-full px-3 py-1.5 shadow-md">
+            <div className="flex items-center bg-white rounded-full p-1 shadow-md">
               <button
                 onClick={() => updateQty(item.id, qty - 1)}
-                className="text-black font-bold text-sm active:scale-90 transition-transform"
+                className="w-10 h-10 flex items-center justify-center text-black font-bold text-lg active:scale-90 transition-transform"
                 aria-label="Decrease quantity"
               >
                 −
               </button>
-              <span className="text-black text-[12px] font-bold w-4 text-center">{qty}</span>
+              <span className="text-black text-sm font-bold w-6 text-center">{qty}</span>
               <button
                 onClick={() => updateQty(item.id, qty + 1)}
-                className="text-black font-bold text-sm active:scale-90 transition-transform"
+                className="w-10 h-10 flex items-center justify-center text-black font-bold text-lg active:scale-90 transition-transform"
                 aria-label="Increase quantity"
               >
                 +
@@ -96,7 +96,7 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCard
           ) : (
             <button
               onClick={() => addItem(item)}
-              className="bg-white text-black text-[11px] font-bold px-5 py-2 rounded-full uppercase tracking-wider hover:bg-white/90 shadow-md transition-all active:scale-95"
+              className="bg-white text-black text-xs font-bold px-6 py-3 rounded-full uppercase tracking-wider hover:bg-white/90 shadow-md transition-all active:scale-95"
             >
               Add
             </button>

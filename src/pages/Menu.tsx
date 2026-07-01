@@ -53,7 +53,7 @@ export default function Menu({ cartData }: MenuProps) {
       <MenuTabs active={activeCategory} onChange={setActiveCategory} counts={categoryCounts} />
 
       {/* Page title with Favorites toggle */}
-      <header className="max-w-[1600px] mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-6 md:pb-8">
+      <header className="max-w-[1600px] mx-auto px-4 md:px-8 xl:px-12 pt-8 md:pt-12 pb-6 md:pb-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <h1 className="font-bebas text-5xl md:text-8xl tracking-wide text-[var(--white)] uppercase leading-none">
@@ -126,9 +126,9 @@ export default function Menu({ cartData }: MenuProps) {
       </header>
 
       {/* Menu grid */}
-      <section className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 pb-24">
+      <section className="max-w-[1600px] mx-auto px-4 md:px-8 xl:px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-24">
         {loading &&
-          Array.from({ length: 9 }).map((_, i) => (
+          Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
               className="bg-[var(--card-bg)] border-[0.5px] border-[var(--border)] rounded-[16px] overflow-hidden animate-pulse"

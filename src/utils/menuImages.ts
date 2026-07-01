@@ -57,6 +57,15 @@ export function resolveMenuImage(
     if (dbUrl.startsWith('http://') || dbUrl.startsWith('https://')) return dbUrl;
   }
 
+  // 3. Name-based smart fallback (prevent cross-contamination)
+  const nameLower = item.name.toLowerCase();
+  if (nameLower.includes('plate')) {
+    return imageMap['classic-shawarma-plate'];
+  }
+  if (nameLower.includes('roll') || nameLower.includes('shawarma')) {
+    return imageMap['classic-shawarma-roll'];
+  }
+
   // Category fallback
   if (categoryFallbackMap[item.category]) return categoryFallbackMap[item.category];
 
@@ -70,6 +79,15 @@ export function resolveMenuImage(
 export function getRecoveryImage(item: Pick<MenuItem, 'name' | 'category'> & { slug?: string }): string {
   const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   if (imageMap[slug]) return imageMap[slug];
+
+  const nameLower = item.name.toLowerCase();
+  if (nameLower.includes('plate')) {
+    return imageMap['classic-shawarma-plate'];
+  }
+  if (nameLower.includes('roll') || nameLower.includes('shawarma')) {
+    return imageMap['classic-shawarma-roll'];
+  }
+
   if (categoryFallbackMap[item.category]) return categoryFallbackMap[item.category];
   return categoryFallbackMap['Shawarma'];
 }

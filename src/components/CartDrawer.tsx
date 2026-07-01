@@ -87,26 +87,27 @@ export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProp
                   <p className="text-[var(--white)]/40 text-xs font-body">₹{ci.price} each</p>
                   <p className="text-[var(--red)] font-bebas text-lg leading-none">₹{(ci.price * ci.qty).toFixed(2)}</p>
                 </div>
-                <div className="flex items-center bg-white/5 rounded-full px-2 py-1 gap-3 flex-shrink-0">
+                <div className="flex items-center bg-white/5 rounded-full p-1 gap-2 flex-shrink-0">
                   <button
                     id={`cart-decrease-${ci.id}`}
                     onClick={() => updateQty(ci.id, ci.qty - 1)}
-                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 text-xs text-white"
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-lg text-white font-bold"
                   >
                     −
                   </button>
-                  <span className="text-xs font-bold w-4 text-center text-white">{ci.qty}</span>
+                  <span className="text-sm font-bold w-6 text-center text-white">{ci.qty}</span>
                   <button
                     id={`cart-increase-${ci.id}`}
                     onClick={() => updateQty(ci.id, ci.qty + 1)}
-                    className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 text-xs text-white"
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-lg text-white font-bold"
                   >
                     +
                   </button>
                 </div>
                 <button
                   onClick={() => removeItem(ci.id)}
-                  className="text-[var(--white)]/20 hover:text-[var(--red)] transition-colors ml-1"
+                  className="text-[var(--white)]/20 hover:text-[var(--red)] transition-colors ml-1 p-3 -mr-3"
+                  aria-label="Remove item"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

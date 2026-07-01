@@ -27,7 +27,12 @@ export default function AdminLayout() {
   
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const notifIdRef = useRef(0);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location]);
 
   const tokenRequired = token || '';
 
@@ -114,7 +119,16 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden font-body selection:bg-[#ef8f2f] selection:text-black">
-      <aside className="w-full md:w-64 bg-[#141414] border-r border-white/5 flex flex-col shrink-0 relative z-50">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-[60] lg:hidden backdrop-blur-sm" 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#141414] border-r border-white/5 flex flex-col shrink-0 z-[70] transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-5 border-b border-white/5 flex items-center justify-between">
           <div>
             <h1 className="font-bebas text-3xl tracking-[2px] text-[#ef8f2f]">Shawarma Inn</h1>
@@ -210,9 +224,23 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#101010] to-[#141414] p-4 md:p-8">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex items-center justify-between p-4 bg-[#141414] border-b border-white/5 shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="p-2 -m-2 text-white/70 hover:text-white" aria-label="Open menu">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="font-bebas text-xl text-[#ef8f2f] tracking-[2px] uppercase">Shawarma Inn</h1>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#101010] to-[#141414] p-4 md:p-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
