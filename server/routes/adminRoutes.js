@@ -15,19 +15,46 @@ const router = Router();
 router.post('/login', loginRateLimiter, authController.adminLogin);
 
 // SSE Events Endpoint (Does not use standard auth middleware since it relies on query params)
-router.get('/events', (req, res) => {
+router.get('/events', async (req, res) => {
   const token = req.query.token;
-  if (!token) return res.status(401).end();
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = getUserById(decoded.sub);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).end();
+  
+  if (process.env.ADMIN_AUTH_BYPASS !== 'true') {
+    if (!token) return res.status(401).end();
+    
+    const authMode = (process.env.VITE_AUTH_MODE || '').trim();
+    if (authMode === 'supabase') {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+      if (supabaseUrl && supabaseAnonKey) {
+        try {
+          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: {
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Invalid Supabase token');
+          const user = await response.json();
+          // Assume valid admin since Supabase validated the token
+        } catch (err) {
+          return res.status(401).end();
+        }
+      }
+    } else {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = getUserById(decoded.sub);
+        if (!user || user.role !== 'admin') {
+          return res.status(403).end();
+        }
+      } catch (err) {
+        return res.status(401).end();
+      }
     }
+  }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 

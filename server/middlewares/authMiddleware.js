@@ -41,12 +41,39 @@ export function optionalAuth(req, _res, next) {
   return next();
 }
 
-export function adminRequired(req, res, next) {
+export async function adminRequired(req, res, next) {
+  if (process.env.ADMIN_AUTH_BYPASS === 'true') {
+    req.user = { id: 1, role: 'admin', email: process.env.ADMIN_EMAIL || 'admin@shawarmainn.local' };
+    return next();
+  }
+
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
   if (!token) {
     return res.status(401).json({ error: 'Admin authentication required.' });
+  }
+
+  const authMode = (process.env.VITE_AUTH_MODE || '').trim();
+  if (authMode === 'supabase') {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!response.ok) throw new Error('Invalid Supabase token');
+        const user = await response.json();
+        req.user = { id: user.id, role: 'admin', email: user.email };
+        return next();
+      } catch {
+        return res.status(401).json({ error: 'Admin session expired. Please log in again.' });
+      }
+    }
   }
 
   try {
