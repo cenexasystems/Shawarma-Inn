@@ -1,6 +1,7 @@
 
 import type { CartItem } from '../../hooks/useCart';
 import type { CheckoutTotals } from '../../config/pricing';
+import { getRecoveryImage } from '../../utils/menuImages';
 import CouponSection from './CouponSection';
 
 interface CartSummaryProps {
@@ -42,7 +43,15 @@ export default function CartSummary({
           <div key={ci.id} className="flex gap-4">
             <div className="relative w-16 h-16 rounded-xl bg-black/40 border border-white/5 overflow-hidden flex-shrink-0">
               {ci.image ? (
-                <img src={ci.image} alt={ci.name} className="w-full h-full object-cover" />
+                <img
+                  src={ci.image}
+                  alt={ci.name}
+                  className="w-full h-full object-cover"
+                  onError={({ currentTarget }) => {
+                    currentTarget.onerror = null;
+                    currentTarget.src = getRecoveryImage({ name: ci.name, category: 'Shawarma' });
+                  }}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/10">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { getRecoveryImage } from '../utils/menuImages';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -71,12 +72,8 @@ export default function CartDrawer({ isOpen, onClose, cartData }: CartDrawerProp
                       alt={ci.name}
                       className="w-full h-full object-cover"
                       onError={({ currentTarget }) => {
-                        const parent = currentTarget.parentElement;
-                        currentTarget.style.display = 'none';
-                        if (parent) {
-                          parent.textContent = '🌯';
-                          parent.className = 'w-full h-full flex items-center justify-center text-2xl';
-                        }
+                        currentTarget.onerror = null;
+                        currentTarget.src = getRecoveryImage({ name: ci.name, category: 'Shawarma' });
                       }}
                     />
                   ) : (
