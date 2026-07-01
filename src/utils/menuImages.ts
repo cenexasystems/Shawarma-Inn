@@ -2,11 +2,10 @@
  * Product Image Intelligence Engine
  *
  * Priority chain for any menu item:
- *   1. DB image_url — absolute HTTP/S URL (e.g. admin-set Supabase Storage CDN link)
- *   2. DB image_url — Supabase Storage path (e.g. "menu-images/shawarma/…") → resolved via SDK
- *   3. DB image_url / local JSON image — local path (e.g. "/images/menu/…") → served if file exists
- *   4. Semantic name match → verified Unsplash image for that EXACT food sub-type
- *   5. Category fallback → correct-category Unsplash pool (never crosses food types)
+ *   1. Premium Commercial Assets (Local exact match in imageMap overrides EVERYTHING)
+ *   2. DB image_url — absolute HTTP/S URL (e.g. admin-set Supabase Storage CDN link)
+ *   3. DB image_url — Supabase Storage path (e.g. "menu-images/shawarma/…") → resolved via SDK
+ *   4. Category fallback → correct-category Unsplash pool (never crosses food types)
  *
  * Rule: a milkshake will NEVER show a burger image.
  *       A shawarma will NEVER show a pizza image.
@@ -44,18 +43,19 @@ function isStoragePath(s: string): boolean {
 export function resolveMenuImage(
   item: Pick<MenuItem, 'name' | 'category'> & { image?: string; image_url?: string | null; slug?: string },
 ): string {
+  // Generate a fallback slug from name if slug isn't provided
+  const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  // 1. Premium Commercial Assets (Local exact match overrides EVERYTHING)
+  if (imageMap[slug]) return imageMap[slug];
+
+  // 2. DB image_url (absolute or Supabase Storage)
   const dbUrl = item.image_url ?? null;
 
   if (dbUrl) {
     if (isStoragePath(dbUrl)) return storagePublicUrl(dbUrl);
     if (dbUrl.startsWith('http://') || dbUrl.startsWith('https://')) return dbUrl;
   }
-
-  // Generate a fallback slug from name if slug isn't provided
-  const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-  // Exact map match
-  if (imageMap[slug]) return imageMap[slug];
 
   // Category fallback
   if (categoryFallbackMap[item.category]) return categoryFallbackMap[item.category];
