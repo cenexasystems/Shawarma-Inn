@@ -22,6 +22,7 @@ export const useProfile = () => {
   const { user, token, updateProfile: updateAuthProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,12 +107,41 @@ export const useProfile = () => {
     }
   }, [user?.id, token]);
 
+  const fetchFavorites = useCallback(async () => {
+    if (!user?.id) {
+      setFavorites([]);
+      return;
+    }
+    
+    if (useSupabaseAuth) {
+      const { data } = await supabase
+        .from('user_favorites')
+        .select('*')
+        .eq('user_id', String(user.id));
+      setFavorites(data || []);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users/favorites', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const payload = await response.json();
+        setFavorites(payload.favorites || []);
+      }
+    } catch {
+      setFavorites([]);
+    }
+  }, [user?.id, token]);
+
   useEffect(() => {
     if (user?.id) {
       fetchProfile();
       fetchAddresses();
+      fetchFavorites();
     }
-  }, [user?.id, fetchProfile, fetchAddresses]);
+  }, [user?.id, fetchProfile, fetchAddresses, fetchFavorites]);
 
   const updateProfile = async (updates: Partial<Pick<Profile, 'name' | 'phone' | 'avatar_url' | 'status'>>) => {
     const updatedUser = await updateAuthProfile({
@@ -216,9 +246,44 @@ export const useProfile = () => {
     }
   };
 
+  const toggleFavorite = async (menuItem: any) => {
+    const isFav = favorites.some((f) => String(f.menu_item_id) === String(menuItem.id));
+    if (useSupabaseAuth && user?.id) {
+      if (isFav) {
+        await supabase.from('user_favorites').delete().eq('user_id', String(user.id)).eq('menu_item_id', String(menuItem.id));
+      } else {
+        await supabase.from('user_favorites').insert({
+          user_id: String(user.id),
+          menu_item_id: String(menuItem.id),
+          name: menuItem.name,
+          price: menuItem.price,
+          category: menuItem.category,
+          image_url: menuItem.image_url,
+        });
+      }
+      await fetchFavorites();
+      return;
+    }
+
+    try {
+      if (isFav) {
+        await fetch(`/api/users/favorites/${menuItem.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await fetch('/api/users/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(menuItem),
+        });
+      }
+      await fetchFavorites();
+    } catch {
+      // ignore
+    }
+  };
+
   return {
-    profile, addresses, loading, error,
-    updateProfile, addAddress, deleteAddress, setDefaultAddress,
+    profile, addresses, favorites, loading, error,
+    updateProfile, addAddress, deleteAddress, setDefaultAddress, toggleFavorite,
     refresh: fetchProfile,
   };
 };

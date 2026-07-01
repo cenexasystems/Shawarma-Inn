@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
+import type { ReactNode } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import Loader from './components/Loader';
 import Navbar from './components/Navbar';
@@ -18,9 +19,27 @@ import { runAutomaticMigration, initializeWithHealthCheck } from './lib/supabase
 const Profile = lazy(() => import('./pages/Profile'));
 const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const DashboardPage = lazy(() => import('./pages/admin/DashboardPage'));
+const OrdersPage = lazy(() => import('./pages/admin/OrdersPage'));
+const MenuPage = lazy(() => import('./pages/admin/MenuPage'));
+const CategoriesPage = lazy(() => import('./pages/admin/CategoriesPage'));
+const CustomersPage = lazy(() => import('./pages/admin/CustomersPage'));
+const UsersPage = lazy(() => import('./pages/admin/UsersPage'));
+const CouponsPage = lazy(() => import('./pages/admin/CouponsPage'));
+const ReviewsPage = lazy(() => import('./pages/admin/ReviewsPage'));
+const FranchisePage = lazy(() => import('./pages/admin/FranchisePage'));
+const VideosPage = lazy(() => import('./pages/admin/VideosPage'));
+const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
+const ActivityLogPage = lazy(() => import('./pages/admin/ActivityLogPage'));
 const PosBilling = lazy(() => import('./pages/PosBilling'));
 const Analytics = lazy(() => import('./pages/Analytics'));
+
+function ProtectedAdminRoute({ children }: { children: ReactNode }) {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return <Navigate to="/admin/login" replace />;
+  return <>{children}</>;
+}
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -82,7 +101,7 @@ export default function App() {
       return;
     }
     window.scrollTo(0, 0);
-  }, [location.pathname]);
+  }, [location.pathname, location.hash]);
 
   useEffect(() => {
     if (!location.hash) {
@@ -146,33 +165,56 @@ export default function App() {
         <Route
           path="/admin/login"
           element={
-            <Suspense fallback={<Loader />}>
-              <AdminLogin />
-            </Suspense>
+            user?.role === 'admin' ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Suspense fallback={<Loader />}>
+                <AdminLogin />
+              </Suspense>
+            )
           }
         />
         <Route
           path="/admin"
           element={
-            <Suspense fallback={<Loader />}>
-              <AdminDashboard />
-            </Suspense>
+            <ProtectedAdminRoute>
+              <Suspense fallback={<Loader />}>
+                <AdminLayout />
+              </Suspense>
+            </ProtectedAdminRoute>
           }
-        />
+        >
+          <Route index element={<Suspense fallback={<Loader />}><DashboardPage /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<Loader />}><OrdersPage /></Suspense>} />
+          <Route path="menu" element={<Suspense fallback={<Loader />}><MenuPage /></Suspense>} />
+          <Route path="categories" element={<Suspense fallback={<Loader />}><CategoriesPage /></Suspense>} />
+          <Route path="customers" element={<Suspense fallback={<Loader />}><CustomersPage /></Suspense>} />
+          <Route path="users" element={<Suspense fallback={<Loader />}><UsersPage /></Suspense>} />
+          <Route path="coupons" element={<Suspense fallback={<Loader />}><CouponsPage /></Suspense>} />
+          <Route path="reviews" element={<Suspense fallback={<Loader />}><ReviewsPage /></Suspense>} />
+          <Route path="franchise" element={<Suspense fallback={<Loader />}><FranchisePage /></Suspense>} />
+          <Route path="videos" element={<Suspense fallback={<Loader />}><VideosPage /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<Loader />}><SettingsPage /></Suspense>} />
+          <Route path="activity" element={<Suspense fallback={<Loader />}><ActivityLogPage /></Suspense>} />
+        </Route>
         <Route
           path="/pos"
           element={
-            <Suspense fallback={<Loader />}>
-              <PosBilling />
-            </Suspense>
+            <ProtectedAdminRoute>
+              <Suspense fallback={<Loader />}>
+                <PosBilling />
+              </Suspense>
+            </ProtectedAdminRoute>
           }
         />
         <Route
           path="/analytics"
           element={
-            <Suspense fallback={<Loader />}>
-              <Analytics />
-            </Suspense>
+            <ProtectedAdminRoute>
+              <Suspense fallback={<Loader />}>
+                <Analytics />
+              </Suspense>
+            </ProtectedAdminRoute>
           }
         />
       </Routes>

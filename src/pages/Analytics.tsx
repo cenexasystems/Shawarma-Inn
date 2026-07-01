@@ -5,15 +5,19 @@ import {
 } from 'recharts';
 import { apiRequest } from '../lib/api';
 
-type DateRange = 'today' | '7days' | '30days';
+type DateRange = 'today' | '7days' | '30days' | 'custom';
 
 const COLORS = ['#f97316', '#22c55e', '#f59e0b', '#14b8a6', '#a855f7', '#ef4444'];
 
-function getDateRange(range: DateRange): { dateFrom: string; dateTo: string } {
+function getDateRange(range: DateRange, customFrom?: string, customTo?: string): { dateFrom: string; dateTo: string } {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const today = fmt(now);
+
+  if (range === 'custom' && customFrom && customTo) {
+    return { dateFrom: customFrom, dateTo: customTo };
+  }
 
   if (range === 'today') return { dateFrom: today, dateTo: today };
 
@@ -24,6 +28,8 @@ function getDateRange(range: DateRange): { dateFrom: string; dateTo: string } {
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState<DateRange>('7days');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
   const [loading, setLoading] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
   const [summary, setSummary] = useState<any>(null);
@@ -33,7 +39,7 @@ export default function Analytics() {
     setLoading(true);
     setError('');
     try {
-      const { dateFrom, dateTo } = getDateRange(dateRange);
+      const { dateFrom, dateTo } = getDateRange(dateRange, customFrom, customTo);
       const qs = `dateFrom=${dateFrom}&dateTo=${dateTo}`;
       const [analyticsRes, summaryRes, fullRes] = await Promise.all([
         apiRequest<any>(`/admin/analytics?${qs}`),
@@ -51,7 +57,9 @@ export default function Analytics() {
   };
 
   useEffect(() => {
-    void loadData();
+    if (dateRange !== 'custom') {
+      void loadData();
+    }
   }, [dateRange]);
 
   const kpiData = useMemo(() => {
@@ -60,10 +68,15 @@ export default function Analytics() {
     const totalOrders = (analytics.revenueByDay as any[]).reduce((s: number, d: any) => s + Number(d.orders), 0);
     const avgValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const itemsSold = (analytics.topProducts as any[]).reduce((s: number, p: any) => s + Number(p.qty), 0);
+    const returning = analytics.customerAnalytics?.returningCustomers || 0;
+    const repeatRate = analytics.customerAnalytics?.repeatOrderRate || 0;
+
     return [
       { label: 'Total Revenue', value: totalRevenue, format: 'currency', icon: '💰', color: '#f97316' },
       { label: 'Total Orders', value: totalOrders, format: 'number', icon: '📦', color: '#22c55e' },
       { label: 'Avg Order Value', value: avgValue, format: 'currency', icon: '📊', color: '#f59e0b' },
+      { label: 'Returning Customers', value: returning, format: 'number', icon: '👥', color: '#a855f7' },
+      { label: 'Repeat Order Rate', value: repeatRate, format: 'percent', icon: '🔁', color: '#ec4899' },
       { label: 'Items Sold', value: itemsSold, format: 'number', icon: '🛍️', color: '#14b8a6' },
     ];
   }, [analytics]);
@@ -107,8 +120,8 @@ export default function Analytics() {
             <h1 className="font-bebas text-6xl tracking-[3px] uppercase text-[#f97316]">Analytics</h1>
             <p className="text-white/60 text-sm mt-2">Live database dashboard — completed orders only</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {(['today', '7days', '30days'] as DateRange[]).map((range) => (
+          <div className="flex flex-wrap gap-2 items-center">
+            {(['today', '7days', '30days', 'custom'] as DateRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
@@ -116,9 +129,35 @@ export default function Analytics() {
                   dateRange === range ? 'bg-[#f97316] text-black' : 'bg-white/10 text-white/70 hover:bg-white/20'
                 }`}
               >
-                {range === 'today' ? 'Today' : range === '7days' ? '7 Days' : '30 Days'}
+                {range === 'today' ? 'Today' : range === '7days' ? '7 Days' : range === '30days' ? '30 Days' : 'Custom'}
               </button>
             ))}
+
+            {dateRange === 'custom' && (
+              <div className="flex items-center gap-2 mx-2">
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="bg-white/10 border border-white/20 text-white text-xs px-3 py-2 rounded-lg"
+                />
+                <span className="text-white/50 text-xs">to</span>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="bg-white/10 border border-white/20 text-white text-xs px-3 py-2 rounded-lg"
+                />
+                <button
+                  onClick={() => { void loadData(); }}
+                  disabled={!customFrom || !customTo}
+                  className="px-3 py-2 rounded-lg text-xs font-bold uppercase bg-[#f97316] text-black hover:bg-[#ea580c] disabled:opacity-50"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+
             <button
               onClick={exportCSV}
               className="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/10 text-white/70 hover:bg-white/20 transition-all"
@@ -156,7 +195,7 @@ export default function Analytics() {
                 </div>
                 <p className="text-white/60 text-xs uppercase tracking-widest mb-2">{kpi.label}</p>
                 <p style={{ color: kpi.color }} className="font-bebas text-4xl tracking-widest">
-                  {kpi.format === 'currency' ? `₹${Math.round(kpi.value).toLocaleString('en-IN')}` : kpi.value.toLocaleString('en-IN')}
+                  {kpi.format === 'currency' ? `₹${Math.round(kpi.value).toLocaleString('en-IN')}` : kpi.format === 'percent' ? `${kpi.value}%` : kpi.value.toLocaleString('en-IN')}
                 </p>
               </div>
             ))}
@@ -250,24 +289,62 @@ export default function Analytics() {
               </div>
 
               <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6">
-                <h2 className="font-bebas text-2xl tracking-widest uppercase text-white mb-4">Orders by Hour</h2>
+                <h2 className="font-bebas text-2xl tracking-widest uppercase text-white mb-4">Peak Hourly Orders</h2>
                 {hourlyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={hourlyData}>
+                    <AreaChart data={hourlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                      <XAxis dataKey="hour" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '10px' }} />
+                      <XAxis dataKey="hour" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} />
                       <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} />
-                      <Tooltip
-                        contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.2)' }}
-                        formatter={(v: any, name: any) => [name === 'revenue' ? `₹${Number(v).toLocaleString('en-IN')}` : v, name === 'revenue' ? 'Revenue' : 'Orders']}
-                      />
-                      <Legend />
-                      <Bar dataKey="orders" fill="#22c55e" name="Orders" />
-                      <Bar dataKey="revenue" fill="#f97316" name="Revenue" />
-                    </BarChart>
+                      <Tooltip contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.2)' }} />
+                      <Area type="monotone" dataKey="orders" stroke="#14b8a6" fillOpacity={1} fill="url(#colorOrders)" />
+                    </AreaChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-[300px] flex items-center justify-center text-white/30 text-sm">No hourly data</div>
+                )}
+              </div>
+            </div>
+
+            {/* Charts Row 3: Coupon Analytics */}
+            <div className="grid grid-cols-1 gap-4 mb-8">
+              <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6">
+                <h2 className="font-bebas text-2xl tracking-widest uppercase text-white mb-4">Coupon Analytics</h2>
+                {analytics.couponAnalytics?.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-white/40">
+                          <th className="p-4 font-normal">Coupon Code</th>
+                          <th className="p-4 font-normal">Times Used</th>
+                          <th className="p-4 font-normal">Total Discount Given</th>
+                          <th className="p-4 font-normal">Total Revenue Generated</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analytics.couponAnalytics.map((c: any) => (
+                          <tr key={c.coupon_code} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="p-4">
+                              <span className="bg-[#d62b2b]/20 text-[#d62b2b] px-2 py-1 rounded font-mono font-bold text-sm tracking-wider">
+                                {c.coupon_code}
+                              </span>
+                            </td>
+                            <td className="p-4 text-white">{c.uses}</td>
+                            <td className="p-4 text-green-400 font-semibold">₹{c.total_discount?.toLocaleString('en-IN') || 0}</td>
+                            <td className="p-4 text-white font-semibold">₹{c.revenue_with_coupon?.toLocaleString('en-IN') || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-[100px] flex items-center justify-center text-white/30 text-sm">No coupon usage data</div>
                 )}
               </div>
             </div>

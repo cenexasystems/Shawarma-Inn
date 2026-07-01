@@ -26,7 +26,7 @@ interface GeneratedOrder {
 type OrderType = 'dine-in' | 'takeaway' | 'delivery';
 
 export default function PosBilling() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
 
   const [menuItems, setMenuItems] = useState<PosMenuItem[]>([]);
   const [cart, setCart] = useState<Record<number, number>>({});

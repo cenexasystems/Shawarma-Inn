@@ -16,9 +16,9 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  signup: (input: { email: string; password: string; name?: string; phone?: string }) => Promise<AuthUser>;
-  login: (input: { email: string; password: string }) => Promise<AuthUser>;
-  adminLogin: (input: { email: string; password: string }) => Promise<AuthUser>;
+  signup: (input: { email: string; password: string; name?: string; phone?: string; rememberMe?: boolean }) => Promise<AuthUser>;
+  login: (input: { email: string; password: string; rememberMe?: boolean }) => Promise<AuthUser>;
+  adminLogin: (input: { email: string; password: string; rememberMe?: boolean }) => Promise<AuthUser>;
   signInWithGoogle: (idToken: string) => Promise<AuthUser>;
   logout: () => void;
   refreshUser: () => Promise<AuthUser | null>;
@@ -62,7 +62,7 @@ function mapSupabaseAuthError(errorMessage: string) {
 }
 
 function readSessionFromStorage(): AuthSession | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
   if (!raw) {
     return null;
   }
@@ -82,13 +82,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const persistSession = useCallback((nextSession: AuthSession | null) => {
+  const persistSession = useCallback((nextSession: AuthSession | null, rememberMe?: boolean) => {
     setSession(nextSession);
     if (!nextSession) {
       localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
       return;
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+    if (rememberMe === true) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+      sessionStorage.removeItem(STORAGE_KEY);
+    } else if (rememberMe === false) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      if (sessionStorage.getItem(STORAGE_KEY)) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+      }
+    }
   }, []);
 
   const buildSupabaseAuthUser = useCallback(async (supabaseUser: User): Promise<AuthUser> => {
@@ -201,7 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initialize();
   }, [refreshUser, syncSupabaseSession]);
 
-  const signup = useCallback(async (input: { email: string; password: string; name?: string; phone?: string }) => {
+  const signup = useCallback(async (input: { email: string; password: string; name?: string; phone?: string; rememberMe?: boolean }) => {
     if (useSupabaseAuth) {
       const { data, error } = await supabase.auth.signUp({
         email: input.email,
@@ -226,7 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         // For other Supabase errors (outage, email taken, etc.) fall back to local API.
         const { token, user } = await authApi.signup(input);
-        persistSession({ token, user });
+        persistSession({ token, user }, input.rememberMe);
         return user;
       }
 
@@ -262,11 +275,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { token, user } = await authApi.signup(input);
-    persistSession({ token, user });
+    persistSession({ token, user }, input.rememberMe);
     return user;
   }, [persistSession, syncSupabaseSession]);
 
-  const login = useCallback(async (input: { email: string; password: string }) => {
+  const login = useCallback(async (input: { email: string; password: string; rememberMe?: boolean }) => {
     if (useSupabaseAuth) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: input.email,
@@ -276,7 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         // Fallback to backend API for local email accounts and Supabase outages.
         const { token, user } = await authApi.login(input);
-        persistSession({ token, user });
+        persistSession({ token, user }, input.rememberMe);
         return user;
       }
 
@@ -289,11 +302,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { token, user } = await authApi.login(input);
-    persistSession({ token, user });
+    persistSession({ token, user }, input.rememberMe);
     return user;
   }, [persistSession, syncSupabaseSession]);
 
-  const adminLogin = useCallback(async (input: { email: string; password: string }) => {
+  const adminLogin = useCallback(async (input: { email: string; password: string; rememberMe?: boolean }) => {
     if (useSupabaseAuth) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: input.email,
@@ -323,7 +336,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { token, user } = await authApi.adminLogin(input);
-    persistSession({ token, user });
+    persistSession({ token, user }, input.rememberMe);
     return user;
   }, [persistSession, syncSupabaseSession]);
 

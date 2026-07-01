@@ -19,6 +19,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -67,7 +68,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       setSaving(true);
       if (mode === 'signup') {
-        await signup({ email, password, name: name?.trim(), phone: phone?.trim() });
+        await signup({ email, password, name: name?.trim(), phone: phone?.trim(), rememberMe });
         // Clear form and close on success
         setName('');
         setPhone('');
@@ -75,7 +76,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setPassword('');
         onClose();
       } else {
-        await login({ email, password });
+        await login({ email, password, rememberMe });
         setEmail('');
         setPassword('');
         onClose();
@@ -268,6 +269,30 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 )}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setRememberMe((v) => !v)}
+              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${
+                rememberMe ? 'bg-[var(--red)] border-[var(--red)]' : 'bg-transparent border-white/20'
+              }`}
+              aria-checked={rememberMe}
+              role="checkbox"
+            >
+              {rememberMe && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+            <span
+              className="text-sm text-white/60 cursor-pointer select-none font-body"
+              onClick={() => setRememberMe((v) => !v)}
+            >
+              Remember me
+            </span>
           </div>
 
           {error && (

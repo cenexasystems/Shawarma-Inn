@@ -2,7 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { Order } from './useOrders';
 
-export const ADMIN_ORDER_STATUSES = ['pending', 'confirmed', 'delivered', 'cancelled'] as const;
+export const ADMIN_ORDER_STATUSES = [
+  'pending',
+  'accepted',
+  'processing',
+  'preparing',
+  'ready',
+  'in_transit',
+  'completed',
+  'cancelled',
+] as const;
 export type AdminOrderStatus = typeof ADMIN_ORDER_STATUSES[number];
 
 export interface AdminOrder extends Omit<Order, 'delivery_address'> {
@@ -15,6 +24,12 @@ export const useAdminOrders = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [revenue, setRevenue] = useState(0);
+
+  const computeRevenue = (orderList: AdminOrder[]) =>
+    orderList
+      .filter((o) => o.status === 'completed')
+      .reduce((sum, o) => sum + o.total, 0);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -22,7 +37,9 @@ export const useAdminOrders = () => {
     try {
       const { data, error: supabaseError } = await supabase
         .from('orders')
-        .select('id, status, total, created_at, customer_name, customer_phone, delivery_address, order_items(id, name, price, quantity)')
+        .select(
+          'id, status, total, created_at, customer_name, customer_phone, delivery_address, order_items(id, name, price, quantity)',
+        )
         .order('created_at', { ascending: false });
 
       if (supabaseError) {
@@ -56,6 +73,7 @@ export const useAdminOrders = () => {
       }));
 
       setOrders(mappedOrders);
+      setRevenue(computeRevenue(mappedOrders));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load orders');
@@ -68,19 +86,64 @@ export const useAdminOrders = () => {
     void fetchOrders();
   }, [fetchOrders]);
 
-  const updateOrderStatus = useCallback(async (orderId: string, status: AdminOrderStatus) => {
-    setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status } : order)));
+  // Supabase Realtime: live order feed for admin
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        () => {
+          void fetchOrders();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          const updated = payload.new as { id: string; status: string };
+          setOrders((prev) => {
+            const next = prev.map((o) =>
+              o.id === updated.id ? { ...o, status: updated.status } : o,
+            );
+            setRevenue(computeRevenue(next));
+            return next;
+          });
+        },
+      )
+      .subscribe();
 
-    const { error: supabaseError } = await supabase.from('orders').update({ status }).eq('id', orderId);
-
-    if (supabaseError) {
-      setError(supabaseError.message);
-      await fetchOrders();
-      return false;
-    }
-
-    return true;
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [fetchOrders]);
 
-  return { orders, loading, error, refresh: fetchOrders, updateOrderStatus };
+  const updateOrderStatus = useCallback(
+    async (orderId: string, status: AdminOrderStatus) => {
+      // Optimistic update + instant revenue recalculation
+      setOrders((prev) => {
+        const next = prev.map((order) =>
+          order.id === orderId ? { ...order, status } : order,
+        );
+        setRevenue(computeRevenue(next));
+        return next;
+      });
+
+      const { error: supabaseError } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+
+      if (supabaseError) {
+        setError(supabaseError.message);
+        await fetchOrders();
+        return false;
+      }
+
+      return true;
+    },
+    [fetchOrders],
+  );
+
+  return { orders, loading, error, revenue, refresh: fetchOrders, updateOrderStatus };
 };

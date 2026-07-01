@@ -115,7 +115,7 @@ export const useOrders = () => {
     setOrders([]);
   }, [user?.id, fetchOrders]);
 
-  // Customer SSE: subscribe to order_status events for real-time tracking
+  // Customer SSE: subscribe to order_status events (local API mode only)
   useEffect(() => {
     if (!user?.id || user.role !== 'user' || !token || useSupabaseAuth) return;
 
@@ -125,7 +125,6 @@ export const useOrders = () => {
     es.addEventListener('order_status', (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data || '{}');
-        // Update the specific order's status in state without full refetch
         setOrders((prev) =>
           prev.map((o) =>
             String(o.id) === String(data.orderId)
@@ -134,7 +133,6 @@ export const useOrders = () => {
           ),
         );
       } catch {
-        // Fallback to full refresh on parse error
         void fetchOrders();
       }
     });
@@ -145,7 +143,62 @@ export const useOrders = () => {
     };
   }, [user?.id, user?.role, token, fetchOrders]);
 
+  // Supabase Realtime: live order status updates for the logged-in customer
+  useEffect(() => {
+    if (!user?.id || user.role !== 'user' || !useSupabaseAuth) return;
+
+    const channel = supabase
+      .channel(`customer-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: string; status: string };
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === updated.id ? { ...o, status: updated.status } : o,
+            ),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.role]);
+
   const fetchOrderHistory = async (orderId: string): Promise<OrderStatusHistory[]> => {
+    if (useSupabaseAuth) {
+      try {
+        const { data } = await supabase
+          .from('order_status_history')
+          .select('previous_status, status, note, created_at')
+          .eq('order_id', orderId)
+          .order('created_at', { ascending: true });
+
+        return (data || []).map((row: {
+          previous_status: string | null;
+          status: string;
+          note: string | null;
+          created_at: string;
+        }) => ({
+          previous_status: row.previous_status,
+          status: row.status,
+          note: row.note || null,
+          remarks: null,
+          created_at: row.created_at,
+        }));
+      } catch {
+        return [];
+      }
+    }
+
     if (!token) return [];
     try {
       const payload = await apiRequest<{ history: OrderStatusHistory[] }>(

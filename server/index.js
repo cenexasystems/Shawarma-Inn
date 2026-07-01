@@ -1,263 +1,19 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import dotenv from 'dotenv';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import * as XLSX from 'xlsx';
-import { db, dbPath, mapUserRow, getNextOrderNumber, recordOrderStatusChange } from './db.js';
-
-dotenv.config({ override: true });
+import { db, dbPath, getNextOrderNumber, recordOrderStatusChange } from './db.js';
+import app from './app.js';
+import { authRequired, adminRequired, optionalAuth } from './middlewares/authMiddleware.js';
+import { JWT_SECRET } from './config/env.js';
+import { broadcastSSE, broadcastSSEToUser } from './events/sse.js';
+import jwt from 'jsonwebtoken';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const app = express();
 const PORT = Number(process.env.PORT || 5000);
-const JWT_SECRET = String(process.env.JWT_SECRET || '').trim();
-
-if (!JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET environment variable is required and must not be empty.');
-  process.exit(1);
-}
-
-const allowedOrigins = String(process.env.CORS_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-if (allowedOrigins.length === 0) {
-  allowedOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
-}
-
-app.use(helmet());
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Allow same-origin/non-browser requests (no Origin header) and listed origins.
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error('Not allowed by CORS'));
-    },
-  }),
-);
-app.use(express.json({ limit: '1mb' }));
-
-const loginRateLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many login attempts. Please try again later.' },
-});
-
-function sanitizeEmail(email) {
-  return String(email || '').trim().toLowerCase();
-}
-
-function sanitizeReviewText(text) {
-  return String(text || '').replace(/\s+/g, ' ').trim();
-}
-
-function createToken(user) {
-  return jwt.sign(
-    {
-      sub: user.id,
-      role: user.role,
-      email: user.email,
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' },
-  );
-}
-
-function getUserById(userId) {
-  const row = db
-    .prepare(
-      `SELECT
-        id,
-        email,
-        role,
-        name,
-        phone,
-        avatar_url,
-        status,
-        provider,
-        is_profile_complete
-      FROM users
-      WHERE id = ?`,
-    )
-    .get(Number(userId));
-
-  return mapUserRow(row);
-}
-
-function authRequired(req, res, next) {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = getUserById(decoded.sub);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    req.user = user;
-    return next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-}
-
-function optionalAuth(req, _res, next) {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-
-  if (!token) {
-    return next();
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = getUserById(decoded.sub);
-  } catch {
-    req.user = null;
-  }
-
-  return next();
-}
-
-function adminRequired(req, res, next) {
-
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Admin authentication required.' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = getUserById(decoded.sub);
-    if (!user) return res.status(401).json({ error: 'Admin account not found.' });
-    if (user.role !== 'admin') return res.status(403).json({ error: 'Admin access required.' });
-    req.user = user;
-    return next();
-  } catch {
-    return res.status(401).json({ error: 'Admin session expired. Please log in again.' });
-  }
-}
-
-// ── SSE Realtime ──────────────────────────────────────────────────────────
-
-const sseClients = new Map(); // clientId → { res, role, userId }
-
-function broadcastSSE(event, data) {
-  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  for (const [id, client] of sseClients) {
-    try {
-      client.res.write(payload);
-    } catch {
-      sseClients.delete(id);
-    }
-  }
-}
-
-// Broadcast to a specific user only (for customer-scoped events)
-function broadcastSSEToUser(userId, event, data) {
-  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  for (const [id, client] of sseClients) {
-    if (client.userId && String(client.userId) === String(userId)) {
-      try {
-        client.res.write(payload);
-      } catch {
-        sseClients.delete(id);
-      }
-    }
-  }
-}
-
-let sseClientId = 0;
-
-// Admin SSE — supports token via Authorization header OR ?token= query param
-app.get('/api/admin/events', (req, res) => {
-  // Support token in query param (EventSource API cannot send headers)
-  let user = null;
-
-  const header = req.headers.authorization || '';
-  const queryToken = req.query.token ? String(req.query.token) : null;
-  const token = header.startsWith('Bearer ') ? header.slice(7) : queryToken;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Admin authentication required.' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    user = getUserById(decoded.sub);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required.' });
-    }
-  } catch {
-    return res.status(401).json({ error: 'Invalid or expired token.' });
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-  res.flushHeaders();
-
-  const id = ++sseClientId;
-  sseClients.set(id, { res, role: 'admin', userId: user.id });
-
-  // heartbeat
-  const hb = setInterval(() => {
-    try { res.write(': ping\n\n'); } catch { clearInterval(hb); sseClients.delete(id); }
-  }, 25000);
-
-  req.on('close', () => { clearInterval(hb); sseClients.delete(id); });
-});
-
-// Public customer SSE — token required as ?token= query param
-app.get('/api/events', (req, res) => {
-  const queryToken = req.query.token ? String(req.query.token) : null;
-  let userId = null;
-
-  if (queryToken) {
-    try {
-      const decoded = jwt.verify(queryToken, JWT_SECRET);
-      userId = decoded.sub;
-    } catch {
-      // Invalid token — still allow connection for public events
-    }
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-  res.flushHeaders();
-
-  const id = ++sseClientId;
-  sseClients.set(id, { res, role: 'customer', userId });
-
-  const hb = setInterval(() => {
-    try { res.write(': ping\n\n'); } catch { clearInterval(hb); sseClients.delete(id); }
-  }, 25000);
-
-  req.on('close', () => { clearInterval(hb); sseClients.delete(id); });
-});
 
 // ── Admin Activity Log ────────────────────────────────────────────────────
 
@@ -280,14 +36,30 @@ function logActivity(adminId, action, entityType, entityId, details) {
 }
 
 app.get('/api/admin/activity', adminRequired, (req, res) => {
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+  const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 50));
+  const action = String(req.query.action || '').trim();
+  const entityType = String(req.query.entityType || '').trim();
+  const adminId = String(req.query.adminId || '').trim();
+  const dateFrom = String(req.query.dateFrom || '').trim();
+  const dateTo = String(req.query.dateTo || '').trim();
+
+  const where = [];
+  const params = [];
+  if (action) { where.push('a.action = ?'); params.push(action); }
+  if (entityType) { where.push('a.entity_type = ?'); params.push(entityType); }
+  if (adminId) { where.push('a.admin_id = ?'); params.push(Number(adminId)); }
+  if (dateFrom) { where.push("date(a.created_at, 'localtime') >= date(?)"); params.push(dateFrom); }
+  if (dateTo) { where.push("date(a.created_at, 'localtime') <= date(?)"); params.push(dateTo); }
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+
   const rows = db.prepare(
     `SELECT a.id, a.action, a.entity_type, a.entity_id, a.details, a.created_at,
             u.email AS admin_email, u.name AS admin_name
      FROM admin_activity_log a
      LEFT JOIN users u ON u.id = a.admin_id
+     ${whereSql}
      ORDER BY a.created_at DESC LIMIT ?`
-  ).all(limit);
+  ).all(...params, limit);
 
   return res.json({ activity: rows });
 });
@@ -451,343 +223,11 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, dbPath });
 });
 
-app.post('/api/auth/signup', (req, res) => {
-  const email = sanitizeEmail(req.body.email);
-  const password = String(req.body.password || '');
-  const name = String(req.body.name || '').trim();
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required.' });
-  }
 
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-  }
 
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (existing) {
-    return res.status(409).json({ error: 'Email already exists.' });
-  }
 
-  const now = new Date().toISOString();
-  const passwordHash = bcrypt.hashSync(password, 10);
-  const profileComplete = Number(Boolean(name));
 
-  const result = db
-    .prepare(
-      `INSERT INTO users (
-        email,
-        password_hash,
-        role,
-        name,
-        provider,
-        status,
-        is_profile_complete,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, 'user', ?, 'local', ?, ?, ?, ?)`
-    )
-    .run(email, passwordHash, name || null, 'Customer', profileComplete, now, now);
-
-  const user = getUserById(result.lastInsertRowid);
-  const token = createToken(user);
-
-  broadcastSSE('customer_registered', { email: user.email, name: user.name });
-
-  return res.status(201).json({ token, user });
-});
-
-app.post('/api/auth/login', loginRateLimiter, (req, res) => {
-  const email = sanitizeEmail(req.body.email);
-  const password = String(req.body.password || '');
-
-  const row = db
-    .prepare('SELECT id, email, role, password_hash FROM users WHERE email = ?')
-    .get(email);
-
-  if (!row || !bcrypt.compareSync(password, row.password_hash)) {
-    return res.status(401).json({ error: 'Invalid credentials.' });
-  }
-
-  if (row.role !== 'user') {
-    return res.status(403).json({ error: 'Use admin login for administrator accounts.' });
-  }
-
-  const user = getUserById(row.id);
-  const token = createToken(user);
-
-  return res.json({ token, user });
-});
-
-app.post('/api/admin/login', loginRateLimiter, (req, res) => {
-  const email = sanitizeEmail(req.body.email);
-  const password = String(req.body.password || '');
-
-  const row = db
-    .prepare('SELECT id, email, role, password_hash FROM users WHERE email = ?')
-    .get(email);
-
-  if (!row || row.role !== 'admin' || !bcrypt.compareSync(password, row.password_hash)) {
-    return res.status(401).json({ error: 'Invalid admin credentials.' });
-  }
-
-  const user = getUserById(row.id);
-  const token = createToken(user);
-
-  return res.json({ token, user });
-});
-
-app.get('/api/auth/me', authRequired, (req, res) => {
-  res.json({ user: req.user });
-});
-
-app.get('/api/users/profile', authRequired, (req, res) => {
-  if (req.user.role !== 'user') {
-    return res.status(403).json({ error: 'Profile endpoint is for customer accounts only.' });
-  }
-
-  return res.json({ profile: req.user });
-});
-
-app.put('/api/users/profile', authRequired, (req, res) => {
-  if (req.user.role !== 'user') {
-    return res.status(403).json({ error: 'Profile endpoint is for customer accounts only.' });
-  }
-
-  const name = req.body.name === undefined ? req.user.name : String(req.body.name || '').trim();
-  const phone = req.body.phone === undefined ? req.user.phone : String(req.body.phone || '').trim();
-  const avatarUrl = req.body.avatar_url === undefined
-    ? req.user.avatar_url
-    : String(req.body.avatar_url || '').trim();
-  const status = req.body.status === undefined ? req.user.status : String(req.body.status || '').trim();
-
-  const profileComplete = Number(Boolean(name && phone));
-
-  db.prepare(
-    `UPDATE users
-     SET name = ?,
-         phone = ?,
-         avatar_url = ?,
-         status = ?,
-         is_profile_complete = ?,
-         updated_at = ?
-     WHERE id = ?`
-  ).run(name || null, phone || null, avatarUrl || null, status || null, profileComplete, new Date().toISOString(), req.user.id);
-
-  const user = getUserById(req.user.id);
-  return res.json({ profile: user, user });
-});
-
-const CATEGORY_ORDER = [
-  'Shawarma',
-  'Burgers',
-  'Pizza',
-  'Momos',
-  'Toasts',
-  'Starters',
-  'Loaded Fries',
-  'Bring Your Own Chips',
-  'Mojitos',
-  'Milkshakes',
-  'Waffles',
-  'Desserts',
-  'Combo Deals',
-];
-
-function categoryRank(category) {
-  const index = CATEGORY_ORDER.findIndex(
-    (c) => c.toLowerCase() === String(category || '').toLowerCase()
-  );
-  return index === -1 ? CATEGORY_ORDER.length : index;
-}
-
-function sortByCategoryOrder(rows) {
-  return [...rows].sort((a, b) => categoryRank(a.category) - categoryRank(b.category));
-}
-
-app.get('/api/menu-items', (_req, res) => {
-  const rows = db.prepare(
-    `SELECT id, name, price, category, image_url, is_bestseller, is_active
-     FROM menu_items
-     WHERE deleted_at IS NULL
-       AND is_active = 1
-     ORDER BY name ASC`
-  ).all();
-
-  return res.json({ items: sortByCategoryOrder(rows) });
-});
-
-app.get('/api/admin/menu-items', adminRequired, (req, res) => {
-  const category = String(req.query.category || '').trim();
-  const availability = String(req.query.availability || '').trim();
-  const bestseller = String(req.query.bestseller || '').trim();
-
-  const where = ['deleted_at IS NULL'];
-  const params = [];
-  if (category) { where.push('category = ?'); params.push(category); }
-  if (availability === 'available') where.push('is_active = 1');
-  if (availability === 'unavailable') where.push('is_active = 0');
-  if (bestseller === 'true') where.push('is_bestseller = 1');
-
-  const rows = db.prepare(
-    `SELECT id, name, price, category, image_url, is_bestseller, is_active, created_at, updated_at
-     FROM menu_items
-     WHERE ${where.join(' AND ')}
-     ORDER BY category ASC, name ASC`
-  ).all(...params);
-
-  return res.json({ items: rows });
-});
-
-app.post('/api/admin/menu-items', adminRequired, (req, res) => {
-  const name = String(req.body.name || '').trim();
-  const price = Number(req.body.price);
-  const category = String(req.body.category || '').trim();
-  const imageUrl = req.body.image_url ? String(req.body.image_url).trim() : null;
-  const isBestseller = Number(Boolean(req.body.is_bestseller));
-  const isActive = req.body.is_active === undefined ? 1 : Number(Boolean(req.body.is_active));
-
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required.' });
-  }
-
-  if (!Number.isFinite(price) || price < 0) {
-    return res.status(400).json({ error: 'Price must be a valid number.' });
-  }
-
-  if (!category) {
-    return res.status(400).json({ error: 'Category is required.' });
-  }
-
-  const now = new Date().toISOString();
-  const result = db.prepare(
-    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(name, price, category, imageUrl, isBestseller, isActive, now, now);
-
-  const item = db
-    .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
-    .get(result.lastInsertRowid);
-
-  logActivity(req.user?.id, 'create_menu_item', 'menu_item', item.id, { name: item.name });
-  broadcastSSE('menu_updated', { action: 'create', itemId: item.id });
-  return res.status(201).json({ item });
-});
-
-app.put('/api/admin/menu-items/:id', adminRequired, (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid item id.' });
-  }
-
-  const existing = db.prepare('SELECT id FROM menu_items WHERE id = ? AND deleted_at IS NULL').get(id);
-  if (!existing) {
-    return res.status(404).json({ error: 'Menu item not found.' });
-  }
-
-  const name = String(req.body.name || '').trim();
-  const price = Number(req.body.price);
-  const category = String(req.body.category || '').trim();
-  const imageUrl = req.body.image_url ? String(req.body.image_url).trim() : null;
-  const isBestseller = Number(Boolean(req.body.is_bestseller));
-  const isActive = Number(Boolean(req.body.is_active));
-
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required.' });
-  }
-
-  if (!Number.isFinite(price) || price < 0) {
-    return res.status(400).json({ error: 'Price must be a valid number.' });
-  }
-
-  if (!category) {
-    return res.status(400).json({ error: 'Category is required.' });
-  }
-
-  db.prepare(
-    `UPDATE menu_items
-     SET name = ?, price = ?, category = ?, image_url = ?, is_bestseller = ?, is_active = ?, updated_at = ?
-     WHERE id = ?`
-  ).run(name, price, category, imageUrl, isBestseller, isActive, new Date().toISOString(), id);
-
-  const item = db
-    .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
-    .get(id);
-
-  logActivity(req.user?.id, 'update_menu_item', 'menu_item', id, { name: item.name });
-  broadcastSSE('menu_updated', { action: 'update', itemId: id });
-  return res.json({ item });
-});
-
-app.delete('/api/admin/menu-items/:id', adminRequired, (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid item id.' });
-  }
-
-  const existing = db.prepare('SELECT id FROM menu_items WHERE id = ? AND deleted_at IS NULL').get(id);
-  if (!existing) {
-    return res.status(404).json({ error: 'Menu item not found.' });
-  }
-
-  db.prepare(
-    `UPDATE menu_items
-     SET is_active = 0,
-         deleted_at = ?,
-         updated_at = ?
-     WHERE id = ?`
-  ).run(new Date().toISOString(), new Date().toISOString(), id);
-
-  logActivity(req.user?.id, 'delete_menu_item', 'menu_item', id, {});
-  broadcastSSE('menu_updated', { action: 'delete', itemId: id });
-  return res.json({ success: true });
-});
-
-app.post('/api/admin/menu-items/:id/duplicate', adminRequired, (req, res) => {
-  const id = Number(req.params.id);
-  const existing = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(id);
-  if (!existing) return res.status(404).json({ error: 'Menu item not found' });
-  
-  const result = db.prepare(
-    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(`${existing.name} (Copy)`, existing.price, existing.category, existing.image_url, existing.is_bestseller, existing.is_active, new Date().toISOString(), new Date().toISOString());
-  
-  broadcastSSE('menu_updated', { action: 'create', itemId: result.lastInsertRowid });
-  return res.json({ success: true, id: result.lastInsertRowid });
-});
-
-// ── Categories ─────────────────────────────────────────────────────────────
-
-app.get('/api/admin/categories', adminRequired, (_req, res) => {
-  const categories = db.prepare('SELECT * FROM categories ORDER BY display_order ASC, name ASC').all();
-  return res.json(categories);
-});
-
-app.post('/api/admin/categories', adminRequired, (req, res) => {
-  const { name, display_order = 0, is_active = 1 } = req.body;
-  try {
-    const result = db.prepare('INSERT INTO categories (name, display_order, is_active) VALUES (?, ?, ?)').run(name.trim(), display_order, is_active);
-    return res.json({ id: result.lastInsertRowid, name: name.trim(), display_order, is_active });
-  } catch (err) {
-    return res.status(400).json({ error: 'Category already exists or invalid data.' });
-  }
-});
-
-app.put('/api/admin/categories/:id', adminRequired, (req, res) => {
-  const { name, display_order, is_active } = req.body;
-  try {
-    db.prepare('UPDATE categories SET name = ?, display_order = ?, is_active = ? WHERE id = ?').run(name.trim(), display_order, is_active, req.params.id);
-    return res.json({ success: true });
-  } catch (err) {
-    return res.status(400).json({ error: 'Failed to update category.' });
-  }
-});
-
-app.delete('/api/admin/categories/:id', adminRequired, (req, res) => {
-  db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
-  return res.json({ success: true });
-});
 
 // ── Admin Notifications ────────────────────────────────────────────────────
 
@@ -1275,8 +715,9 @@ app.get('/api/admin/reports/daily', adminRequired, (_req, res) => {
       COUNT(*) AS total_orders,
       COALESCE(SUM(total), 0) AS total_revenue
      FROM orders
-     WHERE date(created_at, 'localtime') = date('now', 'localtime')`
-  ).get();
+     WHERE date(created_at, 'localtime') = date('now', 'localtime')
+       AND status = ?`
+  ).get(REVENUE_COUNTED_STATUS);
 
   const topItem = db.prepare(
     `SELECT
@@ -1285,6 +726,7 @@ app.get('/api/admin/reports/daily', adminRequired, (_req, res) => {
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
      WHERE date(o.created_at, 'localtime') = date('now', 'localtime')
+       AND o.status = 'completed'
      GROUP BY oi.name
      ORDER BY qty DESC
      LIMIT 1`
@@ -1330,8 +772,14 @@ app.get('/api/admin/orders', adminRequired, (req, res) => {
     params.push(like, like, like);
   }
   if (status) {
-    where.push('status = ?');
-    params.push(status);
+    const statuses = status.split(',').map((s) => s.trim()).filter(Boolean);
+    if (statuses.length > 1) {
+      where.push(`status IN (${statuses.map(() => '?').join(',')})`);
+      params.push(...statuses);
+    } else {
+      where.push('status = ?');
+      params.push(statuses[0]);
+    }
   }
   if (deliveryType) {
     where.push('delivery_type = ?');
@@ -1673,6 +1121,63 @@ app.get('/api/admin/customers', adminRequired, (req, res) => {
   ).all(...params);
 
   return res.json({ customers: rows });
+});
+
+app.get('/api/admin/customers/:phone/detail', adminRequired, (req, res) => {
+  const phone = String(req.params.phone || '').trim();
+  if (!phone) {
+    return res.status(400).json({ error: 'Phone is required.' });
+  }
+
+  const orders = db.prepare(
+    `SELECT id, order_number, status, total, discount_amount, coupon_code, created_at
+     FROM orders WHERE customer_phone = ? ORDER BY created_at DESC`
+  ).all(phone);
+
+  if (orders.length === 0) {
+    return res.status(404).json({ error: 'Customer not found.' });
+  }
+
+  const profile = {
+    phone,
+    name: db.prepare('SELECT customer_name FROM orders WHERE customer_phone = ? AND customer_name IS NOT NULL ORDER BY created_at DESC LIMIT 1').get(phone)?.customer_name || null,
+    email: db.prepare('SELECT customer_email FROM orders WHERE customer_phone = ? AND customer_email IS NOT NULL ORDER BY created_at DESC LIMIT 1').get(phone)?.customer_email || null,
+  };
+
+  const lifetimeSpend = orders
+    .filter((o) => o.status === REVENUE_COUNTED_STATUS)
+    .reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+  const orderIds = orders.map((o) => o.id);
+  const placeholders = orderIds.map(() => '?').join(',');
+
+  const couponsUsed = orderIds.length > 0 ? db.prepare(
+    `SELECT cu.id, cu.discount_applied, cu.used_at, c.code, c.discount_type, c.discount_value
+     FROM coupon_usage cu
+     JOIN coupons c ON c.id = cu.coupon_id
+     WHERE cu.order_id IN (${placeholders})
+     ORDER BY cu.used_at DESC`
+  ).all(...orderIds) : [];
+
+  const reviews = db.prepare(
+    'SELECT id, rating, review_text, created_at FROM reviews WHERE phone = ? ORDER BY created_at DESC'
+  ).all(phone);
+
+  const user = db.prepare('SELECT id FROM users WHERE phone = ?').get(phone);
+  const savedAddresses = user ? db.prepare(
+    'SELECT id, label, address, is_default, created_at FROM saved_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC'
+  ).all(user.id) : [];
+
+  return res.json({
+    profile,
+    orders,
+    lifetimeSpend,
+    orderCount: orders.length,
+    repeatCustomer: orders.length > 1,
+    couponsUsed,
+    reviews,
+    savedAddresses,
+  });
 });
 
 // ── Menu Management (visibility + bestseller) ──────────────────────────────
@@ -2354,6 +1859,60 @@ app.put('/api/admin/settings', adminRequired, (req, res) => {
     sections[row.section].push(row);
   }
   return res.json({ settings: rows, sections });
+});
+
+// AI Videos API
+app.get('/api/admin/videos', adminRequired, (req, res) => {
+  try {
+    const videos = db.prepare('SELECT * FROM testimonial_videos ORDER BY created_at DESC').all();
+    res.json({ videos });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/videos', adminRequired, (req, res) => {
+  const { title, url, thumbnail_url, is_active } = req.body;
+  if (!title || !url) return res.status(400).json({ error: 'Title and URL are required' });
+  try {
+    const info = db.prepare('INSERT INTO testimonial_videos (title, url, thumbnail_url, is_active) VALUES (?, ?, ?, ?)').run(title, url, thumbnail_url || null, is_active === undefined ? 1 : is_active);
+    const video = db.prepare('SELECT * FROM testimonial_videos WHERE id = ?').get(info.lastInsertRowid);
+    res.json({ video });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/videos/:id', adminRequired, (req, res) => {
+  const { id } = req.params;
+  const { title, url, thumbnail_url, is_active } = req.body;
+  if (!title || !url) return res.status(400).json({ error: 'Title and URL are required' });
+  try {
+    db.prepare('UPDATE testimonial_videos SET title = ?, url = ?, thumbnail_url = ?, is_active = ? WHERE id = ?').run(title, url, thumbnail_url || null, is_active, id);
+    const video = db.prepare('SELECT * FROM testimonial_videos WHERE id = ?').get(id);
+    if (!video) return res.status(404).json({ error: 'Video not found' });
+    res.json({ video });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/videos/:id', adminRequired, (req, res) => {
+  try {
+    db.prepare('DELETE FROM testimonial_videos WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/videos', (req, res) => {
+  try {
+    const videos = db.prepare('SELECT * FROM testimonial_videos WHERE is_active = 1 ORDER BY created_at DESC').all();
+    res.json({ videos });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const distPath = path.join(rootDir, 'dist');

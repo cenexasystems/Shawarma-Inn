@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Quote } from 'lucide-react';
-import testimonialsData from '../data/testimonials.json';
-import type { VideoTestimonial } from '../types';
+import { apiRequest } from '../lib/api';
 
-const testimonials = testimonialsData as VideoTestimonial[];
-
-function TestimonialCard({ item }: { item: VideoTestimonial }) {
+function TestimonialCard({ item }: { item: any }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -35,11 +32,11 @@ function TestimonialCard({ item }: { item: VideoTestimonial }) {
       ref={cardRef}
       className="relative shrink-0 w-[260px] md:w-[280px] aspect-[9/16] rounded-2xl overflow-hidden border border-white/10 bg-[#141414] snap-center"
     >
-      {item.videoUrl ? (
+      {item.url ? (
         <video
           ref={videoRef}
-          src={item.videoUrl}
-          poster={item.posterUrl || undefined}
+          src={item.url}
+          poster={item.thumbnail_url || undefined}
           loop
           muted
           playsInline
@@ -58,8 +55,7 @@ function TestimonialCard({ item }: { item: VideoTestimonial }) {
       )}
 
       <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
-        <p className="font-headline font-bold text-white text-sm uppercase tracking-[1px]">{item.customerName}</p>
-        <p className="text-[10px] text-[#d62b2b] uppercase tracking-[1.5px] mt-0.5">{item.branchName}</p>
+        <p className="font-headline font-bold text-white text-sm uppercase tracking-[1px]">{item.title}</p>
       </div>
     </div>
   );
@@ -69,6 +65,19 @@ export default function VideoTestimonials() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const res = await apiRequest<any>('/videos');
+        setTestimonials(res.videos || []);
+      } catch (err) {
+        console.error('Failed to fetch videos', err);
+      }
+    };
+    fetchVideos();
+  }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -122,8 +131,11 @@ export default function VideoTestimonials() {
           style={{ scrollbarWidth: 'none' }}
         >
           {testimonials.map((item) => (
-            <TestimonialCard key={item.branchId} item={item} />
+            <TestimonialCard key={item.id} item={item} />
           ))}
+          {testimonials.length === 0 && (
+            <div className="text-white/40 text-sm py-10 w-full text-center">No testimonial videos found.</div>
+          )}
         </div>
       </div>
     </section>

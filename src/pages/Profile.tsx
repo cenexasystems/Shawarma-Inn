@@ -38,20 +38,24 @@ const Icons = {
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
     </svg>
+  ),
+  Heart: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
   )
 };
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { profile, addresses, loading, updateProfile, addAddress, deleteAddress, setDefaultAddress } = useProfile();
+  const { profile, addresses, favorites, loading, updateProfile, addAddress, deleteAddress, setDefaultAddress, toggleFavorite } = useProfile();
   const { orders, loading: ordersLoading } = useOrders();
 
-  const [activeTab, setActiveTab] = useState<'info' | 'addresses' | 'orders' | 'settings'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'addresses' | 'orders' | 'favorites' | 'settings'>('info');
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
-  const [editStatus, setEditStatus] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [newAddrLabel, setNewAddrLabel] = useState('');
@@ -105,6 +109,7 @@ export default function Profile() {
     { id: 'info', label: 'Profile', icon: Icons.Person },
     { id: 'addresses', label: 'Addresses', icon: Icons.Location },
     { id: 'orders', label: 'Orders', icon: Icons.Receipt },
+    { id: 'favorites', label: 'Favorites', icon: Icons.Heart },
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
   ] as const;
 
@@ -340,6 +345,40 @@ export default function Profile() {
                           )}
                         </div>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+          </div>
+        )}
+
+        {/* ── TAB: Favorites ── */}
+        {activeTab === 'favorites' && (
+          <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border)] p-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <h2 className="font-bebas text-3xl text-[var(--red)] tracking-wide uppercase mb-6">Favorite Menu Items</h2>
+            {loading ? <div className="space-y-4 animate-pulse"><div className="h-24 bg-white/5 rounded-xl"></div></div> : 
+              favorites.length === 0 ? (
+                <div className="text-center py-12 flex flex-col items-center">
+                  <Icons.Heart />
+                  <p className="font-body text-[var(--white)]/40 mt-4">You have no favorite items yet.</p>
+                  <button onClick={() => navigate('/menu')} className="mt-6 border border-[var(--red)] text-[var(--red)] px-8 py-3 rounded-full font-bebas text-lg tracking-widest hover:bg-[var(--red)] hover:text-white transition-all">Browse Menu</button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {favorites.map((fav) => (
+                    <div key={fav.id} className="bg-[var(--black)] rounded-2xl border border-[var(--border)] p-4 flex flex-col items-center text-center group hover:border-[var(--red)]/50 transition-all cursor-pointer" onClick={() => navigate('/menu')}>
+                      {fav.image_url ? (
+                        <img src={fav.image_url} alt={fav.name} className="w-24 h-24 rounded-full object-cover mb-4 shadow-xl border border-white/10 group-hover:scale-105 transition-transform" />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 text-2xl">🍔</div>
+                      )}
+                      <h3 className="font-bebas text-2xl tracking-wide">{fav.name}</h3>
+                      <p className="font-body text-xs text-white/50 mb-3">{fav.category}</p>
+                      <p className="font-bebas text-xl text-[#ef8f2f] mb-4">₹{fav.price}</p>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite({ id: fav.menu_item_id }); }} className="w-full flex items-center justify-center gap-2 border border-[var(--red)]/50 text-[var(--red)] py-2 rounded-full font-body text-xs uppercase tracking-widest hover:bg-[var(--red)] hover:text-white transition-colors">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                        Remove
+                      </button>
                     </div>
                   ))}
                 </div>

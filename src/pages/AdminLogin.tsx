@@ -30,7 +30,7 @@ export default function AdminLogin() {
 
     try {
       setSaving(true);
-      const user = await adminLogin({ email, password });
+      const user = await adminLogin({ email, password, rememberMe });
       if (user.role !== 'admin') {
         throw new Error('This account does not have admin access.');
       }

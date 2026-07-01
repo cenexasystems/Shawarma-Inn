@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { MenuItem, CartItem, CartContextType } from '../types';
 import { computeCheckoutTotals } from '../config/pricing';
@@ -59,10 +59,28 @@ function cartReducer(state: CartState, action: Action): CartState {
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
+// ─── Context ──────────────────────────────────────────────────────────────────
 const CartContext = createContext<CartContextType | undefined>(undefined);
+const CART_STORAGE_KEY = 'si_cart_v1';
+
+function initCartState(initial: CartState): CartState {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (raw) {
+      return JSON.parse(raw) as CartState;
+    }
+  } catch {
+    // ignore
+  }
+  return initial;
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [state, dispatch] = useReducer(cartReducer, { items: [] }, initCartState);
+
+  useEffect(() => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
 
   // Cart-only total: sum of actual product prices. GST/delivery/packing are checkout-only.
   const subtotal = state.items.reduce(
