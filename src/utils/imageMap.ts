@@ -102,11 +102,29 @@ export const imageMap: Record<string, string> = {
   'veg-shawarma': shawarmaFallback,
   'veg-platter': shawarmaFallback,
 
-  // Burgers
+  // Burgers (Visually distinct for different variants)
   'veg-burger': 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=600&h=450&fit=crop&q=75&auto=format',
-  'paneer-burger': 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=600&h=450&fit=crop&q=75&auto=format',
+  'hot-glaze-veg-burger': 'https://images.unsplash.com/photo-1586816001966-79b736744398?w=600&h=450&fit=crop&q=75&auto=format',
+  'chipotle-veg-burger': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=450&fit=crop&q=75&auto=format',
+  'jalapeno-veg-burger': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&h=450&fit=crop&q=75&auto=format',
+  'thousand-island-veg-burger': 'https://images.unsplash.com/photo-1594212202999-928cc29d4d5e?w=600&h=450&fit=crop&q=75&auto=format',
+  'sweet-chilli-veg-burger': 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=600&h=450&fit=crop&q=75&auto=format',
+  
+  'paneer-burger': 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=600&h=450&fit=crop&q=75&auto=format',
   'double-veg-burger': 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&h=450&fit=crop&q=75&auto=format',
-  'double-paneer-burger': 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&h=450&fit=crop&q=75&auto=format',
+  'double-paneer-burger': 'https://images.unsplash.com/photo-1549611682-1fa0884617df?w=600&h=450&fit=crop&q=75&auto=format',
+  
+  'chicken-burger': 'https://images.unsplash.com/photo-1615719413546-198b25453f85?w=600&h=450&fit=crop&q=75&auto=format',
+  'hot-glaze-chicken-burger': 'https://images.unsplash.com/photo-1608767221051-2b9d18f35a2f?w=600&h=450&fit=crop&q=75&auto=format',
+  'bbq-chicken-burger': 'https://images.unsplash.com/photo-1596622527583-83674c5ea27c?w=600&h=450&fit=crop&q=75&auto=format',
+  'chipotle-chicken-burger': 'https://images.unsplash.com/photo-1588665045137-b9560fec9224?w=600&h=450&fit=crop&q=75&auto=format',
+  'jalapeno-chicken-burger': 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=600&h=450&fit=crop&q=75&auto=format',
+  'thousand-island-chicken-burger': 'https://images.unsplash.com/photo-1550950158-d0d960dff51b?w=600&h=450&fit=crop&q=75&auto=format',
+  'sweet-chilli-chicken-burger': 'https://images.unsplash.com/photo-1594212202999-928cc29d4d5e?w=600&h=450&fit=crop&q=75&auto=format',
+  'popcorn-chicken-burger': 'https://images.unsplash.com/photo-1563720224240-27cb09919f91?w=600&h=450&fit=crop&q=75&auto=format',
+  'zinger-chicken-burger': 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=600&h=450&fit=crop&q=75&auto=format',
+  'double-chicken-burger': 'https://images.unsplash.com/photo-1542866165-f98292d37c8e?w=600&h=450&fit=crop&q=75&auto=format',
+  'burger-add-on-cheese': 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=600&h=450&fit=crop&q=75&auto=format',
 
   // Fries
   'french-fries': 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=600&h=450&fit=crop&q=75&auto=format',
