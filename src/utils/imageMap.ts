@@ -37,12 +37,8 @@ export const imageMap: Record<string, string> = {
   // Schezwan Shawarma
   'schezwan-shawarma-roll': schezwanRoll,
   'schezwan-shawarma-roll-large': schezwanRoll,
-  'schezwan-shawarma-plate': schezwanRoll,
-  'schezwan-shawarma-plate-large': schezwanRoll,
 
   // BBQ Shawarma
-  'bbq-shawarma-roll': bbqPlate,
-  'bbq-shawarma-roll-large': bbqPlate,
   'bbq-shawarma-plate': bbqPlate,
   'bbq-shawarma-plate-large': bbqPlate,
 
@@ -77,8 +73,6 @@ export const imageMap: Record<string, string> = {
   'jalapeno-shawarma-plate-large': jalapenoPlate,
 
   // Thousand Island Shawarma
-  'thousand-island-shawarma-roll': thousandIslandPlate,
-  'thousand-island-shawarma-roll-large': thousandIslandPlate,
   'thousand-island-shawarma-plate': thousandIslandPlate,
   'thousand-island-shawarma-plate-large': thousandIslandPlate,
 
