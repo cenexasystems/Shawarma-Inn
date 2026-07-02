@@ -63,72 +63,61 @@ export default function Menu({ cartData }: MenuProps) {
       {/* Sticky category tabs */}
       <MenuTabs categories={allCategories} active={activeCategory} onChange={setActiveCategory} counts={categoryCounts} />
 
-      {/* Page title with Favorites toggle */}
-      <header className="max-w-[1600px] mx-auto px-4 md:px-8 xl:px-12 pt-6 md:pt-8 pb-4 md:pb-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="animate-in slide-in-from-left-4 fade-in duration-700">
-            <h1 className="font-bebas text-4xl md:text-6xl tracking-tight text-white uppercase leading-[0.9] drop-shadow-lg flex items-center gap-3">
-              THE <span className="text-[#ef8f2f]">MENU</span>
-              <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-[#ef8f2f]/10 border border-[#ef8f2f]/20 text-[10px] tracking-[3px] text-[#ef8f2f] uppercase font-bold">Discover</span>
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-3 shrink-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
-            {/* Top Controls: Outlet & Delivery Type */}
-            <div className="flex flex-col gap-1 min-w-[140px]">
-              <label className="text-[9px] text-white/50 uppercase tracking-[2px] font-bold">Select Outlet</label>
-              <select 
+      {/* ── Menu Page Header ─────────────────────────────── */}
+      <header className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8 xl:px-12 pt-3 md:pt-6 pb-3 md:pb-5">
+
+        {/* Row 1: Title + Outlet/Delivery controls */}
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-bebas tracking-tight text-white uppercase leading-none drop-shadow-lg shrink-0"
+            style={{ fontSize: 'clamp(28px, 8vw, 48px)' }}>
+            THE <span className="text-[#dc2626]">MENU</span>
+          </h1>
+
+          {/* Controls — horizontally scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar shrink-0">
+            <div className="flex flex-col gap-0.5 shrink-0">
+              <label className="text-[8px] text-white/40 uppercase tracking-[2px] font-bold">Outlet</label>
+              <select
                 value={selectedOutlet}
                 onChange={(e) => setSelectedOutlet(e.target.value)}
-                className="bg-[var(--charcoal)] border border-[var(--border)] rounded-full px-3 py-1.5 text-white font-body text-xs focus:outline-none focus:border-[#ef8f2f] transition-colors cursor-pointer appearance-none"
-                style={{ background: 'var(--charcoal) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23ffffff\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E") no-repeat right 0.75rem center/0.75rem' }}
+                className="bg-[var(--charcoal)] border border-[var(--border)] rounded-full px-3 py-1 text-white font-body text-xs focus:outline-none focus:border-[#dc2626] transition-colors cursor-pointer appearance-none"
+                style={{ background: 'var(--charcoal) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23ffffff\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E") no-repeat right 0.5rem center/0.6rem', minWidth: '100px', maxWidth: '130px' }}
               >
                 <option value="Mathur">Mathur</option>
                 <option value="Madhavaram">Madhavaram</option>
                 <option value="Kolathur">Kolathur</option>
                 <option value="Retteri">Retteri</option>
-                <option value="Thirumullaivoyal">Thirumullaivoyal</option>
+                <option value="Thirumullaivoyal">T'voyal</option>
                 <option value="Kodungaiyur">Kodungaiyur</option>
               </select>
             </div>
-            
-            <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
-              <label className="text-[9px] text-white/50 uppercase tracking-[2px] font-bold">Delivery Type</label>
-              <div className="flex bg-[var(--charcoal)] border border-[var(--border)] rounded-full p-0.5 w-full">
-                {['Self Delivery', 'We Arrange Delivery', 'Pickup'].map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setDeliveryType(type)}
-                    className={`flex-1 text-[9px] font-bold uppercase tracking-[1px] py-1.5 rounded-full transition-all truncate px-1 ${deliveryType === type ? 'bg-[#ef8f2f] text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
-                  >
-                    {type === 'We Arrange Delivery' ? 'Arrange' : type.split(' ')[0]}
-                  </button>
-                ))}
+
+            <div className="flex flex-col gap-0.5 shrink-0">
+              <label className="text-[8px] text-white/40 uppercase tracking-[2px] font-bold">Delivery</label>
+              <div className="flex bg-[var(--charcoal)] border border-[var(--border)] rounded-full p-0.5">
+                {['Self', 'Arrange', 'Pickup'].map((label, i) => {
+                  const val = ['Self Delivery', 'We Arrange Delivery', 'Pickup'][i];
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => setDeliveryType(val)}
+                      style={{ minHeight: '28px', minWidth: '44px' }}
+                      className={`text-[9px] font-bold uppercase tracking-[0.5px] rounded-full px-2 transition-all ${deliveryType === val ? 'bg-[#dc2626] text-white shadow' : 'text-white/55 hover:text-white'}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
-          <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <button
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bebas text-sm tracking-widest uppercase transition-all whitespace-nowrap ${
-                showFavoritesOnly
-                  ? 'bg-[var(--red)] text-white shadow-[0_0_40px_rgba(214,43,43,0.5)]'
-                  : 'border border-white/20 text-white/60 hover:border-white/40'
-              }`}
-            >
-              <svg className="w-5 h-5" fill={showFavoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-              {favorites.length > 0 && <span className="font-bold">{favorites.length}</span>}
-              FAVORITES
-            </button>
-          </div>
 
-        <div className="mt-4 flex flex-col sm:flex-row items-center gap-3">
+        {/* Row 2: Search + Diet filters + Favorites — single scrollable row on mobile */}
+        <div className="mt-2.5 flex items-center gap-2 overflow-x-auto hide-scrollbar">
           {/* Search */}
-          <div className="relative flex-1 w-full">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="relative shrink-0" style={{ width: 'min(100%, 200px)' }}>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
             </svg>
             <input
@@ -136,36 +125,52 @@ export default function Menu({ cartData }: MenuProps) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full bg-[var(--charcoal)] border border-[var(--border)] rounded-full pl-10 pr-4 py-2 text-white placeholder:text-white/40 font-body text-xs focus:outline-none focus:border-[#ef8f2f] transition-colors"
+              className="w-full bg-[var(--charcoal)] border border-[var(--border)] rounded-full pl-9 pr-3 text-white placeholder:text-white/40 font-body text-xs focus:outline-none focus:border-[#dc2626] transition-colors"
+              style={{ height: '32px' }}
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
-            {([
-              ['all', 'All'],
-              ['veg', 'Veg'],
-              ['non-veg', 'Non-Veg']
-            ] as const).map(([val, label]) => (
+          {/* Diet pills */}
+          {(['all', 'veg', 'non-veg'] as const).map((val) => {
+            const label = val === 'all' ? 'All' : val === 'veg' ? 'Veg' : 'Non-Veg';
+            const activeClass = val === 'veg' ? 'bg-green-600 text-white border-green-600'
+              : val === 'non-veg' ? 'bg-red-600 text-white border-red-600'
+              : 'bg-white/20 text-white border-white/20';
+            return (
               <button
                 key={val}
                 onClick={() => setDietFilter(val)}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[1px] transition-colors whitespace-nowrap ${
-                  dietFilter === val
-                    ? val === 'veg' ? 'bg-green-600 text-white border-green-600'
-                    : val === 'non-veg' ? 'bg-red-600 text-white border-red-600'
-                    : 'bg-white/20 text-white border-white/20'
-                    : 'bg-[var(--charcoal)] border border-[var(--border)] text-white/50 hover:text-white'
-                } border`}
+                style={{ minHeight: '32px', minWidth: '44px' }}
+                className={`px-3 rounded-full text-[10px] font-bold uppercase tracking-[1px] transition-colors whitespace-nowrap border shrink-0 ${
+                  dietFilter === val ? activeClass : 'bg-[var(--charcoal)] border-[var(--border)] text-white/50 hover:text-white'
+                }`}
               >
                 {label}
               </button>
-            ))}
-          </div>
+            );
+          })}
+
+          {/* Favorites toggle */}
+          <button
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            style={{ minHeight: '32px' }}
+            className={`flex items-center gap-1.5 px-3 rounded-full font-body text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 border ${
+              showFavoritesOnly
+                ? 'bg-[var(--red)] text-white border-[var(--red)] shadow-[0_0_20px_rgba(214,43,43,0.4)]'
+                : 'border-white/20 text-white/60 hover:border-white/40'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill={showFavoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            {favorites.length > 0 && <span>{favorites.length}</span>}
+            ♡
+          </button>
         </div>
       </header>
 
       {/* Menu grid */}
-      <section className="max-w-[1600px] mx-auto px-4 md:px-8 xl:px-12 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-24">
+      <section className="max-w-[1600px] mx-auto px-2.5 sm:px-4 md:px-8 xl:px-12 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6 pb-32">
         {selectedOutlet !== 'Mathur' && !loading && (
           <div className="col-span-full mb-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 p-4 rounded-2xl flex items-start gap-3">
             <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>

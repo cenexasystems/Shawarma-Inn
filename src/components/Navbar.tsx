@@ -37,8 +37,8 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
         setDropdownOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownRef]);
 
   // Close mobile menu on route change
@@ -46,18 +46,30 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
     setMobileMenuOpen(false);
   }, [location]);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
+
   return (
     <>
       <nav className={`fixed top-0 w-full z-50 h-[64px] border-b-[0.5px] flex justify-between items-center px-4 md:px-8 xl:px-12 transition-all ${navClass}`}>
+
         {/* Logo LEFT */}
-        <Link to="/" className="flex items-baseline gap-2 z-50">
-          <span className="text-xl md:text-2xl font-black uppercase logo-shimmer">SHAWARMA INN</span>
-          <span className="hidden sm:inline text-[10px] font-bold tracking-[2px] uppercase text-[var(--red)] border border-[var(--red)]/40 rounded-full px-2 py-0.5">
-            Mathur Branch
+        <Link to="/" className="flex items-baseline gap-2 z-50 shrink-0">
+          <span className="font-black uppercase logo-shimmer">SHAWARMA INN</span>
+          {/* "Mathur Branch" badge — hidden on smallest screens to prevent overflow */}
+          <span className="hidden sm:inline text-[9px] font-bold tracking-[2px] uppercase text-[var(--red)] border border-[var(--red)]/40 rounded-full px-2 py-0.5 shrink-0">
+            Mathur
           </span>
         </Link>
 
-        {/* Links CENTER (Desktop) */}
+        {/* Links CENTER (Desktop only) */}
         <div className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
           {navLinks.map(link => {
             const active = link.to === '/' ? location.pathname === '/' : location.pathname.startsWith(link.to);
@@ -84,34 +96,43 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
         </div>
 
         {/* Actions RIGHT */}
-        <div className="flex items-center gap-4 md:gap-6 z-50">
+        <div className="flex items-center gap-1 sm:gap-2 z-50">
+
+          {/* Cart button — 44px touch target */}
           <button
             onClick={onCartClick}
-            className="flex items-center gap-2 text-[var(--white)] hover:text-[var(--red)] transition-colors p-2 -m-2"
+            className="touch-target relative text-[var(--white)] hover:text-[var(--red)] transition-colors rounded-full"
             aria-label="Open cart"
           >
             <span className="relative">
-              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[var(--red)] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                  {cartCount}
+                <span className="absolute -top-1.5 -right-1.5 bg-[var(--red)] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full leading-none">
+                  {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
             </span>
+            {/* Cart subtotal — desktop only */}
             {cartSubtotal > 0 && (
-              <span className="hidden md:inline font-bebas text-sm tracking-wider">₹{cartSubtotal.toFixed(0)}</span>
+              <span className="hidden md:inline font-bebas text-sm tracking-wider ml-1">₹{cartSubtotal.toFixed(0)}</span>
             )}
           </button>
 
+          {/* User / Auth button — 44px touch target */}
           {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden border border-[var(--red)]"
+                className="touch-target rounded-full"
+                aria-label="Account menu"
               >
-                <img src={user.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format'} alt={user.name || 'User'} className="w-full h-full object-cover" />
+                <img
+                  src={user.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format'}
+                  alt={user.name || 'User'}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[var(--red)]"
+                />
               </button>
               {dropdownOpen && (
                 <div className="absolute right-0 mt-3 w-48 bg-[var(--charcoal)] border border-[var(--border)] rounded-xl py-2 shadow-2xl">
@@ -140,7 +161,7 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
                       Admin Dashboard
                     </Link>
                   )}
-                  <button 
+                  <button
                     onClick={() => { logout(); setDropdownOpen(false); }}
                     className="w-full text-left px-4 py-3 text-sm text-[var(--red)] hover:bg-[var(--smoke)] transition-colors"
                   >
@@ -152,19 +173,19 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
           ) : (
             <button
               onClick={onAuthClick}
-              className="text-[10px] md:text-[11px] font-semibold tracking-[0.14em] text-[var(--white)] hover:text-[var(--red)] uppercase transition-colors"
+              className="touch-target text-[10px] font-semibold tracking-[0.14em] text-[var(--white)] hover:text-[var(--red)] uppercase transition-colors rounded-full"
             >
               SIGN IN
             </button>
           )}
 
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="lg:hidden p-2 -mr-2 text-white" 
+          {/* Hamburger — 44px touch target, lg+ hidden */}
+          <button
+            className="lg:hidden touch-target text-white rounded-full"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {mobileMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -175,18 +196,22 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
         </div>
       </nav>
 
-      {/* Mobile Menu Overlay */}
+      {/* ─── Mobile Menu Full-Screen Overlay ─────────────────────── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[rgba(10,10,10,0.98)] backdrop-blur-lg flex flex-col items-center justify-center lg:hidden">
-          <div className="flex flex-col items-center gap-8 w-full px-6">
+        <div
+          className="fixed inset-0 z-40 bg-[rgba(10,10,10,0.98)] backdrop-blur-lg flex flex-col lg:hidden"
+          style={{ paddingTop: '64px', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+        >
+          {/* Nav links — large touch targets */}
+          <div className="flex flex-col flex-1 justify-center items-center gap-2 px-6">
             {navLinks.map(link => {
               const active = link.to === '/' ? location.pathname === '/' : location.pathname.startsWith(link.to);
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`font-bebas text-4xl tracking-widest uppercase transition-colors ${
-                    active ? 'text-[var(--red)]' : 'text-white'
+                  className={`w-full max-w-xs text-center font-bebas text-4xl tracking-widest uppercase py-3 transition-colors rounded-xl ${
+                    active ? 'text-[var(--red)]' : 'text-white hover:text-[var(--red)]'
                   }`}
                 >
                   {link.label}
@@ -198,10 +223,20 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
                 setMobileMenuOpen(false);
                 onSupportClick();
               }}
-              className="font-bebas text-4xl tracking-widest uppercase text-white hover:text-[var(--red)] transition-colors"
+              className="w-full max-w-xs text-center font-bebas text-4xl tracking-widest uppercase py-3 text-white hover:text-[var(--red)] transition-colors rounded-xl"
             >
               SUPPORT
             </button>
+          </div>
+
+          {/* Bottom action — Order CTA */}
+          <div className="px-6 pb-4">
+            <Link
+              to="/menu"
+              className="block w-full text-center bg-[var(--red)] text-white font-bebas text-xl tracking-[3px] uppercase py-4 rounded-2xl shadow-[0_8px_30px_rgba(214,43,43,0.4)] active:scale-[0.98] transition-transform"
+            >
+              ORDER FROM MATHUR
+            </Link>
           </div>
         </div>
       )}

@@ -3,7 +3,7 @@ import { MessageCircle } from 'lucide-react';
 const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
 
 interface WhatsAppFabProps {
-  /** Lifts the button above the floating "CHECKOUT" bar so they never overlap. */
+  /** When true (cart bar visible), lift the FAB above the cart bar */
   liftedUp?: boolean;
 }
 
@@ -11,8 +11,6 @@ export default function WhatsAppFab({ liftedUp = false }: WhatsAppFabProps) {
   const targetUrl = WHATSAPP_PHONE
     ? `https://wa.me/${WHATSAPP_PHONE}`
     : undefined;
-
-  const bottomClass = liftedUp ? 'bottom-24 md:bottom-28' : 'bottom-4 md:bottom-6';
 
   return (
     <a
@@ -26,11 +24,37 @@ export default function WhatsAppFab({ liftedUp = false }: WhatsAppFabProps) {
           window.alert('WhatsApp contact is coming soon.');
         }
       }}
-      className={`fixed right-4 md:right-6 z-[70] flex items-center justify-center gap-2 rounded-full bg-[#25D366] text-white p-3 md:px-4 md:py-3 shadow-[0_10px_25px_rgba(37,211,102,0.35)] hover:scale-[1.03] active:scale-[0.98] transition-transform ${bottomClass}`}
       aria-label="Contact us on WhatsApp"
+      style={{
+        position: 'fixed',
+        right: 'max(1rem, env(safe-area-inset-right, 1rem))',
+        // When liftedUp: sit above the 72px cart bar + safe area
+        // When not: sit above safe area only
+        bottom: liftedUp
+          ? 'calc(4.5rem + max(1rem, env(safe-area-inset-bottom, 1rem)))'
+          : 'max(1rem, env(safe-area-inset-bottom, 1rem))',
+        zIndex: 70,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        borderRadius: '9999px',
+        backgroundColor: '#25D366',
+        color: 'white',
+        // 56px min touch target on mobile, expand on desktop
+        minWidth: '56px',
+        minHeight: '56px',
+        padding: '0 1rem',
+        boxShadow: '0 10px 25px rgba(37,211,102,0.4)',
+        transition: 'transform 0.2s ease, bottom 0.3s ease',
+        textDecoration: 'none',
+      }}
+      onTouchStart={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'; }}
+      onTouchEnd={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)'; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
     >
-      <MessageCircle className="w-5 h-5" />
-      <span className="text-sm font-semibold hidden md:inline">WhatsApp Us</span>
+      <MessageCircle className="w-5 h-5 shrink-0" />
+      <span className="text-sm font-semibold hidden md:inline whitespace-nowrap">WhatsApp Us</span>
     </a>
   );
 }
