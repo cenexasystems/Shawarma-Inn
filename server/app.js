@@ -15,6 +15,7 @@ app.use(
       }
       return callback(new Error('Not allowed by CORS'));
     },
+    exposedHeaders: ['X-Refreshed-Token'],
   }),
 );
 app.use(express.json({ limit: '1mb' }));

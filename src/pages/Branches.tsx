@@ -21,10 +21,15 @@ export default function Branches() {
         {/* Branch grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {branches.map(branch => (
-            <div
+            <a
               key={branch.id}
+              href={branch.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onMouseEnter={() => setActiveBranch(branch)}
+              onFocus={() => setActiveBranch(branch)}
               onClick={() => setActiveBranch(branch)}
-              className={`cursor-pointer group bg-[var(--card-bg)] rounded-[16px] overflow-hidden border transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(0,0,0,0.45)] ${
+              className={`cursor-pointer group block bg-[var(--card-bg)] rounded-[16px] overflow-hidden border transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(0,0,0,0.45)] ${
                 activeBranch.id === branch.id ? 'border-[var(--red)] ring-1 ring-[var(--red)]' : 'border-[var(--border)] hover:border-[var(--white)]/30'
               }`}
             >
@@ -63,20 +68,14 @@ export default function Branches() {
                   </div>
                 </div>
 
-                <a
-                  href={branch.mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(event) => event.stopPropagation()}
-                  className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[2px] text-[var(--red)] hover:text-white border border-[var(--red)]/30 hover:border-[var(--red)] hover:bg-[var(--red)]/10 rounded-full px-4 py-2 transition-all duration-300"
-                >
+                <span className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[2px] text-[var(--red)] group-hover:text-white border border-[var(--red)]/30 group-hover:border-[var(--red)] group-hover:bg-[var(--red)]/10 rounded-full px-4 py-2 transition-all duration-300">
                   Get Directions
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4" />
                   </svg>
-                </a>
+                </span>
               </div>
-            </div>
+            </a>
           ))}
         </div>
 

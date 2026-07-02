@@ -14,11 +14,17 @@ export default function AdminLogin() {
   const [rememberMe, setRememberMe] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
 
   // Restore remembered email on mount
   useEffect(() => {
     const saved = localStorage.getItem('admin_remembered_email');
     if (saved) { setEmail(saved); setRememberMe(true); }
+
+    if (sessionStorage.getItem('si_session_expired_notice')) {
+      setSessionExpiredNotice(true);
+      sessionStorage.removeItem('si_session_expired_notice');
+    }
   }, []);
 
   const onSubmit = async (event: FormEvent) => {
@@ -75,6 +81,14 @@ export default function AdminLogin() {
             <div className="mb-6 p-3 rounded-xl bg-amber-900/20 border border-amber-500/20">
               <p className="text-amber-300/90 text-xs leading-relaxed text-center">
                 Admin dashboard requires the Express backend on port 5000.
+              </p>
+            </div>
+          )}
+
+          {sessionExpiredNotice && (
+            <div className="mb-6 p-3 rounded-xl bg-blue-900/20 border border-blue-500/20">
+              <p className="text-blue-300/90 text-xs leading-relaxed text-center">
+                Your session expired. Please sign in again.
               </p>
             </div>
           )}

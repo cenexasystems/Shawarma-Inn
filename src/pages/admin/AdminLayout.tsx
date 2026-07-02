@@ -15,7 +15,9 @@ import {
   LogOut,
   FolderTree,
   Video,
-  BarChart3
+  BarChart3,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { apiRequest } from '../../lib/api';
@@ -28,6 +30,7 @@ export default function AdminLayout() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const notifIdRef = useRef(0);
 
   useEffect(() => {
@@ -128,12 +131,18 @@ export default function AdminLayout() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#0a0a0a]/90 backdrop-blur-2xl border-r border-white/[0.05] flex flex-col shrink-0 z-[70] transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-5 border-b border-white/5 flex items-center justify-between">
-          <div>
-            <h1 className="font-bebas text-3xl tracking-[2px] text-[#ef8f2f]">Shawarma Inn</h1>
-            <p className="text-[10px] text-white/40 uppercase tracking-[2px]">Admin Portal</p>
-          </div>
+      <aside className={`fixed inset-y-0 left-0 w-64 ${collapsed ? 'lg:w-20' : 'lg:w-64'} bg-[#0a0a0a]/90 backdrop-blur-2xl border-r border-white/[0.05] flex flex-col shrink-0 z-[70] transition-all duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="border-b border-white/5">
+          <div className={`flex items-center pt-4 px-4 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+            <button
+              onClick={() => setCollapsed((v) => !v)}
+              className="hidden lg:flex p-2 rounded-lg hover:bg-[#d62b2b]/10 text-white/50 hover:text-[#ff3a3a] transition-colors shrink-0"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            </button>
+            {!collapsed && (
           <div className="relative">
             <button
               onClick={() => setShowNotifications((v) => !v)}
@@ -191,6 +200,14 @@ export default function AdminLayout() {
               </div>
             )}
           </div>
+          )}
+          </div>
+          {!collapsed && (
+            <div className="px-5 pt-3 pb-5">
+              <h1 className="font-bebas text-4xl tracking-[2px] leading-none hero-brand">Shawarma Inn</h1>
+              <p className="text-[10px] text-white/40 uppercase tracking-[2px] mt-2">Admin Portal</p>
+            </div>
+          )}
         </div>
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map(({ key, path, icon: Icon, label }) => {
@@ -199,23 +216,24 @@ export default function AdminLayout() {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 relative group ${
+                title={collapsed ? label : undefined}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 relative group ${collapsed ? 'justify-center' : ''} ${
                   isActive
-                    ? 'bg-white/[0.08] text-white font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
+                    ? 'bg-[#d62b2b]/10 text-white font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
                     : 'text-white/50 hover:bg-white/[0.04] hover:text-white/90'
                 }`}
               >
-                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-[#ef8f2f] rounded-r-full shadow-[0_0_10px_#ef8f2f]" />}
-                <Icon size={18} /> {label}
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-[#d62b2b] rounded-r-full shadow-[0_0_10px_#d62b2b]" />}
+                <Icon size={18} className="shrink-0" /> {!collapsed && label}
               </button>
             );
           })}
         </nav>
         <div className="p-4 border-t border-white/5 space-y-3">
-          {user && (
+          {user && !collapsed && (
             <div className="flex items-center gap-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-[#ef8f2f]/20 border border-[#ef8f2f]/30 flex items-center justify-center flex-shrink-0">
-                <UserCircle size={16} className="text-[#ef8f2f]" />
+              <div className="w-8 h-8 rounded-full bg-[#d62b2b]/20 border border-[#d62b2b]/30 flex items-center justify-center flex-shrink-0">
+                <UserCircle size={16} className="text-[#ff3a3a]" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-white/80 truncate">{(user as any).name || 'Admin'}</p>
@@ -223,8 +241,12 @@ export default function AdminLayout() {
               </div>
             </div>
           )}
-          <button onClick={() => { logout(); navigate('/admin/login'); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all">
-            <LogOut size={16} /> Logout
+          <button
+            onClick={() => { logout(); navigate('/admin/login'); }}
+            title={collapsed ? 'Logout' : undefined}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all"
+          >
+            <LogOut size={16} /> {!collapsed && 'Logout'}
           </button>
         </div>
       </aside>
@@ -238,7 +260,7 @@ export default function AdminLayout() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className="font-bebas text-xl text-[#ef8f2f] tracking-[2px] uppercase">Shawarma Inn</h1>
+            <h1 className="font-bebas text-xl hero-brand tracking-[2px] uppercase">Shawarma Inn</h1>
           </div>
         </header>
 

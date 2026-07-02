@@ -73,7 +73,8 @@ export default function OrdersPage() {
             (o: any) =>
               (o.customer_name && o.customer_name.toLowerCase().includes(lower)) ||
               (o.customer_phone && o.customer_phone.includes(lower)) ||
-              String(o.order_number).includes(lower)
+              (o.order_number && String(o.order_number).includes(lower)) ||
+              String(o.id).toLowerCase().includes(lower)
           );
         }
         setOrders(fetchedOrders);
@@ -182,7 +183,7 @@ export default function OrdersPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
             <input
               type="text"
-              placeholder="Search order #, phone, or name..."
+              placeholder="Search order #, WhatsApp request ID, phone, or name..."
               value={orderSearch}
               onChange={e => setOrderSearch(e.target.value)}
               className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f] transition-colors focus:shadow-[0_0_15px_rgba(239,143,47,0.1)]"
@@ -232,7 +233,14 @@ export default function OrdersPage() {
                   onClick={() => openOrderDrawer(order)}
                 >
                   <td className="p-5">
-                    <div className="font-bebas text-2xl text-[#ef8f2f] drop-shadow-md">#{order.order_number}</div>
+                    {order.order_number ? (
+                      <div className="font-bebas text-2xl text-[#ef8f2f] drop-shadow-md">#{order.order_number}</div>
+                    ) : (
+                      <div>
+                        <div className="text-[9px] uppercase tracking-[1.5px] text-white/40">WhatsApp Request</div>
+                        <div className="font-mono text-xs text-[#ef8f2f] break-all" title={order.id}>{order.id}</div>
+                      </div>
+                    )}
                     <div className="text-xs text-white/40 mt-1">{new Date(order.created_at).toLocaleString()}</div>
                     <div className="text-[10px] mt-2 text-white/70 bg-white/10 border border-white/5 inline-block px-2 py-0.5 rounded uppercase tracking-[1px] shadow-sm">{order.delivery_type.replace('_', ' ')}</div>
                   </td>
@@ -280,8 +288,15 @@ export default function OrdersPage() {
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeOrderDrawer} />
           <aside className="fixed right-0 top-0 h-full w-full max-w-lg bg-[#141414] border-l border-white/10 z-50 flex flex-col shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 sticky top-0 bg-[#141414]">
-              <div>
-                <h3 className="font-bebas text-3xl tracking-wider text-[#ef8f2f]">Order #{selectedOrder.order_number}</h3>
+              <div className="min-w-0">
+                {selectedOrder.order_number ? (
+                  <h3 className="font-bebas text-3xl tracking-wider text-[#ef8f2f]">Order #{selectedOrder.order_number}</h3>
+                ) : (
+                  <>
+                    <div className="text-[10px] uppercase tracking-[2px] text-white/40">WhatsApp Request</div>
+                    <h3 className="font-mono text-sm text-[#ef8f2f] break-all">{selectedOrder.id}</h3>
+                  </>
+                )}
                 <p className="text-xs text-white/40 mt-0.5">{new Date(selectedOrder.created_at).toLocaleString()}</p>
               </div>
               <button onClick={closeOrderDrawer} className="p-2 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors">

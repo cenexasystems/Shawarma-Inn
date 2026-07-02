@@ -1,6 +1,20 @@
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env.js';
 import { getUserById } from '../repositories/userRepository.js';
+import { createToken } from '../services/authService.js';
+
+// If a valid token has less than this much life left, silently issue a
+// fresh one via the X-Refreshed-Token response header so an active admin
+// never gets logged out mid-session.
+const REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+
+function maybeSlideSession(req, res, decoded, user) {
+  if (!decoded.exp) return;
+  const remainingMs = decoded.exp * 1000 - Date.now();
+  if (remainingMs > 0 && remainingMs < REFRESH_THRESHOLD_MS) {
+    res.setHeader('X-Refreshed-Token', createToken(user));
+  }
+}
 
 export async function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
@@ -17,6 +31,7 @@ export async function authRequired(req, res, next) {
       return res.status(401).json({ error: 'Invalid token' });
     }
     req.user = user;
+    maybeSlideSession(req, res, decoded, user);
     return next();
   } catch {
     // If local JWT fails, check if supabase is used
@@ -83,6 +98,7 @@ export async function adminRequired(req, res, next) {
     if (!user) return res.status(401).json({ error: 'Admin account not found.' });
     if (user.role !== 'admin') return res.status(403).json({ error: 'Admin access required.' });
     req.user = user;
+    maybeSlideSession(req, res, decoded, user);
     return next();
   } catch (err) {
     // If local JWT fails, and supabase is enabled, try supabase

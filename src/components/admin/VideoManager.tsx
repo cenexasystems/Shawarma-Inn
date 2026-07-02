@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiRequest } from '../../lib/api';
-import { Play, Plus, Trash2, Edit } from 'lucide-react';
+import { Play, Plus, Trash2, Edit, UploadCloud, Loader2 } from 'lucide-react';
 
 export default function VideoManager({ tokenRequired }: { tokenRequired: string }) {
   const [videos, setVideos] = useState<any[]>([]);
@@ -8,6 +8,8 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ title: '', url: '', thumbnail_url: '', is_active: 1 });
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingThumb, setUploadingThumb] = useState(false);
 
   const fetchVideos = async () => {
     try {
@@ -37,6 +39,54 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
       fetchVideos();
     } catch (err) {
       alert('Error saving video');
+    }
+  };
+
+  const handleVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideo(true);
+    try {
+      const body = new FormData();
+      body.append('video', file);
+      const res = await fetch('/api/admin/videos/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tokenRequired}` },
+        body,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setFormData((prev) => ({ ...prev, url: data.url }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload video');
+    } finally {
+      setUploadingVideo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleThumbnailFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingThumb(true);
+    try {
+      const body = new FormData();
+      body.append('thumbnail', file);
+      const res = await fetch('/api/admin/videos/upload-thumbnail', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tokenRequired}` },
+        body,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setFormData((prev) => ({ ...prev, thumbnail_url: data.url }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload thumbnail');
+    } finally {
+      setUploadingThumb(false);
+      e.target.value = '';
     }
   };
 
@@ -78,21 +128,46 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
             className="w-full bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
             required
           />
-          <input
-            type="url"
-            placeholder="Video URL (e.g. YouTube/TikTok link)"
-            value={formData.url}
-            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-            className="w-full bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
-            required
-          />
-          <input
-            type="url"
-            placeholder="Thumbnail URL (optional)"
-            value={formData.thumbnail_url}
-            onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-            className="w-full bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
-          />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                placeholder="Video URL, or upload a file"
+                value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                className="flex-1 bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
+                required
+              />
+              <label className="shrink-0 flex items-center gap-2 bg-white/5 border border-white/10 hover:border-[#d62b2b] px-3 py-3 rounded-xl text-xs uppercase tracking-wide text-white/70 hover:text-white cursor-pointer transition-colors">
+                {uploadingVideo ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                {uploadingVideo ? 'Uploading...' : 'Upload Video'}
+                <input type="file" accept="video/*" className="hidden" onChange={handleVideoFileUpload} disabled={uploadingVideo} />
+              </label>
+            </div>
+            {formData.url && (
+              <video src={formData.url} className="w-32 h-20 rounded-lg object-cover border border-white/10" muted />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                placeholder="Thumbnail URL, or upload an image"
+                value={formData.thumbnail_url}
+                onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                className="flex-1 bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
+              />
+              <label className="shrink-0 flex items-center gap-2 bg-white/5 border border-white/10 hover:border-[#d62b2b] px-3 py-3 rounded-xl text-xs uppercase tracking-wide text-white/70 hover:text-white cursor-pointer transition-colors">
+                {uploadingThumb ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                {uploadingThumb ? 'Uploading...' : 'Upload Cover'}
+                <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailFileUpload} disabled={uploadingThumb} />
+              </label>
+            </div>
+            {formData.thumbnail_url && (
+              <img src={formData.thumbnail_url} alt="Thumbnail preview" className="w-32 h-20 rounded-lg object-cover border border-white/10" />
+            )}
+          </div>
           <div className="flex items-center gap-2 text-sm text-white/70">
             <input
               type="checkbox"

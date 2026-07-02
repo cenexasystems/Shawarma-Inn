@@ -10,6 +10,7 @@ import { JWT_SECRET } from './config/env.js';
 import { broadcastSSE, broadcastSSEToUser } from './events/sse.js';
 import jwt from 'jsonwebtoken';
 import { getDateRangeSql } from './utils/filterEngine.js';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -773,9 +774,9 @@ app.get('/api/admin/orders', adminRequired, (req, res) => {
   const params = [];
 
   if (search) {
-    where.push('(CAST(order_number AS TEXT) LIKE ? OR customer_phone LIKE ? OR customer_name LIKE ?)');
+    where.push('(CAST(order_number AS TEXT) LIKE ? OR CAST(id AS TEXT) LIKE ? OR customer_phone LIKE ? OR customer_name LIKE ?)');
     const like = `%${search}%`;
-    params.push(like, like, like);
+    params.push(like, like, like, like);
   }
   if (status) {
     const statuses = status.split(',').map((s) => s.trim()).filter(Boolean);
@@ -1917,6 +1918,48 @@ app.put('/api/admin/settings', adminRequired, (req, res) => {
     sections[row.section].push(row);
   }
   return res.json({ settings: rows, sections });
+});
+
+// Video upload (testimonial video file + thumbnail image)
+const videoUploadDir = path.join(rootDir, 'public', 'videos');
+const videoThumbUploadDir = path.join(rootDir, 'public', 'images', 'videos');
+fs.mkdirSync(videoUploadDir, { recursive: true });
+fs.mkdirSync(videoThumbUploadDir, { recursive: true });
+
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, videoUploadDir),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`),
+});
+const uploadVideoFile = multer({
+  storage: videoStorage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('video/')) return cb(new Error('Only video files are allowed'));
+    cb(null, true);
+  },
+});
+
+const videoThumbStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, videoThumbUploadDir),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`),
+});
+const uploadVideoThumb = multer({
+  storage: videoThumbStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) return cb(new Error('Only image files are allowed'));
+    cb(null, true);
+  },
+});
+
+app.post('/api/admin/videos/upload', adminRequired, uploadVideoFile.single('video'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No video uploaded' });
+  res.json({ url: `/videos/${req.file.filename}` });
+});
+
+app.post('/api/admin/videos/upload-thumbnail', adminRequired, uploadVideoThumb.single('thumbnail'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No thumbnail uploaded' });
+  res.json({ url: `/images/videos/${req.file.filename}` });
 });
 
 // AI Videos API

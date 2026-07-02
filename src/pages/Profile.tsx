@@ -299,8 +299,13 @@ export default function Profile() {
                     <div key={order.id} className="bg-[var(--black)] rounded-xl border border-[var(--border)] p-6 hover:border-white/10 transition-colors">
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                         <div>
-                          {order.order_number && (
+                          {order.order_number ? (
                             <p className="font-bebas text-lg text-[var(--red)] tracking-wider">Order #{order.order_number}</p>
+                          ) : (
+                            <p className="font-body text-xs text-[var(--red)] tracking-wide">
+                              <span className="uppercase text-[10px] text-[var(--white)]/40 tracking-[1.5px] mr-1">WhatsApp Request:</span>
+                              <span className="font-mono break-all">{order.id}</span>
+                            </p>
                           )}
                           <p className="font-body text-xs text-[var(--white)]/40 uppercase tracking-widest">{new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                           {order.delivery_type && (

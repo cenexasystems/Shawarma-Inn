@@ -6,7 +6,7 @@ import { getUserById } from '../repositories/userRepository.js';
 import { broadcastSSE } from '../events/sse.js';
 import { ConflictError, UnauthorizedError } from '../utils/errors.js';
 
-function createToken(user) {
+export function createToken(user) {
   return jwt.sign(
     {
       sub: user.id,

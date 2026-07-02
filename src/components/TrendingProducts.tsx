@@ -8,19 +8,19 @@ import { resolveMenuImage, getRecoveryImage } from '../utils/menuImages';
 // (local `item.image` paths are /images/menu/… which don't exist in public/)
 const TARGET_ITEMS = ['Shawarma', 'Chicken Popcorn', 'Loaded French Fries', 'Waffle'];
 
-const trending = (menuData as MenuItem[])
-  .filter((item) => item.bestseller || TARGET_ITEMS.some(t => item.name.toLowerCase().includes(t.toLowerCase())))
-  // Try to pick one of each target item if possible
-  .reduce((acc, item) => {
-    const matched = TARGET_ITEMS.find(t => item.name.toLowerCase().includes(t.toLowerCase()));
-    if (matched && !acc.find(a => a.name.toLowerCase().includes(matched.toLowerCase()))) {
-      acc.push(item);
-    } else if (acc.length < 4 && !matched && item.bestseller) {
-      // acc.push(item);
-    }
-    return acc;
-  }, [] as MenuItem[])
-  .slice(0, 4)
+const MAX_TRENDING = 8;
+
+const bestsellers = (menuData as MenuItem[]).filter((item) => item.bestseller);
+
+// Prioritize the target items (in order), then fill remaining slots with any other bestseller
+const priority = TARGET_ITEMS
+  .map((t) => bestsellers.find((item) => item.name.toLowerCase().includes(t.toLowerCase())))
+  .filter((item): item is MenuItem => Boolean(item));
+
+const rest = bestsellers.filter((item) => !priority.some((p) => p.id === item.id));
+
+const trending = [...priority, ...rest]
+  .slice(0, MAX_TRENDING)
   .map((item) => ({ ...item, image: resolveMenuImage({ name: item.name, category: item.category, image_url: null }) }));
 
 export default function TrendingProducts() {

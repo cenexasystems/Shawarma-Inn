@@ -71,18 +71,18 @@ export default function MapsSection() {
                     <p className={`text-[11px] mt-1.5 ${isActive ? 'text-white/40' : 'text-white/20'}`}>
                       {branch.hours}
                     </p>
-                    {isActive && (
-                      <a
-                        href={branch.mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(event) => event.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 mt-3 text-[10px] font-bold uppercase tracking-[2px] text-[#d62b2b] hover:text-white transition-colors"
-                      >
-                        Get Directions
-                        <ArrowUpRight className="w-3 h-3" />
-                      </a>
-                    )}
+                    <a
+                      href={branch.mapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                      className={`inline-flex items-center gap-1.5 mt-3 text-[10px] font-bold uppercase tracking-[2px] transition-colors ${
+                        isActive ? 'text-[#d62b2b] hover:text-white' : 'text-white/25 hover:text-[#d62b2b]'
+                      }`}
+                    >
+                      Get Directions
+                      <ArrowUpRight className="w-3 h-3" />
+                    </a>
                   </div>
                 </button>
               );

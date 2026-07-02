@@ -18,6 +18,13 @@ interface ApiRequestOptions {
 
 const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined)?.trim() || '/api');
 
+// Dispatched whenever the server silently issues a fresh token (sliding session)
+// so AuthContext can persist it without the caller needing to know about it.
+export const TOKEN_REFRESHED_EVENT = 'si:token-refreshed';
+// Dispatched when an authenticated request comes back 401 with an existing token,
+// meaning the session has truly expired — AuthContext logs out cleanly on this.
+export const SESSION_EXPIRED_EVENT = 'si:session-expired';
+
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method: options.method || 'GET',
@@ -28,10 +35,18 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
 
+  const refreshedToken = response.headers.get('X-Refreshed-Token');
+  if (refreshedToken) {
+    window.dispatchEvent(new CustomEvent(TOKEN_REFRESHED_EVENT, { detail: { token: refreshedToken } }));
+  }
+
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     const message = (payload as { error?: string }).error || 'Request failed';
+    if (response.status === 401 && options.token) {
+      window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+    }
     throw new Error(message);
   }
 

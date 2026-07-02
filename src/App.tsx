@@ -39,7 +39,8 @@ const PosBilling = lazy(() => import('./pages/PosBilling'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 
 function ProtectedAdminRoute({ children }: { children: ReactNode }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading } = useAuth();
+  if (loading) return <Loader />;
   if (!isAdmin) return <Navigate to="/admin/login" replace />;
   return <>{children}</>;
 }
@@ -157,7 +158,9 @@ export default function App() {
         <Route
           path="/admin/login"
           element={
-            user?.role === 'admin' ? (
+            authLoading ? (
+              <Loader />
+            ) : user?.role === 'admin' ? (
               <Navigate to="/admin" replace />
             ) : (
               <Suspense fallback={<Loader />}>

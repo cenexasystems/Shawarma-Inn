@@ -1,7 +1,7 @@
 [
-  { "branchId": "mathur-branch", "branchName": "MATHUR BRANCH", "customerName": "Arjun R.", "quote": "Best shawarma in Chennai, hands down. The garlic sauce is unreal.", "videoUrl": null, "posterUrl": null },
-  { "branchId": "anna-nagar", "branchName": "ANNA NAGAR", "customerName": "Priya S.", "quote": "Fresh, fast, and the staff always remembers my order.", "videoUrl": null, "posterUrl": null },
-  { "branchId": "perambur", "branchName": "PERAMBUR", "customerName": "Karthik M.", "quote": "My go-to spot after work. Never disappoints.", "videoUrl": null, "posterUrl": null },
-  { "branchId": "villivakkam", "branchName": "VILLIVAKKAM", "customerName": "Divya N.", "quote": "Generous portions and the mutton shawarma is to die for.", "videoUrl": null, "posterUrl": null },
+  { "branchId": "mathur-branch", "branchName": "MATHUR (PILOT)", "customerName": "Arjun R.", "quote": "Best shawarma in Chennai, hands down. The garlic sauce is unreal.", "videoUrl": null, "posterUrl": null },
+  { "branchId": "kolathur", "branchName": "KOLATHUR", "customerName": "Priya S.", "quote": "Fresh, fast, and the staff always remembers my order.", "videoUrl": null, "posterUrl": null },
+  { "branchId": "retteri", "branchName": "RETTERI", "customerName": "Karthik M.", "quote": "My go-to spot after work. Never disappoints.", "videoUrl": null, "posterUrl": null },
+  { "branchId": "kodungaiyur", "branchName": "KODUNGAIYUR", "customerName": "Divya N.", "quote": "Generous portions and the mutton shawarma is to die for.", "videoUrl": null, "posterUrl": null },
   { "branchId": "madhavaram", "branchName": "MADHAVARAM", "customerName": "Suresh K.", "quote": "Clean kitchen, friendly staff, consistently great food.", "videoUrl": null, "posterUrl": null }
 ]

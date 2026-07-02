@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { authApi, profileApi, type AuthUser } from '../lib/api';
+import { authApi, profileApi, SESSION_EXPIRED_EVENT, TOKEN_REFRESHED_EVENT, type AuthUser } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
 import { hasExplicitApiBase, isLocalHost, useSupabaseAuth } from '../lib/runtime';
 
@@ -81,8 +81,14 @@ function readSessionFromStorage(): AuthSession | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
+  // Mirrors `session` synchronously so event handlers and the Supabase
+  // auth-state-change listener never act on a stale storage snapshot
+  // (this was the root cause of the admin session getting stomped by a
+  // late-arriving Supabase event during local admin login).
+  const sessionRef = useRef<AuthSession | null>(null);
 
   const persistSession = useCallback((nextSession: AuthSession | null, rememberMe?: boolean) => {
+    sessionRef.current = nextSession;
     setSession(nextSession);
     if (!nextSession) {
       localStorage.removeItem(STORAGE_KEY);
@@ -155,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     // If we have a local session with an admin role (which was logged in via adminLogin),
     // and we are bypassing Supabase for it, don't let Supabase wipe it.
-    const current = readSessionFromStorage();
+    const current = sessionRef.current;
     if (useSupabaseAuth && current?.user?.role !== 'admin') {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
@@ -194,9 +200,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, updatedSession) => {
-        // Do not wipe admin session on auth state changes
-        const current = readSessionFromStorage();
-        if (current?.user?.role !== 'admin') {
+        // Do not wipe admin session on auth state changes. Reads sessionRef
+        // (in-memory, updated synchronously by persistSession) rather than
+        // storage, since storage can lag behind an in-flight local admin
+        // login and let a stale Supabase event stomp the new session.
+        if (sessionRef.current?.user?.role !== 'admin') {
           void syncSupabaseSession(updatedSession);
         }
       });
@@ -213,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      sessionRef.current = local;
       setSession(local);
       await refreshUser();
       setLoading(false);
@@ -220,6 +229,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initialize();
   }, [refreshUser, syncSupabaseSession]);
+
+  // Cross-tab sync (localStorage only — sessionStorage is already tab-isolated),
+  // silent token refresh, and clean logout-on-true-expiry, so a dead/rotated
+  // token never surfaces to the user as a raw "Request failed" error.
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || event.storageArea !== localStorage) return;
+      if (!event.newValue) {
+        sessionRef.current = null;
+        setSession(null);
+        return;
+      }
+      try {
+        const parsed = JSON.parse(event.newValue) as AuthSession;
+        if (parsed?.token && parsed?.user) {
+          sessionRef.current = parsed;
+          setSession(parsed);
+        }
+      } catch {
+        // ignore malformed storage writes from other tabs
+      }
+    };
+
+    const handleTokenRefreshed = (event: Event) => {
+      const detail = (event as CustomEvent<{ token: string }>).detail;
+      if (!detail?.token || !sessionRef.current) return;
+      const rememberMe = localStorage.getItem(STORAGE_KEY) !== null;
+      persistSession({ ...sessionRef.current, token: detail.token }, rememberMe);
+    };
+
+    const handleSessionExpired = () => {
+      if (!sessionRef.current) return;
+      sessionStorage.setItem('si_session_expired_notice', '1');
+      persistSession(null);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener(TOKEN_REFRESHED_EVENT, handleTokenRefreshed);
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(TOKEN_REFRESHED_EVENT, handleTokenRefreshed);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    };
+  }, [persistSession]);
 
   const signup = useCallback(async (input: { email: string; password: string; name?: string; phone?: string; rememberMe?: boolean }) => {
     if (useSupabaseAuth) {

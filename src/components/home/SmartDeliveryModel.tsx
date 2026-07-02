@@ -40,128 +40,74 @@ export default function SmartDeliveryModel() {
     }
   ];
 
-  // Optimized GSAP scroll animation
+  // Smooth, premium GSAP scroll animation
   useEffect(() => {
-    if (!containerRef.current || !progressRef.current || !timelineRef.current) return;
+    if (!containerRef.current || !progressRef.current) return;
 
     const progressBar = progressRef.current;
-    const stepsArray = stepsRef.current.filter(Boolean);
+    const stepsArray = stepsRef.current.filter(Boolean) as HTMLDivElement[];
 
     if (stepsArray.length === 0) return;
 
-    // Main timeline progress with smooth scroll linkage
-    const st = ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: 0.3,
-      onUpdate: (self) => {
-        const progress = self.progress * 100;
-        const scaleY = (progress / 100) * stepsArray.length;
-
-        gsap.to(progressBar, {
-          scaleY: scaleY,
-          ease: "power2.out",
-          duration: 0.2,
-          transformOrigin: "top"
-        });
-      }
-    });
-
-    // Individual step animations
-    stepsArray.forEach((stepElement, index) => {
-      if (!stepElement) return;
-
-      // Create timeline for this step
-      const stepTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: stepElement,
-          start: "center center",
-          end: "center center",
-          scrub: 0.5,
-          toggleActions: "play none none reverse"
-        }
+    const ctx = gsap.context(() => {
+      // Progress line tracks scroll through the whole steps container, buttery-smooth via scrub lag
+      gsap.set(progressBar, { scaleY: 0, transformOrigin: "top" });
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top center",
+        end: "bottom center",
+        scrub: 0.6,
+        animation: gsap.to(progressBar, {
+          scaleY: 1,
+          ease: "none"
+        })
       });
 
-      // Animate timeline dot
-      stepTl.to(`.timeline-dot-${index}`, {
-        scale: 1.5,
-        boxShadow: '0 0 30px rgba(214, 43, 43, 0.8)',
-        duration: 0.3,
-        ease: "back.out(1.7)"
-      }, 0);
-
-      // Animate step card with stagger
-      stepTl.to(stepElement, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        duration: 0.5,
-        ease: "power2.out"
-      }, 0);
-
-      // Previous steps fade out with scale
-      if (index > 0) {
-        const prevSteps = stepsArray.slice(0, index);
-        stepTl.to(prevSteps, {
-          opacity: 0.3,
-          scale: 0.95,
-          duration: 0.5,
-          ease: "power2.out"
-        }, 0);
-      }
-
-      // Glow effect for active step
-      stepTl.to(`.timeline-dot-${index}`, {
-        boxShadow: '0 0 50px rgba(214, 43, 43, 1)',
-        duration: 0.5
-      }, 0.3);
-
-      // Rotate icon for fun animation
-      stepTl.to(`.step-icon-${index}`, {
-        rotation: 360,
-        duration: 1,
-        ease: "back.out(1.7)"
-      }, 0);
-
-      // Floating animation for step card
-      gsap.to(stepElement, {
-        y: -10,
-        duration: 2,
-        ease: "sine.inOut",
-        yoyo: true,
-        repeat: -1,
-        scrollTrigger: {
-          trigger: stepElement,
-          start: "center center",
-          end: "center center",
-          scrub: true
-        }
+      // Each step eases in smoothly over a generous scroll range (no zero-length triggers)
+      stepsArray.forEach((stepElement) => {
+        gsap.fromTo(
+          stepElement,
+          { opacity: 0, y: 60, scale: 0.94 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: stepElement,
+              start: "top 85%",
+              end: "top 45%",
+              scrub: 1
+            }
+          }
+        );
       });
-    });
+    }, containerRef);
+
+    // Recalculate trigger positions once layout has settled (fonts/images)
+    const refresh = () => ScrollTrigger.refresh();
+    window.addEventListener("load", refresh);
 
     return () => {
-      st.kill();
-      ScrollTrigger.getAll().forEach(trigger => {
-        if (trigger.trigger !== containerRef.current) trigger.kill();
-      });
+      window.removeEventListener("load", refresh);
+      ctx.revert();
     };
   }, [steps.length]);
 
-  // Mouse move parallax effect
+  // Mouse move parallax effect — quickTo gives a single buttery-interpolated tween instead of
+  // spawning a competing tween on every mousemove event
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      const { clientX, clientY } = e;
-      const x = clientX / window.innerWidth - 0.5;
-      const y = clientY / window.innerHeight - 0.5;
+    if (!containerRef.current) return;
+    const el = containerRef.current;
 
-      gsap.to(containerRef.current, {
-        backgroundPositionX: `${x * 20}px`,
-        backgroundPositionY: `${y * 20}px`,
-        duration: 0.5,
-        ease: "power2.out"
-      });
+    const xTo = gsap.quickTo(el, "backgroundPositionX", { duration: 0.6, ease: "power3.out" });
+    const yTo = gsap.quickTo(el, "backgroundPositionY", { duration: 0.6, ease: "power3.out" });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = e.clientX / window.innerWidth - 0.5;
+      const y = e.clientY / window.innerHeight - 0.5;
+      xTo(x * 20);
+      yTo(y * 20);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -250,27 +196,14 @@ export default function SmartDeliveryModel() {
             {/* Steps Container */}
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-12">
               {steps.map((s, idx) => (
-                <motion.div
+                <div
                   key={idx}
                   ref={(el) => {
                     stepsRef.current[idx] = el;
                   }}
-                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{
-                    duration: 0.8,
-                    delay: idx * 0.2,
-                    ease: "easeOut"
-                  }}
-                  className="relative pl-0 lg:pl-16 step-card"
+                  className="relative pl-0 lg:pl-16 step-card will-change-transform"
+                  style={{ opacity: 0 }}
                 >
-                  {/* Timeline Dot */}
-                  <motion.div
-                    className={`step-icon-${idx} timeline-dot-${idx} hidden lg:block absolute left-0 w-6 h-6 rounded-full border-2 border-[var(--red)] bg-[var(--black)] z-30 transition-all duration-300 ${idx === 0 ? 'shadow-[0_0_20px_rgba(214,43,43,0.6)]' : ''}`}
-                    whileHover={{ scale: 1.2 }}
-                  />
-
                   {/* Step Card */}
                   <motion.div
                     className="group relative bg-[#0f0f0f]/80 backdrop-blur-md border border-white/10 rounded-[32px] p-8 md:p-10 overflow-hidden hover:border-[var(--red)]/30 transition-all duration-500 shadow-2xl hover:shadow-[0_0_40px_rgba(214,43,43,0.2)]"
@@ -323,7 +256,7 @@ export default function SmartDeliveryModel() {
                       {s.desc}
                     </motion.p>
                   </motion.div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
