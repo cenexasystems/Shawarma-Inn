@@ -6,12 +6,15 @@ export interface MenuItem {
   desc?: string;
   description?: string; // legacy
   price: number;
+  large_price?: number;
   rating?: number;
   category: string;
   image?: string;
   image_url?: string;
   bestseller?: boolean;
   isVeg?: boolean;
+  trending?: boolean;
+  display_order?: number;
   is_active?: boolean;
   is_bestseller?: boolean;
 }

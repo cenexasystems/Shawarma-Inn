@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Search, Plus, Filter, Tag, Check, CheckSquare, Square, RefreshCcw, Power, PowerOff, Edit3 } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Search, Plus, Check, CheckSquare, Square, PowerOff, Edit3 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { ProductDrawer } from '../../components/admin/ProductDrawer';
@@ -22,7 +22,7 @@ export default function MenuPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [vegFilter, setVegFilter] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState('');
-  const [bestsellerFilter, setBestsellerFilter] = useState('');
+  const [bestsellerFilter] = useState('');
   const [sortField, setSortField] = useState('display_order');
   
   // Bulk selection

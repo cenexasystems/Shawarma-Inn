@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Search, Plus, Check, PowerOff, Edit3 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';

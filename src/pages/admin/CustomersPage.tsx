@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Search, User, Mail, Phone, Calendar, ShoppingBag, DollarSign, Tag, TrendingUp } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Search, User, Mail, Phone, ShoppingBag, Tag } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 
