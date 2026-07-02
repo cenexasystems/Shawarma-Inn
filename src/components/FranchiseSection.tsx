@@ -1,10 +1,31 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Megaphone, GraduationCap, Handshake, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, Megaphone, GraduationCap, Handshake, CheckCircle2, ExternalLink } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { franchiseApi } from '../lib/api';
 
 const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
+
+// Use verified outlet links when configured; otherwise fall back to Chennai-wide searches.
+const swiggyUrl = import.meta.env.VITE_SWIGGY_URL || 'https://www.swiggy.com/city/chennai/shawarma-inn';
+const zomatoUrl = import.meta.env.VITE_ZOMATO_URL || 'https://www.zomato.com/chennai/restaurants/shawarma';
+
+const deliveryApps = [
+  {
+    name: 'Swiggy',
+    href: swiggyUrl,
+    image: '/swiggy-logo-ref.png',
+    accentClass: 'text-[#f97316]',
+    label: 'Fast Delivery Partner',
+  },
+  {
+    name: 'Zomato',
+    href: zomatoUrl,
+    image: '/zomato-logo-ref.jpg',
+    accentClass: 'text-[#ef4444]',
+    label: 'Customer Favorite',
+  },
+];
 
 const highlights = [
   {
@@ -141,7 +162,7 @@ export default function FranchiseSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
         transition={{ duration: 0.6 }}
-        className="max-w-6xl mx-auto px-8 pt-24 pb-12 text-center"
+        className="max-w-6xl mx-auto px-8 pt-24 pb-8 text-center"
       >
         <p className="text-[11px] uppercase tracking-[3px] text-[#d62b2b]">Franchise Opportunity</p>
         <h2 className="mt-3 text-5xl md:text-6xl font-bebas tracking-[3px] uppercase leading-none">
@@ -151,6 +172,12 @@ export default function FranchiseSection() {
           Join our proven business model that combines authentic flame-grilled Lebanese recipes with a highly optimized direct-ordering and Rapido delivery system.
         </p>
       </motion.div>
+
+      {(!import.meta.env.VITE_SWIGGY_URL || !import.meta.env.VITE_ZOMATO_URL) ? (
+        <p className="max-w-6xl mx-auto px-8 pb-16 text-[10px] uppercase tracking-[1.5px] text-white/30 text-center">
+          Showing Chennai-wide searches until verified Mathur outlet links are configured.
+        </p>
+      ) : null}
 
       {/* Business highlight cards */}
       <div className="max-w-6xl mx-auto px-8 pb-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -207,6 +234,37 @@ export default function FranchiseSection() {
             </div>
           </div>
           
+          <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5">Order On Delivery Apps</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            {deliveryApps.map((app) => (
+              <a
+                key={app.name}
+                href={app.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex min-h-[116px] items-center gap-4 bg-black/50 border border-white/5 p-4 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+              >
+                <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white">
+                  <img
+                    src={app.image}
+                    alt={app.name}
+                    className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[10px] uppercase tracking-[2px] font-bold text-white/40">{app.label}</span>
+                  <span className="mt-1 flex items-center gap-2 font-bebas text-xl tracking-[1px] text-white">
+                    {app.name}
+                    <ExternalLink className={`h-4 w-4 ${app.accentClass}`} />
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-white/55">
+                    Open Shawarma Inn Mathur
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+
           <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5">Existing Outlets</h3>
           <div className="flex flex-wrap gap-2">
             {branches.map(branch => (

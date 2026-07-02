@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { MenuItem } from '../types';
 import { supabase } from '../lib/supabaseClient';
-import { useSupabaseAuth } from '../lib/runtime';
+import { isLocalHost, useSupabaseAuth } from '../lib/runtime';
 import { resolveMenuImage } from '../utils/menuImages';
 
 /**
@@ -26,9 +26,33 @@ function mapMenuRow(row: any): MenuItem {
     }),
     isVeg: Boolean(row.is_veg),
     bestseller: Boolean(row.is_bestseller),
+    is_bestseller: Boolean(row.is_bestseller),
     trending: Boolean(row.is_trending),
     display_order: Number(row.display_order) || 0,
+    is_active: row.is_active ?? row.is_available ?? true,
   };
+}
+
+function isRowActive(row: any): boolean {
+  const value = row?.is_active ?? row?.is_available;
+
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  if (typeof value === 'string') {
+    return value !== '0' && value.toLowerCase() !== 'false';
+  }
+
+  return Boolean(value);
 }
 
 export const useMenuItems = () => {
@@ -46,7 +70,6 @@ export const useMenuItems = () => {
         const { data, error: supabaseError } = await supabase
           .from('menu_items')
           .select('*')
-          .eq('is_active', 1)
           .order('display_order', { ascending: true })
           .order('name', { ascending: true });
 
@@ -54,7 +77,21 @@ export const useMenuItems = () => {
           throw new Error(supabaseError.message);
         }
 
-        menuItems = (data || []).map(mapMenuRow);
+        menuItems = (data || [])
+          .filter(isRowActive)
+          .map(mapMenuRow);
+
+        if (menuItems.length === 0 && isLocalHost) {
+          const response = await fetch('/api/menu-items');
+          if (!response.ok) {
+            throw new Error('Could not load menu from local API');
+          }
+
+          const payload = await response.json();
+          menuItems = (payload.items || [])
+            .filter(isRowActive)
+            .map(mapMenuRow);
+        }
       } else {
         const response = await fetch('/api/menu-items');
         if (!response.ok) {

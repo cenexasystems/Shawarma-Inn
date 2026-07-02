@@ -86,20 +86,6 @@ export default function App() {
   const cartData = useCart();
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
-    if (
-      user?.role === 'user' &&
-      !user.is_profile_complete &&
-      location.pathname !== '/profile-setup'
-    ) {
-      navigate('/profile-setup', { replace: true });
-    }
-  }, [authLoading, user, location.pathname, navigate]);
-
-  useEffect(() => {
     if (location.hash) {
       return;
     }
