@@ -223,12 +223,16 @@ export const useOrders = () => {
     deliveryType?: 'home_delivery' | 'store_pickup';
     couponCode?: string;
     discountAmount?: number;
-    branchId?: string;
+    outlet?: string;
     notes?: string;
     gstAmount?: number;
     packingCharge?: number;
   }): Promise<{ success: boolean; orderId?: string; error?: string }> => {
     try {
+      if (params.outlet && params.outlet !== 'Mathur') {
+        return { success: false, error: 'Direct ordering is only available for the Mathur outlet.' };
+      }
+
       if (useSupabaseAuth) {
         if (!user?.id || user.role !== 'user') {
           return { success: false, error: 'Please sign in before placing an order.' };
@@ -295,6 +299,7 @@ export const useOrders = () => {
           deliveryAddress: params.deliveryAddress,
           deliveryType: params.deliveryType ?? 'store_pickup',
           couponCode: params.couponCode ?? null,
+          outlet: params.outlet ?? 'Mathur',
           notes: params.notes ?? null,
           gstAmount: params.gstAmount ?? 0,
           packingCharge: params.packingCharge ?? 0,

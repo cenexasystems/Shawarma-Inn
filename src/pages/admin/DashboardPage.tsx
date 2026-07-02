@@ -14,7 +14,6 @@ import {
   Download
 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
-import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import {
   XAxis,
@@ -46,13 +45,14 @@ const getStatusColor = (status: string) => {
 };
 
 const StatCard = ({ title, value, icon: Icon, trend, colorClass }: any) => (
-  <div className="group bg-[#181818] border border-white/5 rounded-2xl p-6 flex items-center justify-between transition-all duration-300 hover:border-white/20 hover:bg-[#1c1c1c] hover:-translate-y-1 shadow-lg hover:shadow-2xl">
-    <div>
-      <p className="text-[11px] uppercase tracking-[2px] text-white/50 group-hover:text-white/70 transition-colors">{title}</p>
-      <h3 className="font-bebas text-5xl mt-2 tracking-wide group-hover:scale-[1.02] transition-transform origin-left">{value}</h3>
-      {trend && <p className="text-xs text-green-400 mt-2">{trend}</p>}
+  <div className="group relative bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex items-center justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(239,143,47,0.1)] hover:bg-white/[0.04] overflow-hidden">
+    <div className={`absolute -top-10 -right-10 w-40 h-40 bg-current opacity-[0.03] rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150 group-hover:opacity-[0.06] ${colorClass}`} />
+    <div className="relative z-10">
+      <p className="text-[10px] uppercase tracking-[2px] text-white/50 group-hover:text-white/70 transition-colors font-semibold">{title}</p>
+      <h3 className="font-bebas text-5xl mt-2 tracking-wide text-white drop-shadow-md group-hover:scale-[1.02] transition-transform origin-left">{value}</h3>
+      {trend && <p className="text-xs text-green-400 mt-2 font-medium">{trend}</p>}
     </div>
-    <div className={`p-4 rounded-xl bg-black/40 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-inner ${colorClass}`}>
+    <div className={`relative z-10 p-4 rounded-xl bg-black/40 border border-white/5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] ${colorClass}`}>
       <Icon size={24} />
     </div>
   </div>
@@ -151,20 +151,20 @@ export default function DashboardPage() {
 
       {/* Live Operations Status Strip */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
-            { label: 'Pending', value: summary.cards.pendingOrders, color: 'border-red-500/40 bg-red-500/10 hover:bg-red-500/20', dot: 'bg-red-500', icon: AlertCircle },
-            { label: 'Processing', value: summary.cards.processingOrders, color: 'border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20', dot: 'bg-yellow-400', icon: Clock },
-            { label: 'In Transit', value: summary.cards.inTransitOrders, color: 'border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20', dot: 'bg-purple-400', icon: Truck },
-            { label: 'Completed Today', value: summary.cards.completedToday, color: 'border-green-500/40 bg-green-500/10 hover:bg-green-500/20', dot: 'bg-green-400', icon: CheckCircle },
-            { label: 'Cancelled Today', value: summary.cards.cancelledToday, color: 'border-gray-500/30 bg-gray-500/10 hover:bg-gray-500/20', dot: 'bg-gray-400', icon: XCircle },
+            { label: 'Pending', value: summary.cards.pendingOrders, color: 'border-red-500/20 bg-red-500/[0.05] hover:bg-red-500/10 hover:border-red-500/40', dot: 'bg-red-500 shadow-[0_0_10px_#ef4444]', icon: AlertCircle },
+            { label: 'Processing', value: summary.cards.processingOrders, color: 'border-yellow-500/20 bg-yellow-500/[0.05] hover:bg-yellow-500/10 hover:border-yellow-500/40', dot: 'bg-yellow-400 shadow-[0_0_10px_#facc15]', icon: Clock },
+            { label: 'In Transit', value: summary.cards.inTransitOrders, color: 'border-purple-500/20 bg-purple-500/[0.05] hover:bg-purple-500/10 hover:border-purple-500/40', dot: 'bg-purple-400 shadow-[0_0_10px_#c084fc]', icon: Truck },
+            { label: 'Completed Today', value: summary.cards.completedToday, color: 'border-green-500/20 bg-green-500/[0.05] hover:bg-green-500/10 hover:border-green-500/40', dot: 'bg-green-400 shadow-[0_0_10px_#4ade80]', icon: CheckCircle },
+            { label: 'Cancelled Today', value: summary.cards.cancelledToday, color: 'border-gray-500/20 bg-gray-500/[0.05] hover:bg-gray-500/10 hover:border-gray-500/40', dot: 'bg-gray-400 shadow-[0_0_10px_#9ca3af]', icon: XCircle },
           ].map(({ label, value, color, dot }) => (
-            <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-300 cursor-default ${color}`}>
-              <span className={`w-3 h-3 rounded-full flex-shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.5)] ${dot} ${label === 'Pending' && value > 0 ? 'animate-ping shadow-red-500' : ''}`} />
+            <div key={label} className={`group flex items-center justify-between p-5 rounded-2xl border backdrop-blur-sm transition-all duration-300 cursor-default ${color}`}>
               <div>
-                <p className="text-[10px] uppercase tracking-[1.5px] text-white/60 font-medium">{label}</p>
-                <p className="font-bebas text-4xl leading-none mt-1 text-white shadow-black drop-shadow-md">{value ?? 0}</p>
+                <p className="text-[10px] uppercase tracking-[1.5px] text-white/50 font-bold group-hover:text-white/70 transition-colors">{label}</p>
+                <p className="font-bebas text-4xl leading-none mt-2 text-white shadow-black drop-shadow-md">{value ?? 0}</p>
               </div>
+              <span className={`w-3 h-3 rounded-full flex-shrink-0 ${dot} ${label === 'Pending' && value > 0 ? 'animate-pulse' : ''}`} />
             </div>
           ))}
         </div>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
       {!summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-[#181818] border border-white/5 rounded-2xl p-6 animate-pulse">
+            <div key={i} className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 animate-pulse">
               <div className="h-3 w-24 bg-white/10 rounded mb-3" />
               <div className="h-10 w-16 bg-white/10 rounded" />
             </div>

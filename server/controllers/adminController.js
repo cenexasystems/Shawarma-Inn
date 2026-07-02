@@ -10,6 +10,15 @@ export const getUsers = (req, res, next) => {
   }
 };
 
+export const getCustomers = (req, res, next) => {
+  try {
+    const customers = adminService.getCustomers();
+    res.json({ customers });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const updateUserRole = (req, res, next) => {
   try {
     const userId = Number(req.params.id);

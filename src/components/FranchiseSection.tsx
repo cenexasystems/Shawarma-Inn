@@ -4,44 +4,52 @@ import { TrendingUp, Megaphone, GraduationCap, Handshake, CheckCircle2 } from 'l
 import jsPDF from 'jspdf';
 import { franchiseApi } from '../lib/api';
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '919003195805';
+const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
 
 const highlights = [
   {
     icon: TrendingUp,
-    title: 'Growing Brand',
-    desc: 'Backed by a fast-expanding Lebanese QSR brand with a loyal, repeat customer base across Chennai.',
+    title: 'Mathur Pilot',
+    desc: 'Our flagship branch proves the model works with consistent high volume and local loyalty.',
   },
   {
     icon: Megaphone,
-    title: 'Marketing Support',
-    desc: 'Launch campaigns, social media playbooks, and local marketing assets provided for every new outlet.',
+    title: 'Direct Ordering Model',
+    desc: 'We bypass heavy aggregator commissions with our own robust direct ordering platform.',
   },
   {
     icon: GraduationCap,
-    title: 'Operations Training',
-    desc: 'Hands-on kitchen, hygiene, and service training for your team before and after launch day.',
+    title: 'Rapido Delivery Model',
+    desc: 'Optimized delivery utilizing Rapido and Porter for fast, low-cost fulfillment.',
   },
   {
     icon: Handshake,
-    title: 'Business Assistance',
-    desc: 'Site selection guidance, vendor connects, and ongoing support from our franchise success team.',
+    title: 'Scalable Operations',
+    desc: 'Simple, repeatable kitchen processes designed for rapid training and consistent quality.',
   },
 ];
 
 const benefits = [
-  'Proven flame-grilled kitchen model with standardized recipes',
-  'Dedicated onboarding manager for your first 90 days',
-  'Centralized recipe and supply chain support',
-  'Access to delivery partner integrations (Swiggy, Zomato, Porter)',
+  'High Demand for authentic flame-grilled Lebanese cuisine',
+  'Simple Operations with standardized central recipes',
+  'Scalable Model designed for high ROI and fast expansion',
+  'Complete training and ongoing operational support',
+];
+
+const branches = [
+  'Mathur (Pilot)',
+  'Madhavaram',
+  'Kolathur',
+  'Retteri',
+  'Thirumullaivoyal',
+  'Kodungaiyur'
 ];
 
 export default function FranchiseSection() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
-  const [message, setMessage] = useState('');
+  const [investment, setInvestment] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -60,9 +68,8 @@ export default function FranchiseSection() {
     const lines: [string, string][] = [
       ['Name', name],
       ['Phone Number', phone],
-      ['Email', email],
       ['City', city],
-      ['Message', message || '—'],
+      ['Investment Range', investment],
       ['Submitted On', new Date().toLocaleString('en-IN')],
     ];
 
@@ -81,12 +88,10 @@ export default function FranchiseSection() {
 
   const openWhatsApp = () => {
     const text = [
-      'Hi Shawarma Inn, I am interested in a franchise opportunity.',
       `Name: ${name}`,
       `Phone: ${phone}`,
-      `Email: ${email}`,
       `City: ${city}`,
-      message ? `Message: ${message}` : null,
+      `Investment Range: ${investment}`,
     ]
       .filter(Boolean)
       .join('\n');
@@ -98,34 +103,29 @@ export default function FranchiseSection() {
     setError('');
     setSuccess('');
 
-    if (!name.trim() || !phone.trim() || !email.trim() || !city.trim()) {
-      setError('Name, phone number, email, and city are required.');
+    if (!name.trim() || !phone.trim() || !city.trim() || !investment.trim()) {
+      setError('Name, phone number, city, and investment range are required.');
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('Please enter a valid email address.');
-      return;
-    }
+
 
     try {
       setSaving(true);
       await franchiseApi.submitLead({
         name: name.trim(),
         phone: phone.trim(),
-        email: email.trim(),
-        message: `City: ${city.trim()}${message.trim() ? ` | Message: ${message.trim()}` : ''}`,
+        email: 'franchise@shawarmainn.com', // Placeholder since it's removed from form
+        message: `City: ${city.trim()} | Investment: ${investment.trim()}`,
       });
-
       generatePdf();
       openWhatsApp();
 
       setSuccess('Thanks! Your franchise enquiry PDF has been downloaded and our WhatsApp chat is opening.');
       setName('');
       setPhone('');
-      setEmail('');
       setCity('');
-      setMessage('');
+      setInvestment('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not submit your details. Please try again.');
     } finally {
@@ -145,11 +145,10 @@ export default function FranchiseSection() {
       >
         <p className="text-[11px] uppercase tracking-[3px] text-[#d62b2b]">Franchise Opportunity</p>
         <h2 className="mt-3 text-5xl md:text-6xl font-bebas tracking-[3px] uppercase leading-none">
-          <span className="hero-brand">Shawarma Inn</span> Is Open For Franchise
+          Start Your Own <span className="hero-brand">Shawarma Inn</span>
         </h2>
         <p className="mt-5 max-w-2xl mx-auto text-white/70 font-body leading-relaxed">
-          Expand with our proven kitchen model and growing customer base. Partner with us and bring authentic,
-          flame-grilled Lebanese food to your city.
+          Join our proven business model that combines authentic flame-grilled Lebanese recipes with a highly optimized direct-ordering and Rapido delivery system.
         </p>
       </motion.div>
 
@@ -182,8 +181,8 @@ export default function FranchiseSection() {
           transition={{ duration: 0.5 }}
           className="bg-[#151515] border border-white/10 rounded-3xl p-8"
         >
-          <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5">Franchise Benefits</h3>
-          <ul className="space-y-4">
+          <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5">Why Franchise</h3>
+          <ul className="space-y-4 mb-8">
             {benefits.map((benefit) => (
               <li key={benefit} className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-[#d62b2b] shrink-0 mt-0.5" />
@@ -191,6 +190,31 @@ export default function FranchiseSection() {
               </li>
             ))}
           </ul>
+          
+          <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5 mt-8">Business Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-black/50 border border-white/5 p-4 rounded-xl text-center">
+              <span className="block text-[10px] text-[var(--red)] uppercase tracking-[2px] font-bold mb-1">Investment Range</span>
+              <span className="text-lg font-bebas tracking-wide text-white">₹8L - ₹15L</span>
+            </div>
+            <div className="bg-black/50 border border-white/5 p-4 rounded-xl text-center">
+              <span className="block text-[10px] text-[var(--red)] uppercase tracking-[2px] font-bold mb-1">Space Required</span>
+              <span className="text-lg font-bebas tracking-wide text-white">150 - 300 sq.ft</span>
+            </div>
+            <div className="bg-black/50 border border-white/5 p-4 rounded-xl text-center">
+              <span className="block text-[10px] text-[var(--red)] uppercase tracking-[2px] font-bold mb-1">ROI Estimate</span>
+              <span className="text-lg font-bebas tracking-wide text-white">12 - 18 Months</span>
+            </div>
+          </div>
+          
+          <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5">Existing Outlets</h3>
+          <div className="flex flex-wrap gap-2">
+            {branches.map(branch => (
+              <span key={branch} className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-bold text-white/80 uppercase tracking-widest">
+                {branch}
+              </span>
+            ))}
+          </div>
         </motion.div>
 
         <motion.div
@@ -218,28 +242,25 @@ export default function FranchiseSection() {
               className="w-full appearance-none bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-[#d62b2b]"
             />
             <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Email Address"
-              className="w-full appearance-none bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-[#d62b2b]"
-            />
-            <input
               type="text"
               value={city}
               onChange={(event) => setCity(event.target.value)}
               placeholder="City"
               className="w-full appearance-none bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-[#d62b2b]"
             />
+            <select
+              value={investment}
+              onChange={(event) => setInvestment(event.target.value)}
+              className="w-full appearance-none bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white/50 outline-none focus:border-[#d62b2b] cursor-pointer"
+            >
+              <option value="" disabled>Select Investment Range</option>
+              <option value="₹8L - ₹10L" className="text-black">₹8L - ₹10L</option>
+              <option value="₹10L - ₹15L" className="text-black">₹10L - ₹15L</option>
+              <option value="Above ₹15L" className="text-black">Above ₹15L</option>
+            </select>
           </div>
 
-          <textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            rows={3}
-            placeholder="Message (optional)"
-            className="w-full mt-4 appearance-none bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-[#d62b2b] resize-none"
-          />
+
 
           {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
           {success && <p className="mt-3 text-sm text-emerald-400">{success}</p>}
@@ -252,7 +273,7 @@ export default function FranchiseSection() {
             disabled={saving}
             className="w-full mt-5 bg-[#d62b2b] text-white rounded-2xl py-4 font-headline font-bold uppercase tracking-[2px] hover:bg-[#bf2323] transition-colors disabled:opacity-50"
           >
-            {saving ? 'Submitting...' : 'Submit Franchise Application'}
+            {saving ? 'Submitting...' : 'Talk to Founder'}
           </button>
           <p className="mt-3 text-[11px] text-white/40 text-center">
             Submitting downloads a PDF copy of your enquiry and opens WhatsApp to chat with our franchise team.

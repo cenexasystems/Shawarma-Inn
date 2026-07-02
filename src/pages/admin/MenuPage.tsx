@@ -1,43 +1,45 @@
-import { useEffect, useState } from 'react';
-import { Star, Eye, EyeOff, Edit2, Copy, ExternalLink, Trash2 } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Search, Plus, Filter, Tag, Check, CheckSquare, Square, RefreshCcw, Power, PowerOff, Edit3 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
-
-const emptyMenuItem = {
-  name: '',
-  price: '',
-  category: '',
-  image_url: '',
-  is_bestseller: false,
-  is_active: true,
-};
+import { ProductDrawer } from '../../components/admin/ProductDrawer';
+import { resolveMenuImage } from '../../utils/menuImages';
 
 export default function MenuPage() {
   const { token } = useAuth();
   const tokenRequired = token || '';
   
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const [menuForm, setMenuForm] = useState(emptyMenuItem);
-  const [editingMenuId, setEditingMenuId] = useState<number | null>(null);
+  // Drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [vegFilter, setVegFilter] = useState('');
+  const [availabilityFilter, setAvailabilityFilter] = useState('');
+  const [bestsellerFilter, setBestsellerFilter] = useState('');
+  const [sortField, setSortField] = useState('display_order');
+  
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const loadData = async () => {
     if (!tokenRequired) return;
     setLoading(true);
-    setError('');
     try {
       const [menuRes, catRes] = await Promise.all([
         apiRequest<any>('/admin/menu-items', { token: tokenRequired }),
         apiRequest<any[]>('/admin/categories', { token: tokenRequired }),
       ]);
-      setMenuItems(menuRes.items || []);
+      setItems(menuRes.items || []);
       setCategories(catRes || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load menu data');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -47,144 +49,241 @@ export default function MenuPage() {
     void loadData();
   }, [tokenRequired]);
 
-  const handleMenuSubmit = async () => {
-    try {
-      const payload = {
-        name: menuForm.name,
-        price: Number(menuForm.price),
-        category: menuForm.category,
-        image_url: menuForm.image_url,
-        is_bestseller: menuForm.is_bestseller,
-        is_active: menuForm.is_active,
-      };
-      if (editingMenuId) {
-        await apiRequest(`/admin/menu-items/${editingMenuId}`, {
-          method: 'PUT',
-          token: tokenRequired,
-          body: payload,
-        });
-      } else {
-        await apiRequest('/admin/menu-items', {
-          method: 'POST',
-          token: tokenRequired,
-          body: payload,
-        });
-      }
-      setMenuForm(emptyMenuItem);
-      setEditingMenuId(null);
-      void loadData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save menu item');
+  // Client-side filtering & sorting
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchCat = categoryFilter ? item.category === categoryFilter : true;
+      const matchVeg = vegFilter ? (vegFilter === 'veg' ? item.is_veg : !item.is_veg) : true;
+      const matchAvail = availabilityFilter ? (availabilityFilter === 'available' ? item.is_active : !item.is_active) : true;
+      const matchBest = bestsellerFilter ? item.is_bestseller : true;
+      return matchSearch && matchCat && matchVeg && matchAvail && matchBest;
+    }).sort((a, b) => {
+      if (sortField === 'display_order') return a.display_order - b.display_order;
+      if (sortField === 'price_asc') return a.price - b.price;
+      if (sortField === 'price_desc') return b.price - a.price;
+      if (sortField === 'name_asc') return a.name.localeCompare(b.name);
+      return 0;
+    });
+  }, [items, searchTerm, categoryFilter, vegFilter, availabilityFilter, bestsellerFilter, sortField]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(i => i.id)));
     }
   };
 
-  const handleDeleteMenu = async (id: number) => {
-    if (!window.confirm('Delete this menu item?')) return;
-    try {
-      await apiRequest(`/admin/menu-items/${id}`, { method: 'DELETE', token: tokenRequired });
-      void loadData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete menu item');
-    }
+  const toggleSelect = (id: number) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
   };
 
-  const handleToggleMenuVisibility = async (id: number) => {
-    try {
-      await apiRequest(`/admin/menu-items/${id}/hide`, { method: 'PATCH', token: tokenRequired });
-      void loadData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to toggle visibility');
-    }
+  const openDrawer = (product: any = null) => {
+    setEditingProduct(product);
+    setDrawerOpen(true);
   };
 
-  const handleDuplicateMenu = async (id: number) => {
+  const handleBulkPrice = async () => {
+    const amt = prompt('Enter amount to increase (e.g. 10) or decrease (e.g. -5):');
+    if (!amt || isNaN(Number(amt))) return;
     try {
-      await apiRequest(`/admin/menu-items/${id}/duplicate`, { method: 'POST', token: tokenRequired });
-      void loadData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to duplicate menu item');
-    }
+      await apiRequest('/admin/menu-items/bulk/price', {
+        method: 'PATCH',
+        token: tokenRequired,
+        body: { ids: Array.from(selectedIds), amount: Number(amt) }
+      });
+      setSelectedIds(new Set());
+      loadData();
+    } catch (e) { alert('Failed'); }
+  };
+
+  const handleBulkAvailability = async (is_active: boolean) => {
+    if (!window.confirm(`Mark ${selectedIds.size} items as ${is_active ? 'Available' : 'Unavailable'}?`)) return;
+    try {
+      await apiRequest('/admin/menu-items/bulk/availability', {
+        method: 'PATCH',
+        token: tokenRequired,
+        body: { ids: Array.from(selectedIds), is_active }
+      });
+      setSelectedIds(new Set());
+      loadData();
+    } catch (e) { alert('Failed'); }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <header>
-        <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Menu Management</h2>
-      </header>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-white">Menu Inventory</h1>
+          <p className="text-zinc-400 mt-1">Manage your entire product catalog from one place.</p>
+        </div>
+        <button 
+          onClick={() => openDrawer()}
+          className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors whitespace-nowrap shadow-lg shadow-orange-900/20"
+        >
+          <Plus className="w-5 h-5" /> Add Product
+        </button>
+      </div>
 
-      {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
-      {loading && <div className="text-xs text-white/30 animate-pulse">Loading menu items…</div>}
-
-      <div className="bg-[#181818] border border-white/5 rounded-2xl p-6">
-        <h3 className="font-bebas text-2xl tracking-[2px] uppercase mb-4 text-[#ef8f2f]">{editingMenuId ? 'Edit Item' : 'Add New Item'}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <input type="text" placeholder="Item Name" value={menuForm.name} onChange={e => setMenuForm({...menuForm, name: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f]" />
-          <input type="number" placeholder="Price (₹)" value={menuForm.price} onChange={e => setMenuForm({...menuForm, price: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f]" />
-          <select value={menuForm.category} onChange={e => setMenuForm({...menuForm, category: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f] text-white">
-            <option value="" disabled>Select Category</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.name}>{cat.name}</option>
-            ))}
+      {/* Toolbar */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="w-5 h-5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input 
+            type="text" 
+            placeholder="Search 167+ products..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+          />
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-zinc-300 focus:outline-none focus:border-orange-500">
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
           </select>
-          <input type="text" placeholder="Image URL (optional)" value={menuForm.image_url} onChange={e => setMenuForm({...menuForm, image_url: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f]" />
-        </div>
-        <div className="flex items-center gap-6 mb-6">
-          <label className="flex items-center gap-2 cursor-pointer text-sm text-white/70 hover:text-white">
-            <input type="checkbox" checked={menuForm.is_active} onChange={e => setMenuForm({...menuForm, is_active: e.target.checked})} className="accent-[#ef8f2f] w-4 h-4" />
-            Available for Order
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer text-sm text-white/70 hover:text-white">
-            <input type="checkbox" checked={menuForm.is_bestseller} onChange={e => setMenuForm({...menuForm, is_bestseller: e.target.checked})} className="accent-[#ef8f2f] w-4 h-4" />
-            Mark as Bestseller
-          </label>
-        </div>
-        <div className="flex gap-3">
-          <button onClick={handleMenuSubmit} className="bg-[#ef8f2f] text-black px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-[#ef8f2f]/90 transition-colors">
-            {editingMenuId ? 'Update Item' : 'Add Item'}
-          </button>
-          {editingMenuId && (
-            <button onClick={() => { setEditingMenuId(null); setMenuForm(emptyMenuItem); }} className="px-6 py-3 border border-white/20 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-white/5 transition-colors">
-              Cancel
-            </button>
-          )}
+          <select value={availabilityFilter} onChange={e => setAvailabilityFilter(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-zinc-300 focus:outline-none focus:border-orange-500">
+            <option value="">Any Availability</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Hidden</option>
+          </select>
+          <select value={vegFilter} onChange={e => setVegFilter(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-zinc-300 focus:outline-none focus:border-orange-500">
+            <option value="">Veg / Non-Veg</option>
+            <option value="veg">Vegetarian</option>
+            <option value="nonveg">Non-Vegetarian</option>
+          </select>
+          <select value={sortField} onChange={e => setSortField(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-zinc-300 focus:outline-none focus:border-orange-500">
+            <option value="display_order">Custom Order</option>
+            <option value="name_asc">A-Z</option>
+            <option value="price_desc">Highest Price</option>
+            <option value="price_asc">Lowest Price</option>
+          </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {menuItems.map(item => (
-          <div key={item.id} className={`bg-[#181818] border rounded-2xl overflow-hidden transition-all ${item.is_active ? 'border-white/10 hover:border-white/30' : 'border-red-500/20 opacity-70'}`}>
-            {item.image_url && <div className="h-32 w-full bg-black/40"><img src={item.image_url} alt={item.name} className="w-full h-full object-cover opacity-80" /></div>}
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-lg leading-tight">{item.name}</h4>
-                {item.is_bestseller && <Star size={16} className="text-yellow-400 fill-yellow-400 shrink-0" />}
-              </div>
-              <p className="text-xs text-white/50 mb-3">{item.category}</p>
-              <p className="font-bebas text-3xl text-[#ef8f2f] mb-4">₹{item.price}</p>
-              
-              <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                <button onClick={() => handleToggleMenuVisibility(item.id)} className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${item.is_active ? 'text-green-400' : 'text-red-400'}`}>
-                  {item.is_active ? <><Eye size={14} /> Active</> : <><EyeOff size={14} /> Hidden</>}
-                </button>
-                <div className="flex gap-2">
-                  <button onClick={() => { setEditingMenuId(item.id); setMenuForm({ name: item.name, price: String(item.price), category: item.category, image_url: item.image_url || '', is_bestseller: !!item.is_bestseller, is_active: !!item.is_active }); }} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white" title="Edit">
-                    <Edit2 size={16} />
-                  </button>
-                  <button onClick={() => handleDuplicateMenu(item.id)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white" title="Duplicate">
-                    <Copy size={16} />
-                  </button>
-                  <a href={`/menu`} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white flex items-center justify-center" title="Preview on Website">
-                    <ExternalLink size={16} />
-                  </a>
-                  <button onClick={() => handleDeleteMenu(item.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors text-red-400" title="Delete">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="flex justify-between items-center text-sm font-medium text-zinc-400 px-1">
+        <span>Showing {filteredItems.length} Products</span>
+        {selectedIds.size > 0 && <span className="text-orange-500">{selectedIds.size} Selected</span>}
       </div>
+
+      {/* Data Table */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-zinc-800/50 border-b border-zinc-800">
+                <th className="p-4 w-12">
+                  <button onClick={toggleSelectAll} className="text-zinc-400 hover:text-white">
+                    {selectedIds.size === filteredItems.length && filteredItems.length > 0 ? <CheckSquare className="w-5 h-5 text-orange-500" /> : <Square className="w-5 h-5" />}
+                  </button>
+                </th>
+                <th className="p-4 text-sm font-semibold text-zinc-400">Product</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400">Category</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400">Price</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400 text-center">Available</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400 text-center">Bestseller</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={7} className="p-8 text-center text-zinc-500">Loading products...</td></tr>
+              ) : filteredItems.length === 0 ? (
+                <tr><td colSpan={7} className="p-8 text-center text-zinc-500">No products found matching filters.</td></tr>
+              ) : (
+                filteredItems.map(item => (
+                  <tr key={item.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors group cursor-pointer" onClick={(e) => {
+                    // Prevent drawer opening if they click the checkbox
+                    if ((e.target as HTMLElement).closest('.checkbox-cell')) return;
+                    openDrawer(item);
+                  }}>
+                    <td className="p-4 checkbox-cell">
+                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }} className="text-zinc-500 hover:text-white">
+                        {selectedIds.has(item.id) ? <CheckSquare className="w-5 h-5 text-orange-500" /> : <Square className="w-5 h-5" />}
+                      </button>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-4">
+                        <img 
+                          src={resolveMenuImage({ image_url: item.image_url, name: item.name, category: item.category })} 
+                          alt={item.name} 
+                          className="w-12 h-12 rounded-lg object-cover bg-zinc-800 border border-zinc-700 flex-shrink-0" 
+                        />
+                        <div>
+                          <div className="font-bold text-white flex items-center gap-2">
+                            {item.name}
+                            {item.is_veg && <span className="w-2 h-2 rounded-full bg-green-500" title="Veg"></span>}
+                          </div>
+                          <div className="text-xs text-zinc-500 max-w-[200px] truncate">{item.description || 'No description'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className="inline-block px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-full text-xs font-medium text-zinc-300">
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-medium text-white">₹{item.price}</div>
+                      {item.large_price && <div className="text-xs text-zinc-500">L: ₹{item.large_price}</div>}
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${item.is_active ? 'bg-green-500/10 text-green-500' : 'bg-zinc-800 text-zinc-500'}`}>
+                        {item.is_active ? <Check className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      {item.is_bestseller ? <span className="text-yellow-500 font-bold">★</span> : <span className="text-zinc-700">-</span>}
+                    </td>
+                    <td className="p-4 text-right">
+                      <button className="p-2 text-zinc-500 hover:text-white bg-zinc-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Bulk Action Strip */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-800 border border-zinc-700 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-30 animate-in slide-in-from-bottom-10">
+          <div className="flex items-center gap-2">
+            <span className="bg-orange-500/20 text-orange-500 px-2.5 py-0.5 rounded-md font-bold">{selectedIds.size}</span>
+            <span className="text-zinc-300 font-medium">Items Selected</span>
+          </div>
+          <div className="h-6 w-px bg-zinc-700"></div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleBulkPrice} className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg text-sm font-medium transition-colors">
+              Update Price
+            </button>
+            <button onClick={() => handleBulkAvailability(true)} className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm font-medium transition-colors">
+              Make Available
+            </button>
+            <button onClick={() => handleBulkAvailability(false)} className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors">
+              Hide
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ProductDrawer 
+        isOpen={drawerOpen} 
+        onClose={() => setDrawerOpen(false)} 
+        product={editingProduct} 
+        categories={categories}
+        onSave={() => { setDrawerOpen(false); loadData(); }} 
+      />
     </div>
   );
 }

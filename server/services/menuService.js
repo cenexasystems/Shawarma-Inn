@@ -50,14 +50,14 @@ function logActivity(adminId, action, entityType, entityId, details) {
 
 export function getPublicMenuItems() {
   const rows = db.prepare(
-    `SELECT id, name, price, category, image_url, is_bestseller, is_active
+    `SELECT id, slug, name, description, price, large_price, category, image_url, is_veg, is_bestseller, is_trending, is_active, display_order
      FROM menu_items
      WHERE deleted_at IS NULL
        AND is_active = 1
-     ORDER BY name ASC`
+     ORDER BY display_order ASC, name ASC`
   ).all();
 
-  return sortByCategoryOrder(rows);
+  return rows;
 }
 
 export function getAdminMenuItems({ category, availability, bestseller }) {
@@ -69,10 +69,10 @@ export function getAdminMenuItems({ category, availability, bestseller }) {
   if (bestseller === 'true') where.push('is_bestseller = 1');
 
   const rows = db.prepare(
-    `SELECT id, name, price, category, image_url, is_bestseller, is_active, created_at, updated_at
+    `SELECT id, slug, name, description, price, large_price, category, image_url, is_veg, is_bestseller, is_trending, is_active, display_order, created_at, updated_at
      FROM menu_items
      WHERE ${where.join(' AND ')}
-     ORDER BY category ASC, name ASC`
+     ORDER BY category ASC, display_order ASC, name ASC`
   ).all(...params);
 
   return rows;
@@ -81,13 +81,11 @@ export function getAdminMenuItems({ category, availability, bestseller }) {
 export function createMenuItem(data, adminId) {
   const now = new Date().toISOString();
   const result = db.prepare(
-    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(data.name, data.price, data.category, data.image_url, data.is_bestseller ? 1 : 0, data.is_active ? 1 : 0, now, now);
+    `INSERT INTO menu_items (slug, name, description, price, large_price, category, image_url, is_veg, is_bestseller, is_trending, is_active, display_order, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(data.slug || '', data.name, data.description || '', data.price, data.large_price || null, data.category, data.image_url || null, data.is_veg ? 1 : 0, data.is_bestseller ? 1 : 0, data.is_trending ? 1 : 0, data.is_active ? 1 : 0, data.display_order || 0, now, now);
 
-  const item = db
-    .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
-    .get(result.lastInsertRowid);
+  const item = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(result.lastInsertRowid);
 
   logActivity(adminId, 'create_menu_item', 'menu_item', item.id, { name: item.name });
   broadcastSSE('menu_updated', { action: 'create', itemId: item.id });
@@ -97,19 +95,15 @@ export function createMenuItem(data, adminId) {
 
 export function updateMenuItem(id, data, adminId) {
   const existing = db.prepare('SELECT id FROM menu_items WHERE id = ? AND deleted_at IS NULL').get(id);
-  if (!existing) {
-    throw new NotFoundError('Menu item not found.');
-  }
+  if (!existing) throw new NotFoundError('Menu item not found.');
 
   db.prepare(
     `UPDATE menu_items
-     SET name = ?, price = ?, category = ?, image_url = ?, is_bestseller = ?, is_active = ?, updated_at = ?
+     SET slug = ?, name = ?, description = ?, price = ?, large_price = ?, category = ?, image_url = ?, is_veg = ?, is_bestseller = ?, is_trending = ?, is_active = ?, display_order = ?, updated_at = ?
      WHERE id = ?`
-  ).run(data.name, data.price, data.category, data.image_url, data.is_bestseller ? 1 : 0, data.is_active ? 1 : 0, new Date().toISOString(), id);
+  ).run(data.slug || '', data.name, data.description || '', data.price, data.large_price || null, data.category, data.image_url || null, data.is_veg ? 1 : 0, data.is_bestseller ? 1 : 0, data.is_trending ? 1 : 0, data.is_active ? 1 : 0, data.display_order || 0, new Date().toISOString(), id);
 
-  const item = db
-    .prepare('SELECT id, name, price, category, image_url, is_bestseller, is_active FROM menu_items WHERE id = ?')
-    .get(id);
+  const item = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(id);
 
   logActivity(adminId, 'update_menu_item', 'menu_item', id, { name: item.name });
   broadcastSSE('menu_updated', { action: 'update', itemId: id });
@@ -140,12 +134,61 @@ export function duplicateMenuItem(id, adminId) {
   if (!existing) throw new NotFoundError('Menu item not found');
   
   const result = db.prepare(
-    `INSERT INTO menu_items (name, price, category, image_url, is_bestseller, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(`${existing.name} (Copy)`, existing.price, existing.category, existing.image_url, existing.is_bestseller, existing.is_active, new Date().toISOString(), new Date().toISOString());
+    `INSERT INTO menu_items (slug, name, description, price, large_price, category, image_url, is_veg, is_bestseller, is_trending, is_active, display_order, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(`${existing.slug}-copy`, `${existing.name} (Copy)`, existing.description, existing.price, existing.large_price, existing.category, existing.image_url, existing.is_veg, existing.is_bestseller, existing.is_trending, existing.is_active, existing.display_order, new Date().toISOString(), new Date().toISOString());
   
   broadcastSSE('menu_updated', { action: 'create', itemId: result.lastInsertRowid });
   return result.lastInsertRowid;
+}
+
+export function bulkUpdatePrice(ids, amount, adminId) {
+  const stmt = db.prepare('UPDATE menu_items SET price = price + ? WHERE id = ?');
+  const tx = db.transaction(() => {
+    for (const id of ids) {
+      stmt.run(amount, id);
+      logActivity(adminId, 'bulk_update_price', 'menu_item', id, { amount });
+      broadcastSSE('menu_updated', { action: 'update', itemId: id });
+    }
+  });
+  tx();
+}
+
+export function bulkUpdateAvailability(ids, is_active, adminId) {
+  const stmt = db.prepare('UPDATE menu_items SET is_active = ? WHERE id = ?');
+  const tx = db.transaction(() => {
+    for (const id of ids) {
+      stmt.run(is_active ? 1 : 0, id);
+      logActivity(adminId, 'bulk_update_availability', 'menu_item', id, { is_active });
+      broadcastSSE('menu_updated', { action: 'update', itemId: id });
+    }
+  });
+  tx();
+}
+
+export function bulkUpdateCategory(ids, category, adminId) {
+  const stmt = db.prepare('UPDATE menu_items SET category = ? WHERE id = ?');
+  const tx = db.transaction(() => {
+    for (const id of ids) {
+      stmt.run(category, id);
+      logActivity(adminId, 'bulk_update_category', 'menu_item', id, { category });
+      broadcastSSE('menu_updated', { action: 'update', itemId: id });
+    }
+  });
+  tx();
+}
+
+export function bulkDelete(ids, adminId) {
+  const stmt = db.prepare('UPDATE menu_items SET is_active = 0, deleted_at = ? WHERE id = ?');
+  const now = new Date().toISOString();
+  const tx = db.transaction(() => {
+    for (const id of ids) {
+      stmt.run(now, id);
+      logActivity(adminId, 'bulk_delete_menu_item', 'menu_item', id, {});
+      broadcastSSE('menu_updated', { action: 'delete', itemId: id });
+    }
+  });
+  tx();
 }
 
 export function getCategories() {

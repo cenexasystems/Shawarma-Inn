@@ -1,51 +1,33 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { MenuItem } from '../types';
-import localMenuData from '../data/menu.json';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../lib/runtime';
 import { resolveMenuImage } from '../utils/menuImages';
-import { sortByCategoryOrder } from '../utils/categoryOrder';
-
-const localMenuByName = new Map(
-  (localMenuData as MenuItem[]).map((item) => [item.name.trim().toLowerCase(), item]),
-);
 
 /**
- * Enrich a DB row with local catalogue metadata (slug, desc, isVeg, rating)
- * and resolve the best available image via the semantic image engine.
- *
- * Image resolution priority:
- *   1. DB image_url — absolute CDN/admin URL or Supabase Storage path
- *   2. Semantic name-based Unsplash fallback — NEVER crosses food categories
- *
- * Local JSON `image` paths (/images/menu/…) are NOT passed to resolveMenuImage
- * because those files don't exist in public/. Passing them would cause 404s
- * and a broken-image flash before onError fires.
+ * Cleanly map a DB row to the MenuItem interface.
+ * The SQLite database is now the Single Source of Truth.
  */
-function enrichMenuRow(row: {
-  id: string | number;
-  name: string;
-  price: number;
-  category: string;
-  image_url?: string | null;
-}): MenuItem {
-  const local = localMenuByName.get(row.name.trim().toLowerCase());
+function mapMenuRow(row: any): MenuItem {
   return {
     id: row.id,
-    slug: local?.slug,
+    slug: row.slug || '',
     name: row.name,
-    desc: local?.desc || '',
-    description: local?.desc || '',
+    desc: row.description || '',
+    description: row.description || '',
     price: Number(row.price),
+    large_price: row.large_price ? Number(row.large_price) : undefined,
     category: row.category,
-    rating: local?.rating ?? 4.6,
+    rating: row.rating ?? 4.6,
     image: resolveMenuImage({
       name: row.name,
       category: row.category,
       image_url: row.image_url ?? null,
     }),
-    isVeg: local?.isVeg,
-    bestseller: local?.bestseller ?? false,
+    isVeg: Boolean(row.is_veg),
+    bestseller: Boolean(row.is_bestseller),
+    trending: Boolean(row.is_trending),
+    display_order: Number(row.display_order) || 0,
   };
 }
 
@@ -57,29 +39,22 @@ export const useMenuItems = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-
     try {
       let menuItems: MenuItem[] = [];
 
       if (useSupabaseAuth) {
         const { data, error: supabaseError } = await supabase
           .from('menu_items')
-          .select('id, name, price, category, image_url')
-          .eq('is_available', true)
-          .order('category', { ascending: true })
+          .select('*')
+          .eq('is_active', 1)
+          .order('display_order', { ascending: true })
           .order('name', { ascending: true });
 
         if (supabaseError) {
           throw new Error(supabaseError.message);
         }
 
-        menuItems = ((data || []) as Array<{
-          id: string;
-          name: string;
-          price: number;
-          category: string;
-          image_url?: string | null;
-        }>).map(enrichMenuRow);
+        menuItems = (data || []).map(mapMenuRow);
       } else {
         const response = await fetch('/api/menu-items');
         if (!response.ok) {
@@ -87,20 +62,15 @@ export const useMenuItems = () => {
         }
 
         const payload = await response.json();
-        menuItems = (payload.items || []).map(enrichMenuRow);
+        menuItems = (payload.items || []).map(mapMenuRow);
       }
 
-      if (!menuItems.length) {
-        setItems(sortByCategoryOrder(localMenuData as MenuItem[]));
-      } else {
-        setItems(sortByCategoryOrder(menuItems));
-      }
+      setItems(menuItems);
       setError(null);
     } catch (err) {
-      setItems(sortByCategoryOrder(localMenuData as MenuItem[]));
+      console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to load menu');
     }
-
     setLoading(false);
   }, []);
 

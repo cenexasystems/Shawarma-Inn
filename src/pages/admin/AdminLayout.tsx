@@ -128,7 +128,7 @@ export default function AdminLayout() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#141414] border-r border-white/5 flex flex-col shrink-0 z-[70] transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#0a0a0a]/90 backdrop-blur-2xl border-r border-white/[0.05] flex flex-col shrink-0 z-[70] transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-5 border-b border-white/5 flex items-center justify-between">
           <div>
             <h1 className="font-bebas text-3xl tracking-[2px] text-[#ef8f2f]">Shawarma Inn</h1>
@@ -147,7 +147,7 @@ export default function AdminLayout() {
               )}
             </button>
             {showNotifications && (
-              <div className="absolute top-full right-0 mt-3 w-80 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full right-0 mt-3 w-80 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.7)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-gradient-to-r from-[#ef8f2f]/10 to-transparent">
                   <span className="text-xs font-bold uppercase tracking-[2px] text-[#ef8f2f]">Notifications</span>
                   {notifications.some((n) => !n.is_read) && (
@@ -199,13 +199,13 @@ export default function AdminLayout() {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 relative ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 relative group ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#ef8f2f]/20 to-transparent text-[#ef8f2f] font-semibold'
-                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                    ? 'bg-white/[0.08] text-white font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
+                    : 'text-white/50 hover:bg-white/[0.04] hover:text-white/90'
                 }`}
               >
-                {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ef8f2f] rounded-r-full" />}
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-[#ef8f2f] rounded-r-full shadow-[0_0_10px_#ef8f2f]" />}
                 <Icon size={18} /> {label}
               </button>
             );
@@ -231,7 +231,7 @@ export default function AdminLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         {/* Mobile Header */}
-        <header className="lg:hidden flex items-center justify-between p-4 bg-[#141414] border-b border-white/5 shrink-0">
+        <header className="lg:hidden flex items-center justify-between p-4 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5 shrink-0">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="p-2 -m-2 text-white/70 hover:text-white" aria-label="Open menu">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,8 +242,11 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#101010] to-[#141414] p-4 md:p-8">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a0a0a] to-[#121212] p-4 md:p-8 relative">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#ef8f2f]/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="relative z-10">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -62,6 +62,16 @@ export default function Footer() {
                 Franchise
               </Link>
             </li>
+            <li>
+              <Link to="/offers" className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors">
+                Offers
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="text-white/40 hover:text-white font-bebas text-lg tracking-widest transition-colors">
+                Contact Us
+              </Link>
+            </li>
           </ul>
         </div>
 

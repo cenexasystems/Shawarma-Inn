@@ -16,11 +16,11 @@ const STATUS_LABELS: Record<string, string> = {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'completed': return 'text-green-500 bg-green-500/10 border-green-500/20';
-    case 'pending': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-    case 'processing': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
-    case 'in_transit': return 'text-purple-500 bg-purple-500/10 border-purple-500/20';
-    case 'cancelled': return 'text-red-500 bg-red-500/10 border-red-500/20';
+    case 'completed': return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20 shadow-[0_0_10px_rgba(52,211,153,0.1)]';
+    case 'pending': return 'text-red-400 bg-red-400/10 border-red-400/20 shadow-[0_0_10px_rgba(248,113,113,0.1)]';
+    case 'processing': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20 shadow-[0_0_10px_rgba(250,204,21,0.1)]';
+    case 'in_transit': return 'text-purple-400 bg-purple-400/10 border-purple-400/20 shadow-[0_0_10px_rgba(192,132,252,0.1)]';
+    case 'cancelled': return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
     default: return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
   }
 };
@@ -177,7 +177,7 @@ export default function OrdersPage() {
 
         {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
 
-        <div className="flex flex-col md:flex-row gap-4 bg-[#181818] p-4 rounded-2xl border border-white/5">
+        <div className="flex flex-col md:flex-row gap-4 bg-white/[0.02] backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-lg relative z-10">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
             <input
@@ -185,14 +185,14 @@ export default function OrdersPage() {
               placeholder="Search order #, phone, or name..."
               value={orderSearch}
               onChange={e => setOrderSearch(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f] transition-colors"
+              className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f] transition-colors focus:shadow-[0_0_15px_rgba(239,143,47,0.1)]"
             />
           </div>
           <div className="relative w-full md:w-64">
             <select
               value={orderStatusFilter}
               onChange={e => setOrderStatusFilter(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm appearance-none focus:outline-none focus:border-[#ef8f2f] transition-colors"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm appearance-none focus:outline-none focus:border-[#ef8f2f] transition-colors focus:shadow-[0_0_15px_rgba(239,143,47,0.1)]"
             >
               <option value="">All Statuses</option>
               {ADMIN_ORDER_STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ').toUpperCase()}</option>)}
@@ -201,15 +201,15 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        <div className="bg-[#181818] border border-white/5 rounded-2xl overflow-x-auto">
-          <table className="w-full text-sm min-w-[900px]">
-            <thead className="bg-black/40 text-white/50 text-[10px] uppercase tracking-[2px]">
+        <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl overflow-x-auto shadow-2xl relative z-10">
+          <table className="w-full text-sm min-w-[900px] border-collapse">
+            <thead className="bg-black/60 backdrop-blur-md text-white/50 text-[10px] uppercase tracking-[2px] sticky top-0 z-20">
               <tr>
-                <th className="p-4 text-left font-medium">Order Details</th>
-                <th className="p-4 text-left font-medium">Customer</th>
-                <th className="p-4 text-left font-medium">Items</th>
-                <th className="p-4 text-right font-medium">Total</th>
-                <th className="p-4 text-center font-medium">Status</th>
+                <th className="p-5 text-left font-semibold">Order Details</th>
+                <th className="p-5 text-left font-semibold">Customer</th>
+                <th className="p-5 text-left font-semibold">Items</th>
+                <th className="p-5 text-right font-semibold">Total</th>
+                <th className="p-5 text-center font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -231,10 +231,10 @@ export default function OrdersPage() {
                   className="hover:bg-white/5 transition-colors cursor-pointer"
                   onClick={() => openOrderDrawer(order)}
                 >
-                  <td className="p-4">
-                    <div className="font-bebas text-xl text-[#ef8f2f]">#{order.order_number}</div>
-                    <div className="text-xs text-white/40">{new Date(order.created_at).toLocaleString()}</div>
-                    <div className="text-xs mt-1 text-white/60 bg-white/5 inline-block px-2 py-0.5 rounded">{order.delivery_type.replace('_', ' ')}</div>
+                  <td className="p-5">
+                    <div className="font-bebas text-2xl text-[#ef8f2f] drop-shadow-md">#{order.order_number}</div>
+                    <div className="text-xs text-white/40 mt-1">{new Date(order.created_at).toLocaleString()}</div>
+                    <div className="text-[10px] mt-2 text-white/70 bg-white/10 border border-white/5 inline-block px-2 py-0.5 rounded uppercase tracking-[1px] shadow-sm">{order.delivery_type.replace('_', ' ')}</div>
                   </td>
                   <td className="p-4">
                     <div className="font-semibold">{order.customer_name || 'Guest'}</div>

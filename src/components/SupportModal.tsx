@@ -5,7 +5,7 @@ interface SupportModalProps {
   onClose: () => void;
 }
 
-const SUPPORT_WHATSAPP = import.meta.env.VITE_SUPPORT_WHATSAPP || import.meta.env.VITE_OWNER_WHATSAPP || '919003195805';
+const SUPPORT_WHATSAPP = import.meta.env.VITE_SUPPORT_WHATSAPP || import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
 
 export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
   const [name, setName] = useState('');

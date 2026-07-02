@@ -1,34 +1,31 @@
-import { useEffect, useState } from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Search, Plus, Check, PowerOff, Edit3 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
-
-const emptyCategory = {
-  name: '',
-  display_order: '0',
-  is_active: true,
-};
+import { CategoryDrawer } from '../../components/admin/CategoryDrawer';
 
 export default function CategoriesPage() {
   const { token } = useAuth();
   const tokenRequired = token || '';
   
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
   const [categories, setCategories] = useState<any[]>([]);
-  const [categoryForm, setCategoryForm] = useState(emptyCategory);
-  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
 
   const loadData = async () => {
     if (!tokenRequired) return;
     setLoading(true);
-    setError('');
     try {
       const catRes = await apiRequest<any[]>('/admin/categories', { token: tokenRequired });
       setCategories(catRes || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load categories');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -38,96 +35,108 @@ export default function CategoriesPage() {
     void loadData();
   }, [tokenRequired]);
 
-  const handleCategorySubmit = async () => {
-    try {
-      if (editingCategoryId) {
-        await apiRequest(`/admin/categories/${editingCategoryId}`, {
-          method: 'PUT',
-          token: tokenRequired,
-          body: categoryForm,
-        });
-      } else {
-        await apiRequest('/admin/categories', {
-          method: 'POST',
-          token: tokenRequired,
-          body: categoryForm,
-        });
-      }
-      setCategoryForm(emptyCategory);
-      setEditingCategoryId(null);
-      void loadData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save category');
-    }
-  };
+  const filteredCategories = useMemo(() => {
+    return categories.filter(cat => 
+      cat.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (cat.description && cat.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [categories, searchTerm]);
 
-  const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm('Delete this category? Menu items using this category will not be deleted but may not display properly.')) return;
-    try {
-      await apiRequest(`/admin/categories/${id}`, { method: 'DELETE', token: tokenRequired });
-      void loadData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete category');
-    }
+  const openDrawer = (category: any = null) => {
+    setEditingCategory(category);
+    setDrawerOpen(true);
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <header>
-        <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Categories</h2>
-      </header>
-
-      {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
-      {loading && <div className="text-xs text-white/30 animate-pulse">Loading categories…</div>}
-
-      <div className="bg-[#181818] border border-white/5 rounded-2xl p-6">
-        <h3 className="font-bebas text-2xl tracking-[2px] uppercase mb-4 text-[#ef8f2f]">{editingCategoryId ? 'Edit Category' : 'Add New Category'}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <input type="text" placeholder="Category Name" value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f]" />
-          <input type="number" placeholder="Display Order (e.g. 1)" value={categoryForm.display_order} onChange={e => setCategoryForm({...categoryForm, display_order: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ef8f2f]" />
+    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-white">Categories</h1>
+          <p className="text-zinc-400 mt-1">Manage your menu categories and their display order.</p>
         </div>
-        <div className="flex items-center gap-6 mb-6">
-          <label className="flex items-center gap-2 cursor-pointer text-sm text-white/70 hover:text-white">
-            <input type="checkbox" checked={categoryForm.is_active} onChange={e => setCategoryForm({...categoryForm, is_active: e.target.checked})} className="accent-[#ef8f2f] w-4 h-4" />
-            Active
-          </label>
-        </div>
-        <div className="flex gap-3">
-          <button onClick={handleCategorySubmit} className="bg-[#ef8f2f] text-black px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-[#ef8f2f]/90 transition-colors">
-            {editingCategoryId ? 'Update Category' : 'Add Category'}
-          </button>
-          {editingCategoryId && (
-            <button onClick={() => { setEditingCategoryId(null); setCategoryForm(emptyCategory); }} className="px-6 py-3 border border-white/20 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-white/5 transition-colors">
-              Cancel
-            </button>
-          )}
+        <button 
+          onClick={() => openDrawer()}
+          className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors whitespace-nowrap shadow-lg shadow-orange-900/20"
+        >
+          <Plus className="w-5 h-5" /> Add Category
+        </button>
+      </div>
+
+      {/* Toolbar */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="w-5 h-5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input 
+            type="text" 
+            placeholder="Search categories..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {categories.map(cat => (
-          <div key={cat.id} className={`bg-[#181818] border p-5 rounded-2xl transition-all ${cat.is_active ? 'border-white/10 hover:border-white/30' : 'border-red-500/20 opacity-70'}`}>
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="font-bold text-lg leading-tight">{cat.name}</h4>
-            </div>
-            <p className="text-xs text-white/50 mb-3">Order: {cat.display_order}</p>
-            
-            <div className="flex items-center justify-between border-t border-white/5 pt-4">
-              <span className={`text-xs font-semibold uppercase tracking-wider ${cat.is_active ? 'text-green-400' : 'text-red-400'}`}>
-                {cat.is_active ? 'Active' : 'Hidden'}
-              </span>
-              <div className="flex gap-2">
-                <button onClick={() => { setEditingCategoryId(cat.id); setCategoryForm({ name: cat.name, display_order: String(cat.display_order), is_active: !!cat.is_active }); }} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white">
-                  <Edit2 size={16} />
-                </button>
-                <button onClick={() => handleDeleteCategory(cat.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors text-red-400">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Data Table */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-zinc-800/50 border-b border-zinc-800">
+                <th className="p-4 text-sm font-semibold text-zinc-400">Category</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400">Display Order</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400 text-center">Visible</th>
+                <th className="p-4 text-sm font-semibold text-zinc-400 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={4} className="p-8 text-center text-zinc-500">Loading categories...</td></tr>
+              ) : filteredCategories.length === 0 ? (
+                <tr><td colSpan={4} className="p-8 text-center text-zinc-500">No categories found.</td></tr>
+              ) : (
+                filteredCategories.map(cat => (
+                  <tr key={cat.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors group cursor-pointer" onClick={() => openDrawer(cat)}>
+                    <td className="p-4">
+                      <div className="flex items-center gap-4">
+                        {cat.banner_image ? (
+                          <img src={cat.banner_image} alt={cat.name} className="w-16 h-10 rounded object-cover bg-zinc-800 border border-zinc-700 flex-shrink-0" />
+                        ) : (
+                          <div className="w-16 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs text-zinc-600">No Img</div>
+                        )}
+                        <div>
+                          <div className="font-bold text-white">{cat.name}</div>
+                          <div className="text-xs text-zinc-500">{cat.slug || 'No slug'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-zinc-300">
+                      {cat.display_order}
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${cat.is_active || cat.is_visible ? 'bg-green-500/10 text-green-500' : 'bg-zinc-800 text-zinc-500'}`}>
+                        {(cat.is_active || cat.is_visible) ? <Check className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <button className="p-2 text-zinc-500 hover:text-white bg-zinc-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <CategoryDrawer 
+        isOpen={drawerOpen} 
+        onClose={() => setDrawerOpen(false)} 
+        category={editingCategory} 
+        onSave={() => { setDrawerOpen(false); loadData(); }} 
+      />
     </div>
   );
 }

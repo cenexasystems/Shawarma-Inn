@@ -22,7 +22,7 @@ export interface PublicSettings {
 const DEFAULT_SETTINGS: PublicSettings = {
   restaurant_name: 'Shawarma Inn',
   tagline: 'Authentic Flavors, Every Bite',
-  whatsapp_number: import.meta.env.VITE_OWNER_WHATSAPP || '',
+  whatsapp_number: import.meta.env.VITE_OWNER_WHATSAPP || '8778024010',
   opening_hours: '11:00 AM – 11:00 PM',
   days_open: 'Monday – Sunday',
   gst_enabled: import.meta.env.VITE_GST_ENABLED ?? 'true',

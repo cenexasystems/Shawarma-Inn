@@ -81,6 +81,38 @@ export const duplicateMenuItem = (req, res, next) => {
   }
 };
 
+export const bulkUpdatePrice = (req, res, next) => {
+  try {
+    const { ids, amount } = req.body;
+    menuService.bulkUpdatePrice(ids, amount, req.user?.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};
+
+export const bulkUpdateAvailability = (req, res, next) => {
+  try {
+    const { ids, is_active } = req.body;
+    menuService.bulkUpdateAvailability(ids, is_active, req.user?.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};
+
+export const bulkUpdateCategory = (req, res, next) => {
+  try {
+    const { ids, category } = req.body;
+    menuService.bulkUpdateCategory(ids, category, req.user?.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};
+
+export const bulkDelete = (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    menuService.bulkDelete(ids, req.user?.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};
+
 export const getCategories = (req, res, next) => {
   try {
     const categories = menuService.getCategories();

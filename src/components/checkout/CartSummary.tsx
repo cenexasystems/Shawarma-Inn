@@ -9,6 +9,7 @@ interface CartSummaryProps {
   totals: CheckoutTotals;
   saving: boolean;
   isCustomerLoggedIn: boolean;
+  deliveryMethod: 'self_delivery' | 'we_arrange' | 'pickup';
   handlePlaceOrder: () => void;
   appliedCoupon: { code: string; discount: number } | null;
   couponInput: string;
@@ -24,6 +25,7 @@ export default function CartSummary({
   totals,
   saving,
   isCustomerLoggedIn,
+  deliveryMethod,
   handlePlaceOrder,
   appliedCoupon,
   couponInput,
@@ -79,6 +81,31 @@ export default function CartSummary({
         handleApplyCoupon={handleApplyCoupon}
         handleRemoveCoupon={handleRemoveCoupon}
       />
+
+      {/* Payment Method */}
+      <div className="mb-6">
+        <label className="block text-[10px] font-bold uppercase tracking-[4px] mb-3 text-white/60 font-body">Payment Method</label>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between bg-[var(--red)]/10 border border-[var(--red)]/50 rounded-xl p-4 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full border-2 border-[var(--red)] flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-[var(--red)]" />
+              </div>
+              <span className="font-bebas tracking-wide text-white text-lg">UPI / Scan QR</span>
+            </div>
+            <div className="flex gap-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" className="h-4 opacity-80" />
+            </div>
+          </div>
+          <div className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${deliveryMethod === 'pickup' ? 'bg-black/40 border-white/5 cursor-pointer hover:border-white/20' : 'bg-black/20 border-white/5 opacity-50 cursor-not-allowed'}`}>
+            <div className="w-4 h-4 rounded-full border-2 border-white/20" />
+            <span className="font-bebas tracking-wide text-white/80 text-lg">Cash on Delivery</span>
+            {deliveryMethod !== 'pickup' && (
+              <span className="ml-auto text-[9px] text-red-400 font-bold uppercase tracking-wider">Store Pickup Only</span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Bill Details */}
       <div className="space-y-3 font-body text-sm mb-6">

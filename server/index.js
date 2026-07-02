@@ -251,6 +251,10 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
     return res.status(400).json({ error: 'Cart is empty.' });
   }
 
+  if (req.body.outlet !== 'Mathur') {
+    return res.status(400).json({ error: 'Direct ordering is only available for the Mathur outlet.' });
+  }
+
   const customerName = String(req.body.customerName || '').trim();
   const customerPhone = String(req.body.customerPhone || '').trim();
   const customerEmail = sanitizeEmail(req.body.customerEmail || '');

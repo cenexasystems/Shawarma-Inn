@@ -6,9 +6,21 @@ import { resolveMenuImage, getRecoveryImage } from '../utils/menuImages';
 
 // Map local JSON items so resolveMenuImage picks up the semantic engine
 // (local `item.image` paths are /images/menu/… which don't exist in public/)
+const TARGET_ITEMS = ['Shawarma', 'Chicken Popcorn', 'Loaded French Fries', 'Waffle'];
+
 const trending = (menuData as MenuItem[])
-  .filter((item) => item.bestseller)
-  .slice(0, 8)
+  .filter((item) => item.bestseller || TARGET_ITEMS.some(t => item.name.toLowerCase().includes(t.toLowerCase())))
+  // Try to pick one of each target item if possible
+  .reduce((acc, item) => {
+    const matched = TARGET_ITEMS.find(t => item.name.toLowerCase().includes(t.toLowerCase()));
+    if (matched && !acc.find(a => a.name.toLowerCase().includes(matched.toLowerCase()))) {
+      acc.push(item);
+    } else if (acc.length < 4 && !matched && item.bestseller) {
+      // acc.push(item);
+    }
+    return acc;
+  }, [] as MenuItem[])
+  .slice(0, 4)
   .map((item) => ({ ...item, image: resolveMenuImage({ name: item.name, category: item.category, image_url: null }) }));
 
 export default function TrendingProducts() {
@@ -63,12 +75,11 @@ export default function TrendingProducts() {
                 <h3 className="font-headline font-bold text-white text-sm uppercase tracking-[1px] truncate">
                   {item.name}
                 </h3>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-[#d62b2b] font-bold">₹{item.price}</span>
-                  <span className="flex items-center gap-1 text-white/50 text-xs">
-                    <span className="text-[#d62b2b]">★</span>
-                    {item.rating}
-                  </span>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[var(--red)] font-bold text-lg">₹{item.price}</span>
+                  <button className="bg-white/10 hover:bg-[var(--red)] text-white text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-wider transition-colors">
+                    Quick Add
+                  </button>
                 </div>
               </div>
             </motion.button>

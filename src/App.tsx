@@ -11,7 +11,10 @@ import WhatsAppFab from './components/WhatsAppFab';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
 import Checkout from './pages/Checkout';
+import OrderConfirmation from './pages/OrderConfirmation';
 import Branches from './pages/Branches';
+import OffersPage from './pages/OffersPage';
+import ContactPage from './pages/ContactPage';
 import { useCart } from './hooks/useCart';
 import { useAuth } from './hooks/useAuth';
 import { runAutomaticMigration, initializeWithHealthCheck } from './lib/supabaseMigration';
@@ -137,7 +140,10 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<Menu cartData={cartData} />} />
         <Route path="/checkout" element={<Checkout cartData={cartData} />} />
+        <Route path="/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/branches" element={<Branches />} />
+        <Route path="/offers" element={<OffersPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route
           path="/profile"
           element={
@@ -221,10 +227,10 @@ export default function App() {
 
       {/* Floating Checkout Button (Bottom) */}
       {!isAdminArea && !isCheckoutPage && cartData.count > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[50] w-full max-w-[190px] px-2 animate-in fade-in slide-in-from-bottom-5 duration-500">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[50] w-[90%] max-w-[170px] animate-in fade-in slide-in-from-bottom-5 duration-500">
           <button
             onClick={() => navigate('/checkout')}
-            className="w-full bg-[var(--red)] text-white font-bebas text-base py-2 rounded-full flex items-center justify-between px-4 tracking-[1.5px] shadow-[0_15px_30px_rgba(214,43,43,0.4)] hover:scale-105 active:scale-95 transition-all border border-white/10"
+            className="w-full bg-[var(--red)] text-white font-bebas text-sm py-1.5 rounded-full flex items-center justify-between px-3 tracking-[1px] shadow-[0_15px_30px_rgba(214,43,43,0.4)] hover:scale-105 active:scale-95 transition-all border border-white/10"
           >
             <span>CHECKOUT</span>
             <div className="flex items-center gap-1.5">

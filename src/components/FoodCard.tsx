@@ -7,9 +7,10 @@ interface FoodCardProps {
   addItem: (i: any) => void;
   qty?: number;
   updateQty?: (id: string | number, qty: number) => void;
+  disabled?: boolean;
 }
 
-export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCardProps) {
+export default function FoodCard({ item, addItem, qty = 0, updateQty, disabled = false }: FoodCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(item.id);
   // Recovery image: semantically correct for this item's food type, never crosses categories.
@@ -76,27 +77,30 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCard
           </div>
 
           {qty > 0 && updateQty ? (
-            <div className="flex items-center bg-white rounded-full p-1 shadow-md">
+            <div className={`flex items-center bg-white rounded-full p-1 shadow-md ${disabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
               <button
-                onClick={() => updateQty(item.id, qty - 1)}
+                onClick={() => !disabled && updateQty(item.id, qty - 1)}
                 className="w-10 h-10 flex items-center justify-center text-black font-bold text-lg active:scale-90 transition-transform"
                 aria-label="Decrease quantity"
+                disabled={disabled}
               >
                 −
               </button>
               <span className="text-black text-sm font-bold w-6 text-center">{qty}</span>
               <button
-                onClick={() => updateQty(item.id, qty + 1)}
+                onClick={() => !disabled && updateQty(item.id, qty + 1)}
                 className="w-10 h-10 flex items-center justify-center text-black font-bold text-lg active:scale-90 transition-transform"
                 aria-label="Increase quantity"
+                disabled={disabled}
               >
                 +
               </button>
             </div>
           ) : (
             <button
-              onClick={() => addItem(item)}
-              className="bg-white text-black text-xs font-bold px-6 py-3 rounded-full uppercase tracking-wider hover:bg-white/90 shadow-md transition-all active:scale-95"
+              onClick={() => !disabled && addItem(item)}
+              disabled={disabled}
+              className={`bg-white text-black text-xs font-bold px-6 py-3 rounded-full uppercase tracking-wider shadow-md transition-all ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-white/90 active:scale-95'}`}
             >
               Add
             </button>

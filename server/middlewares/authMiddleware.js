@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/env.js';
 import { getUserById } from '../repositories/userRepository.js';
 
-export function authRequired(req, res, next) {
+export async function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
@@ -19,6 +19,28 @@ export function authRequired(req, res, next) {
     req.user = user;
     return next();
   } catch {
+    // If local JWT fails, check if supabase is used
+    const authMode = (process.env.VITE_AUTH_MODE || '').trim();
+    if (authMode === 'supabase') {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+      if (supabaseUrl && supabaseAnonKey) {
+        try {
+          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: {
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Invalid Supabase token');
+          const user = await response.json();
+          req.user = { id: user.id, email: user.email, role: 'user' }; // fallback role
+          return next();
+        } catch {
+          // Fall through to error
+        }
+      }
+    }
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
@@ -54,28 +76,7 @@ export async function adminRequired(req, res, next) {
     return res.status(401).json({ error: 'Admin authentication required.' });
   }
 
-  const authMode = (process.env.VITE_AUTH_MODE || '').trim();
-  if (authMode === 'supabase') {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
-    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
-    if (supabaseUrl && supabaseAnonKey) {
-      try {
-        const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Invalid Supabase token');
-        const user = await response.json();
-        req.user = { id: user.id, role: 'admin', email: user.email };
-        return next();
-      } catch {
-        return res.status(401).json({ error: 'Admin session expired. Please log in again.' });
-      }
-    }
-  }
-
+  // First try to verify as local JWT
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = getUserById(decoded.sub);
@@ -83,7 +84,30 @@ export async function adminRequired(req, res, next) {
     if (user.role !== 'admin') return res.status(403).json({ error: 'Admin access required.' });
     req.user = user;
     return next();
-  } catch {
+  } catch (err) {
+    // If local JWT fails, and supabase is enabled, try supabase
+    const authMode = (process.env.VITE_AUTH_MODE || '').trim();
+    if (authMode === 'supabase') {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+      if (supabaseUrl && supabaseAnonKey) {
+        try {
+          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: {
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Invalid Supabase token');
+          const user = await response.json();
+          req.user = { id: user.id, role: 'admin', email: user.email };
+          return next();
+        } catch {
+          // Fall through to error
+        }
+      }
+    }
+    
     return res.status(401).json({ error: 'Admin session expired. Please log in again.' });
   }
 }

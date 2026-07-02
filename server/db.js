@@ -65,13 +65,32 @@ function runMigrations() {
 
     CREATE TABLE IF NOT EXISTS menu_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT,
       name TEXT NOT NULL,
+      description TEXT,
       price REAL NOT NULL,
+      large_price REAL,
       category TEXT NOT NULL,
       image_url TEXT,
+      is_veg INTEGER NOT NULL DEFAULT 0,
       is_bestseller INTEGER NOT NULL DEFAULT 0,
+      is_trending INTEGER NOT NULL DEFAULT 0,
       is_active INTEGER NOT NULL DEFAULT 1,
+      display_order INTEGER NOT NULL DEFAULT 0,
       deleted_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      is_visible INTEGER NOT NULL DEFAULT 1,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      banner_image TEXT,
+      category_image TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -208,6 +227,24 @@ function runMigrations() {
   }
   if (!menuColumns.includes('is_bestseller')) {
     db.exec("ALTER TABLE menu_items ADD COLUMN is_bestseller INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!menuColumns.includes('slug')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN slug TEXT");
+  }
+  if (!menuColumns.includes('description')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN description TEXT");
+  }
+  if (!menuColumns.includes('large_price')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN large_price REAL");
+  }
+  if (!menuColumns.includes('is_veg')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN is_veg INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!menuColumns.includes('is_trending')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN is_trending INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!menuColumns.includes('display_order')) {
+    db.exec("ALTER TABLE menu_items ADD COLUMN display_order INTEGER NOT NULL DEFAULT 0");
   }
 
   // NOTE: a previous version backfilled image_url from menu.json local paths here.
@@ -699,7 +736,7 @@ function seedBranches() {
   ).run(
     'Shawarma Inn — Mathur',
     'Mathur, Chennai, Tamil Nadu',
-    String(process.env.VITE_OWNER_WHATSAPP || '918610632662'),
+    String(process.env.VITE_OWNER_WHATSAPP || '918778024010'),
     'Chennai',
     null,
     String(process.env.VITE_SWIGGY_URL || ''),

@@ -165,15 +165,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return syncSupabaseSession(data.session);
     }
 
-    const current = readSessionFromStorage();
-    if (!current?.token) {
+    const fallbackCurrent = readSessionFromStorage();
+    if (!fallbackCurrent?.token) {
       persistSession(null);
       return null;
     }
 
     try {
-      const { user } = await authApi.me(current.token);
-      const next = { token: current.token, user };
+      const { user } = await authApi.me(fallbackCurrent.token);
+      const next = { token: fallbackCurrent.token, user };
       persistSession(next);
       return user;
     } catch {

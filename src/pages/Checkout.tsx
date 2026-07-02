@@ -8,8 +8,6 @@ import { usePublicSettings } from '../hooks/usePublicSettings';
 import { apiRequest } from '../lib/api';
 import { playCheckoutSound } from '../utils/playCheckoutSound';
 import type { CartItem } from '../hooks/useCart';
-import type { CheckoutTotals } from '../config/pricing';
-
 import CheckoutLayout from '../components/checkout/CheckoutLayout';
 import CustomerDetailsForm from '../components/checkout/CustomerDetailsForm';
 import AddressSection from '../components/checkout/AddressSection';
@@ -19,18 +17,17 @@ interface CheckoutCartData {
   cart: CartItem[];
   subtotal: number;
   clearCart: () => void;
-  buildWhatsAppUrl: (phone: string, totals: CheckoutTotals) => string;
 }
 
 interface CheckoutProps {
   cartData?: CheckoutCartData;
 }
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '919003195805';
+const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
 
 export default function Checkout({ cartData }: CheckoutProps) {
   if (!cartData) return null;
-  const { cart, subtotal, buildWhatsAppUrl, clearCart } = cartData;
+  const { cart, subtotal, clearCart } = cartData;
   const { user, login, signup, signInWithGoogle, logout } = useAuth();
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
@@ -39,11 +36,18 @@ export default function Checkout({ cartData }: CheckoutProps) {
   
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [address, setAddress] = useState('');
+  const [addressData, setAddressData] = useState({
+    houseNo: '',
+    street: '',
+    area: '',
+    landmark: '',
+    city: 'Chennai',
+    pincode: ''
+  });
   const [placed, setPlaced] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery');
+  const [deliveryMethod, setDeliveryMethod] = useState<'self_delivery' | 'we_arrange' | 'pickup'>('we_arrange');
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponMessage, setCouponMessage] = useState({ text: '', type: '' });
@@ -53,7 +57,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
     const discount = appliedCoupon?.discount ?? 0;
     const cappedDiscount = Math.max(0, Math.min(discount, subtotal));
     const taxableAmount = subtotal - cappedDiscount;
-    const dc = deliveryMethod === 'delivery' ? liveDeliveryCharge : 0;
+    const dc = deliveryMethod === 'we_arrange' ? liveDeliveryCharge : 0;
     const gst = gstActive ? Math.round(taxableAmount * (gstPercentage / 100) * 100) / 100 : 0;
     const grandTotal = Math.round((taxableAmount + dc + livePackingCharge + gst) * 100) / 100;
     return {
@@ -154,11 +158,24 @@ export default function Checkout({ cartData }: CheckoutProps) {
     }
   };
 
+  const getFormattedAddress = () => {
+    const { houseNo, street, area, landmark, city, pincode } = addressData;
+    return `${houseNo}, ${street}, ${area}, ${landmark ? landmark + ', ' : ''}${city} - ${pincode}`;
+  };
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!name.trim()) errors.name = 'Name is required';
     if (!phone.trim() || phone.replace(/\D/g, '').length !== 10) errors.phone = 'Valid 10-digit phone is required';
-    if (deliveryMethod === 'delivery' && !address.trim()) errors.address = 'Delivery address is required';
+    
+    if (deliveryMethod === 'we_arrange') {
+      if (!addressData.houseNo.trim()) errors.houseNo = 'Required';
+      if (!addressData.street.trim()) errors.street = 'Required';
+      if (!addressData.area.trim()) errors.area = 'Required';
+      if (!addressData.city.trim()) errors.city = 'Required';
+      if (!addressData.pincode.trim()) errors.pincode = 'Required';
+    }
+    
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -182,8 +199,8 @@ export default function Checkout({ cartData }: CheckoutProps) {
       customerName: name,
       customerPhone: phone,
       customerEmail: user?.email ?? undefined,
-      deliveryAddress: deliveryMethod === 'delivery' ? address : 'STORE PICKUP',
-      deliveryType: deliveryMethod === 'delivery' ? 'home_delivery' : 'store_pickup',
+      deliveryAddress: deliveryMethod === 'we_arrange' ? getFormattedAddress() : (deliveryMethod === 'self_delivery' ? 'RAPIDO/PORTER' : 'STORE PICKUP'),
+      deliveryType: deliveryMethod === 'pickup' ? 'store_pickup' : 'home_delivery',
       couponCode: appliedCoupon?.code ?? undefined,
       discountAmount: totals.discount ?? 0,
       packingCharge: totals.packingCharge ?? 0,
@@ -198,10 +215,33 @@ export default function Checkout({ cartData }: CheckoutProps) {
 
     setSaving(false);
     playCheckoutSound();
-    window.open(buildWhatsAppUrl(WHATSAPP_PHONE, totals), '_blank');
+    
+    // Generate Custom WhatsApp Message
+    const orderItemsText = cart.map(item => `• ${item.qty}x ${item.name} (₹${item.price * item.qty})`).join('\n');
+    const finalAddress = deliveryMethod === 'we_arrange' ? getFormattedAddress() : (deliveryMethod === 'self_delivery' ? 'Self Delivery (Rapido/Porter)' : 'Store Pickup');
+    const discountText = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-₹${totals.discount})` : '';
+    
+    const message = `*NEW ORDER FROM SHAWARMA INN* 🌯🔥\n\n` +
+      `*Customer Details*\n` +
+      `Name: ${name}\n` +
+      `Phone: ${phone}\n\n` +
+      `*Delivery Type*\n${deliveryMethod === 'we_arrange' ? 'We Arrange Delivery' : deliveryMethod === 'self_delivery' ? 'Self Delivery (Rapido/Porter)' : 'Store Pickup'}\n\n` +
+      `*Address/Location*\n${finalAddress}\n\n` +
+      `*Order Items*\n${orderItemsText}\n\n` +
+      `*Order Summary*${discountText}\n` +
+      `Items Total: ₹${totals.itemsTotal}\n` +
+      `Packing Charge: ₹${totals.packingCharge}\n` +
+      `Delivery Charge: ₹${totals.deliveryCharge}\n` +
+      (totals.gstEnabled ? `GST (${totals.gstPercentage}%): ₹${totals.gst}\n` : '') +
+      `*Grand Total: ₹${totals.grandTotal}*\n\n` +
+      `Please confirm my order!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodedMessage}`, '_blank');
+
     setPlaced(true);
     clearCart();
-    setTimeout(() => navigate('/'), 3000);
+    navigate('/order-confirmation', { state: { orderData: { name, phone, deliveryMethod, totals } } });
   };
 
   if (cart.length === 0 && !placed) {
@@ -224,17 +264,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
   }
 
   if (placed) {
-    return (
-      <main className="pt-32 min-h-screen flex flex-col items-center justify-center gap-8 bg-[var(--black)] text-center px-6">
-        <div className="w-24 h-24 bg-[#25D366]/10 rounded-full flex items-center justify-center border border-[#25D366]/20 shadow-[0_0_60px_rgba(37,211,102,0.1)] mb-4">
-          <svg className="w-12 h-12 text-[#25D366]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h1 className="font-bebas text-7xl uppercase text-[var(--white)] tracking-[6px] animate-pulse">ORDER SENT!</h1>
-        <p className="text-[var(--white)]/60 font-body max-w-sm leading-relaxed">Check WhatsApp for confirmation and tracking. Redirecting home shortly…</p>
-      </main>
-    );
+    return null; // The redirect to /order-confirmation happens instantly
   }
 
   return (
@@ -279,17 +309,32 @@ export default function Checkout({ cartData }: CheckoutProps) {
                 <span className="w-8 h-8 rounded-full bg-[var(--red)]/10 flex items-center justify-center text-[var(--red)]">2</span>
                 Order Type
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
-                  onClick={() => setDeliveryMethod('delivery')}
-                  className={`relative p-5 rounded-2xl border text-left transition-all ${deliveryMethod === 'delivery' ? 'bg-[var(--red)]/10 border-[var(--red)] text-white' : 'bg-black/40 border-white/5 text-white/50 hover:border-white/20'}`}
+                  onClick={() => setDeliveryMethod('self_delivery')}
+                  className={`relative p-5 rounded-2xl border text-left transition-all ${deliveryMethod === 'self_delivery' ? 'bg-[var(--red)]/10 border-[var(--red)] text-white' : 'bg-black/40 border-white/5 text-white/50 hover:border-white/20'}`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <span className="font-bebas text-xl tracking-wider">Self Delivery</span>
+                  </div>
+                  <p className="text-xs font-body leading-relaxed opacity-80">Book Rapido or Porter. No delivery fee from us.</p>
+                  {deliveryMethod === 'self_delivery' && (
+                    <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-[var(--red)] flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                  )}
+                </button>
+                <button
+                  onClick={() => setDeliveryMethod('we_arrange')}
+                  className={`relative p-5 rounded-2xl border text-left transition-all ${deliveryMethod === 'we_arrange' ? 'bg-[var(--red)]/10 border-[var(--red)] text-white' : 'bg-black/40 border-white/5 text-white/50 hover:border-white/20'}`}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                    <span className="font-bebas text-xl tracking-wider">Home Delivery</span>
+                    <span className="font-bebas text-xl tracking-wider">We Arrange</span>
                   </div>
-                  <p className="text-xs font-body leading-relaxed opacity-80">Hot & fresh delivered straight to your door.</p>
-                  {deliveryMethod === 'delivery' && (
+                  <p className="text-xs font-body leading-relaxed opacity-80">We'll handle the delivery. Delivery charges apply.</p>
+                  {deliveryMethod === 'we_arrange' && (
                     <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-[var(--red)] flex items-center justify-center">
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
@@ -320,8 +365,8 @@ export default function Checkout({ cartData }: CheckoutProps) {
               setName={setName}
               phone={phone}
               setPhone={setPhone}
-              address={address}
-              setAddress={setAddress}
+              addressData={addressData}
+              setAddressData={setAddressData}
               fieldErrors={fieldErrors}
               setFieldErrors={setFieldErrors}
             />
@@ -335,6 +380,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
                 totals={totals}
                 saving={saving}
                 isCustomerLoggedIn={isCustomerLoggedIn}
+                deliveryMethod={deliveryMethod}
                 handlePlaceOrder={handlePlaceOrder}
                 appliedCoupon={appliedCoupon}
                 couponInput={couponInput}
