@@ -9,6 +9,7 @@ import { authRequired, adminRequired, optionalAuth } from './middlewares/authMid
 import { JWT_SECRET } from './config/env.js';
 import { broadcastSSE, broadcastSSEToUser } from './events/sse.js';
 import jwt from 'jsonwebtoken';
+import { getDateRangeSql } from './utils/filterEngine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -903,6 +904,25 @@ app.patch('/api/admin/orders/:id/status', adminRequired, (req, res) => {
   }
 
   const previousStatus = existing.status;
+
+  const ALLOWED_TRANSITIONS = {
+    pending: ['accepted', 'processing', 'preparing', 'cancelled'],
+    accepted: ['processing', 'preparing', 'ready', 'cancelled'],
+    processing: ['preparing', 'ready', 'in_transit', 'cancelled'],
+    preparing: ['ready', 'in_transit', 'cancelled'],
+    ready: ['in_transit', 'completed', 'cancelled'],
+    in_transit: ['completed', 'cancelled'],
+    completed: [],
+    cancelled: [],
+  };
+
+  if (previousStatus !== nextStatus) {
+    const validNextStatuses = ALLOWED_TRANSITIONS[previousStatus] || [];
+    if (!validNextStatuses.includes(nextStatus)) {
+      return res.status(400).json({ error: `Invalid status transition from ${previousStatus} to ${nextStatus}.` });
+    }
+  }
+
   const now = new Date().toISOString();
   const remarks = req.body.remarks ? String(req.body.remarks) : null;
   db.prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?').run(nextStatus, now, orderId);
@@ -946,26 +966,44 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
 
   const todaysOrders = countByDate("'now'");
   const yesterdayOrders = countByDate("'now', '-1 day'");
+  const weeklyOrders = db.prepare(
+    `SELECT COUNT(*) AS count FROM orders WHERE date(created_at, 'localtime') >= date('now', '-6 days')`
+  ).get().count;
 
-  // All-time status counts (for sidebar badges)
-  const statusCounts = db.prepare(
+  // All-time status counts (for sidebar badges and main dashboard)
+  const statusCountsRaw = db.prepare(
     `SELECT status, COUNT(*) AS count FROM orders GROUP BY status`
-  ).all().reduce((acc, row) => ({ ...acc, [row.status]: row.count }), {});
+  ).all();
+  const statusCounts = { pending: 0, processing: 0, in_transit: 0, completed: 0, cancelled: 0 };
+  for (const row of statusCountsRaw) {
+    statusCounts[row.status] = row.count;
+  }
 
   // Today's status breakdown (for live operations strip)
-  const todayStatusCounts = db.prepare(
+  const todayStatusCountsRaw = db.prepare(
     `SELECT status, COUNT(*) AS count FROM orders
      WHERE date(created_at, 'localtime') = date('now', 'localtime')
      GROUP BY status`
-  ).all().reduce((acc, row) => ({ ...acc, [row.status]: row.count }), {});
+  ).all();
+  const todayStatusCounts = { pending: 0, processing: 0, in_transit: 0, completed: 0, cancelled: 0 };
+  for (const row of todayStatusCountsRaw) {
+    todayStatusCounts[row.status] = row.count;
+  }
 
   const revenueSince = (sqlDateExpr) => db.prepare(
     `SELECT COALESCE(SUM(total), 0) AS revenue
      FROM orders
      WHERE status = ? AND date(created_at, 'localtime') >= date(${sqlDateExpr}, 'localtime')`
   ).get(REVENUE_COUNTED_STATUS).revenue;
+  
+  const revenueOnDate = (sqlDateExpr) => db.prepare(
+    `SELECT COALESCE(SUM(total), 0) AS revenue
+     FROM orders
+     WHERE status = ? AND date(created_at, 'localtime') = date(${sqlDateExpr}, 'localtime')`
+  ).get(REVENUE_COUNTED_STATUS).revenue;
 
-  const todaysRevenue = revenueSince("'now'");
+  const todaysRevenue = revenueOnDate("'now'");
+  const yesterdayRevenue = revenueOnDate("'now', '-1 day'");
   const weeklyRevenue = revenueSince("'now', '-6 days'");
   const monthlyRevenue = revenueSince("'now', 'start of month'");
 
@@ -976,7 +1014,18 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
   ).get(REVENUE_COUNTED_STATUS);
   const avgOrderValue = Math.round((avgRow?.avg || 0) * 100) / 100;
 
-  // New customers today (unique phones placing their first-ever order today)
+  // Repeat Customers (Total all time)
+  const repeatCustomersCount = db.prepare(
+    `SELECT COUNT(*) as count FROM (
+      SELECT customer_phone, COUNT(*) AS orders
+      FROM orders
+      WHERE customer_phone IS NOT NULL AND customer_phone != ''
+      GROUP BY customer_phone
+      HAVING COUNT(*) > 1
+    )`
+  ).get().count;
+
+  // New customers today
   const newCustomersToday = db.prepare(
     `SELECT COUNT(DISTINCT o.customer_phone) AS count
      FROM orders o
@@ -990,7 +1039,7 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
   ).get().count;
 
   // Returning customers today
-  const returningCustomers = db.prepare(
+  const returningCustomersToday = db.prepare(
     `SELECT COUNT(DISTINCT o.customer_phone) AS count
      FROM orders o
      WHERE o.customer_phone IS NOT NULL
@@ -1068,16 +1117,20 @@ app.get('/api/admin/dashboard/summary', adminRequired, (_req, res) => {
     cards: {
       todaysOrders,
       yesterdayOrders,
+      weeklyOrders,
       pendingOrders: statusCounts.pending || 0,
       processingOrders: statusCounts.processing || 0,
       inTransitOrders: statusCounts.in_transit || 0,
       completedOrders: statusCounts.completed || 0,
+      cancelledOrders: statusCounts.cancelled || 0,
       todaysRevenue,
+      yesterdayRevenue,
       weeklyRevenue,
       monthlyRevenue,
       avgOrderValue,
+      repeatCustomersCount,
       newCustomersToday,
-      returningCustomers,
+      returningCustomersToday,
       todayReviews,
       franchiseEnquiries,
       couponUsageToday,
@@ -1387,14 +1440,9 @@ app.get('/api/admin/franchise-leads/export', adminRequired, (req, res) => {
 // ── Analytics ───────────────────────────────────────────────────────────────
 
 app.get('/api/admin/analytics', adminRequired, (req, res) => {
-  const dateFrom = String(req.query.dateFrom || '').trim();
-  const dateTo = String(req.query.dateTo || '').trim();
-
-  const where = [`status = '${REVENUE_COUNTED_STATUS}'`];
-  const params = [];
-  if (dateFrom) { where.push("date(created_at, 'localtime') >= date(?)"); params.push(dateFrom); }
-  if (dateTo) { where.push("date(created_at, 'localtime') <= date(?)"); params.push(dateTo); }
-  const whereSql = `WHERE ${where.join(' AND ')}`;
+  const { sqlClause, params } = getDateRangeSql(req.query, 'created_at');
+  
+  const whereSql = `WHERE status = '${REVENUE_COUNTED_STATUS}' AND ${sqlClause}`;
 
   const revenueByDay = db.prepare(
     `SELECT date(created_at, 'localtime') AS day, SUM(total) AS revenue, COUNT(*) AS orders
@@ -1427,6 +1475,7 @@ app.get('/api/admin/analytics', adminRequired, (req, res) => {
   const totalCustomers = db.prepare(
     `SELECT customer_phone, COUNT(*) AS orders FROM orders ${whereSql} AND customer_phone IS NOT NULL AND customer_phone != '' GROUP BY customer_phone`
   ).all(...params);
+  
   const returningCustomers = totalCustomers.filter((c) => c.orders > 1).length;
   const newCustomers = totalCustomers.filter((c) => c.orders === 1).length;
   const repeatOrderRate = totalCustomers.length > 0
@@ -1443,7 +1492,29 @@ app.get('/api/admin/analytics', adminRequired, (req, res) => {
      FROM orders ${whereSql} GROUP BY delivery_type`
   ).all(...params);
 
+  // KPIs calculation
+  let totalRevenue = 0;
+  let totalOrders = 0;
+  for (const day of revenueByDay) {
+    totalRevenue += Number(day.revenue || 0);
+    totalOrders += Number(day.orders || 0);
+  }
+  const avgValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  
+  let itemsSold = 0;
+  for (const prod of topProducts) {
+    itemsSold += Number(prod.qty || 0);
+  }
+
   return res.json({
+    kpis: {
+      totalRevenue,
+      totalOrders,
+      avgValue,
+      itemsSold,
+      returningCustomers,
+      repeatOrderRate,
+    },
     revenueByDay,
     revenueByWeek,
     revenueByMonth,
@@ -1485,14 +1556,10 @@ function sendExport(res, rows, filename, format) {
 app.get('/api/admin/reports/export', adminRequired, (req, res) => {
   const type = String(req.query.type || 'orders');
   const format = req.query.format === 'excel' ? 'excel' : 'csv';
-  const dateFrom = String(req.query.dateFrom || '').trim();
-  const dateTo = String(req.query.dateTo || '').trim();
-
-  const dateWhere = [];
-  const dateParams = [];
-  if (dateFrom) { dateWhere.push("date(created_at, 'localtime') >= date(?)"); dateParams.push(dateFrom); }
-  if (dateTo) { dateWhere.push("date(created_at, 'localtime') <= date(?)"); dateParams.push(dateTo); }
-  const dateWhereSql = dateWhere.length > 0 ? `WHERE ${dateWhere.join(' AND ')}` : '';
+  
+  const { sqlClause, params: dateParams } = getDateRangeSql(req.query, 'created_at');
+  const dateWhereSql = sqlClause !== '1=1' ? `WHERE ${sqlClause}` : '';
+  const dateWhereSqlO = sqlClause !== '1=1' ? `WHERE ${sqlClause.replace(/created_at/g, 'o.created_at')}` : '';
 
   if (type === 'orders') {
     const rows = db.prepare(
@@ -1524,8 +1591,8 @@ app.get('/api/admin/reports/export', adminRequired, (req, res) => {
   }
 
   if (type === 'products') {
-    const completedWhere = dateWhereSql
-      ? `${dateWhereSql.replace('created_at', 'o.created_at')} AND o.status = '${REVENUE_COUNTED_STATUS}'`
+    const completedWhere = dateWhereSqlO
+      ? `${dateWhereSqlO} AND o.status = '${REVENUE_COUNTED_STATUS}'`
       : `WHERE o.status = '${REVENUE_COUNTED_STATUS}'`;
     const rows = db.prepare(
       `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
@@ -1536,14 +1603,17 @@ app.get('/api/admin/reports/export', adminRequired, (req, res) => {
   }
 
   if (type === 'customers') {
+    // For customers, the date filter typically applies to when their orders were placed.
+    // We filter orders by dateWhereSql, and optionally consider only completed for spend.
     const rows = db.prepare(
       `SELECT customer_phone AS phone, MAX(customer_name) AS name, MAX(customer_email) AS email,
         COUNT(*) AS order_count, SUM(CASE WHEN status = '${REVENUE_COUNTED_STATUS}' THEN total ELSE 0 END) AS total_spend,
         MAX(created_at) AS last_order_date
        FROM orders
-       WHERE customer_phone IS NOT NULL AND customer_phone != ''
+       ${dateWhereSql}
+       ${dateWhereSql ? 'AND' : 'WHERE'} customer_phone IS NOT NULL AND customer_phone != ''
        GROUP BY customer_phone ORDER BY total_spend DESC`
-    ).all().map((c) => ({
+    ).all(...dateParams).map((c) => ({
       Phone: c.phone, Name: c.name || '', Email: c.email || '',
       'Order Count': c.order_count, 'Total Spend': c.total_spend, 'Last Order': c.last_order_date,
     }));
@@ -1672,43 +1742,26 @@ app.put('/api/admin/branches/:id', adminRequired, (req, res) => {
 // ── Full Analytics ────────────────────────────────────────────────────────
 
 app.get('/api/admin/analytics/full', adminRequired, (req, res) => {
-  const dateFrom = String(req.query.dateFrom || '').trim();
-  const dateTo = String(req.query.dateTo || '').trim();
-
-  const allWhere = ['1=1'];
-  const revWhere = [`status = '${REVENUE_COUNTED_STATUS}'`];
-  const params = [];
-  const revParams = [];
-
-  if (dateFrom) {
-    const clause = "date(created_at, 'localtime') >= date(?)";
-    allWhere.push(clause); params.push(dateFrom);
-    revWhere.push(clause); revParams.push(dateFrom);
-  }
-  if (dateTo) {
-    const clause = "date(created_at, 'localtime') <= date(?)";
-    allWhere.push(clause); params.push(dateTo);
-    revWhere.push(clause); revParams.push(dateTo);
-  }
-
-  const allSql = `WHERE ${allWhere.join(' AND ')}`;
-  const revSql = `WHERE ${revWhere.join(' AND ')}`;
-  const revSqlO = revSql.replace(/created_at/g, 'o.created_at').replace(/status/, 'o.status');
+  const { sqlClause, params } = getDateRangeSql(req.query, 'created_at');
+  
+  const allSql = `WHERE ${sqlClause}`;
+  const revSql = `WHERE status = '${REVENUE_COUNTED_STATUS}' AND ${sqlClause}`;
+  const revSqlO = revSql.replace(/created_at/g, 'o.created_at').replace(/status/g, 'o.status');
 
   const dailyRevenue = db.prepare(
     `SELECT date(created_at, 'localtime') AS date, SUM(total) AS revenue, COUNT(*) AS orders
      FROM orders ${revSql} GROUP BY date ORDER BY date ASC`
-  ).all(...revParams);
+  ).all(...params);
 
   const weeklyRevenue = db.prepare(
     `SELECT strftime('%Y-W%W', created_at, 'localtime') AS week, SUM(total) AS revenue, COUNT(*) AS orders
      FROM orders ${revSql} GROUP BY week ORDER BY week ASC`
-  ).all(...revParams);
+  ).all(...params);
 
   const monthlyRevenue = db.prepare(
     `SELECT strftime('%Y-%m', created_at, 'localtime') AS month, SUM(total) AS revenue, COUNT(*) AS orders
      FROM orders ${revSql} GROUP BY month ORDER BY month ASC`
-  ).all(...revParams);
+  ).all(...params);
 
   const ordersByStatus = db.prepare(
     `SELECT status, COUNT(*) AS orders, SUM(total) AS total_value
@@ -1719,13 +1772,13 @@ app.get('/api/admin/analytics/full', adminRequired, (req, res) => {
     `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
      FROM order_items oi INNER JOIN orders o ON o.id = oi.order_id
      ${revSqlO} GROUP BY oi.name ORDER BY qty DESC LIMIT 10`
-  ).all(...revParams);
+  ).all(...params);
 
   const bottomProducts = db.prepare(
     `SELECT oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
      FROM order_items oi INNER JOIN orders o ON o.id = oi.order_id
      ${revSqlO} GROUP BY oi.name ORDER BY qty ASC LIMIT 10`
-  ).all(...revParams);
+  ).all(...params);
 
   const revenueByCategory = db.prepare(
     `SELECT mi.category, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price) AS revenue
@@ -1733,7 +1786,7 @@ app.get('/api/admin/analytics/full', adminRequired, (req, res) => {
      INNER JOIN orders o ON o.id = oi.order_id
      LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
      ${revSqlO} GROUP BY mi.category ORDER BY revenue DESC`
-  ).all(...revParams);
+  ).all(...params);
 
   const peakHours = db.prepare(
     `SELECT strftime('%H', created_at, 'localtime') AS hour, COUNT(*) AS orders
@@ -1742,7 +1795,7 @@ app.get('/api/admin/analytics/full', adminRequired, (req, res) => {
 
   const avgOrderValue = db.prepare(
     `SELECT AVG(total) AS avg FROM orders ${revSql}`
-  ).get(...revParams);
+  ).get(...params);
 
   const customerStats = db.prepare(
     `SELECT customer_phone, COUNT(*) AS order_count
@@ -1768,7 +1821,7 @@ app.get('/api/admin/analytics/full', adminRequired, (req, res) => {
   const ordersByDeliveryType = db.prepare(
     `SELECT delivery_type, COUNT(*) AS orders, SUM(total) AS revenue
      FROM orders ${revSql} GROUP BY delivery_type`
-  ).all(...revParams);
+  ).all(...params);
 
   // Completion rate and cancelled count for analytics dashboard
   const completedCount = db.prepare(

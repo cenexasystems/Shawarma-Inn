@@ -135,24 +135,13 @@ export default function Hero() {
               textShadow: '0 10px 40px rgba(0,0,0,0.95)',
             }}
           >
-            <span
-              className="text-[var(--white)] block"
-              style={{ fontSize: '100px' }}
-            >
+            <span className="text-[var(--white)] block text-[48px] sm:text-[70px] md:text-[100px]">
               FLAME
             </span>
-            <span
-              className="text-[var(--white)] block"
-              style={{ fontSize: '100px' }}
-            >
+            <span className="text-[var(--white)] block text-[48px] sm:text-[70px] md:text-[100px]">
               GRILLED
             </span>
-            <span
-              className="block"
-              style={{
-                fontSize: '110px',
-              }}
-            >
+            <span className="block text-[56px] sm:text-[80px] md:text-[110px]">
               PERFECTION.
             </span>
           </h1>
@@ -167,11 +156,12 @@ export default function Hero() {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap gap-5 items-center">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-5 items-center sm:items-start w-full sm:w-auto">
             <button
               id="hero-order-now-btn"
               onClick={() => navigate('/menu')}
               className="
+                w-full sm:w-auto
                 group relative
                 bg-[var(--red)] text-[var(--white)]
                 px-12 py-[20px] rounded-full
@@ -190,6 +180,7 @@ export default function Hero() {
               id="hero-see-menu-btn"
               onClick={() => navigate('/menu')}
               className="
+                w-full sm:w-auto
                 relative
                 border border-[var(--white)]/20 text-[var(--white)]
                 px-10 py-[20px] rounded-full
@@ -209,7 +200,7 @@ export default function Hero() {
       </div>
 
       {/* ─── LAYER 4: Right Column — Image Card ──────────── */}
-      <div className="relative z-20 w-full h-[55vh] lg:h-full flex items-center justify-center px-6 lg:px-12 py-8">
+      <div className="relative z-20 w-full h-[50vh] min-h-[400px] lg:h-full flex items-center justify-center px-6 lg:px-12 py-8 pb-16 lg:pb-8">
 
         {/* Ambient red glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -218,7 +209,7 @@ export default function Hero() {
 
         {/* Main image card */}
         <div
-          className="relative w-full max-w-sm aspect-square rounded-[40px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,1)] border border-white/5 group"
+          className="relative w-full max-w-sm aspect-square rounded-[40px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,1)] border border-white/5 group animate-in fade-in zoom-in slide-in-from-bottom-12 duration-1000 fill-mode-both delay-300"
           style={{ transform: 'rotate(-4deg)' }}
         >
           <img

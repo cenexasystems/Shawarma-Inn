@@ -126,7 +126,7 @@ export default function Menu({ cartData }: MenuProps) {
       </header>
 
       {/* Menu grid */}
-      <section className="max-w-[1600px] mx-auto px-4 md:px-8 xl:px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-24">
+      <section className="max-w-[1600px] mx-auto px-4 md:px-8 xl:px-12 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-24">
         {loading &&
           Array.from({ length: 8 }).map((_, i) => (
             <div

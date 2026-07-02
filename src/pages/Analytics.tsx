@@ -9,22 +9,7 @@ type DateRange = 'today' | '7days' | '30days' | 'custom';
 
 const COLORS = ['#f97316', '#22c55e', '#f59e0b', '#14b8a6', '#a855f7', '#ef4444'];
 
-function getDateRange(range: DateRange, customFrom?: string, customTo?: string): { dateFrom: string; dateTo: string } {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const today = fmt(now);
 
-  if (range === 'custom' && customFrom && customTo) {
-    return { dateFrom: customFrom, dateTo: customTo };
-  }
-
-  if (range === 'today') return { dateFrom: today, dateTo: today };
-
-  const past = new Date(now);
-  past.setDate(now.getDate() - (range === '7days' ? 6 : 29));
-  return { dateFrom: fmt(past), dateTo: today };
-}
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState<DateRange>('7days');
@@ -39,8 +24,7 @@ export default function Analytics() {
     setLoading(true);
     setError('');
     try {
-      const { dateFrom, dateTo } = getDateRange(dateRange, customFrom, customTo);
-      const qs = `dateFrom=${dateFrom}&dateTo=${dateTo}`;
+      const qs = `range=${dateRange}&customFrom=${customFrom}&customTo=${customTo}`;
       const [analyticsRes, summaryRes, fullRes] = await Promise.all([
         apiRequest<any>(`/admin/analytics?${qs}`),
         apiRequest<any>('/admin/dashboard/summary'),
@@ -63,20 +47,16 @@ export default function Analytics() {
   }, [dateRange]);
 
   const kpiData = useMemo(() => {
-    if (!analytics) return [];
-    const totalRevenue = (analytics.revenueByDay as any[]).reduce((s: number, d: any) => s + Number(d.revenue), 0);
-    const totalOrders = (analytics.revenueByDay as any[]).reduce((s: number, d: any) => s + Number(d.orders), 0);
-    const avgValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const itemsSold = (analytics.topProducts as any[]).reduce((s: number, p: any) => s + Number(p.qty), 0);
-    const returning = analytics.customerAnalytics?.returningCustomers || 0;
-    const repeatRate = analytics.customerAnalytics?.repeatOrderRate || 0;
+    if (!analytics?.kpis) return [];
+    
+    const { totalRevenue, totalOrders, avgValue, itemsSold, returningCustomers, repeatOrderRate } = analytics.kpis;
 
     return [
       { label: 'Total Revenue', value: totalRevenue, format: 'currency', icon: '💰', color: '#f97316' },
       { label: 'Total Orders', value: totalOrders, format: 'number', icon: '📦', color: '#22c55e' },
       { label: 'Avg Order Value', value: avgValue, format: 'currency', icon: '📊', color: '#f59e0b' },
-      { label: 'Returning Customers', value: returning, format: 'number', icon: '👥', color: '#a855f7' },
-      { label: 'Repeat Order Rate', value: repeatRate, format: 'percent', icon: '🔁', color: '#ec4899' },
+      { label: 'Returning Customers', value: returningCustomers, format: 'number', icon: '👥', color: '#a855f7' },
+      { label: 'Repeat Order Rate', value: repeatOrderRate, format: 'percent', icon: '🔁', color: '#ec4899' },
       { label: 'Items Sold', value: itemsSold, format: 'number', icon: '🛍️', color: '#14b8a6' },
     ];
   }, [analytics]);

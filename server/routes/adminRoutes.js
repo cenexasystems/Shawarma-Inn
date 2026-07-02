@@ -17,16 +17,17 @@ router.post('/login', loginRateLimiter, authController.adminLogin);
 // SSE Events Endpoint (Does not use standard auth middleware since it relies on query params)
 router.get('/events', async (req, res) => {
   const token = req.query.token;
+  let userId = 1; // Default for bypass
   
-  if (process.env.ADMIN_AUTH_BYPASS !== 'true') {
-    if (!token) return res.status(401).end();
-    
-    const authMode = (process.env.VITE_AUTH_MODE || '').trim();
-    if (authMode === 'supabase') {
-      const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
-      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
-      if (supabaseUrl && supabaseAnonKey) {
-        try {
+  try {
+    if (process.env.ADMIN_AUTH_BYPASS !== 'true') {
+      if (!token) return res.status(401).end();
+      
+      const authMode = (process.env.VITE_AUTH_MODE || '').trim();
+      if (authMode === 'supabase') {
+        const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+        const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+        if (supabaseUrl && supabaseAnonKey) {
           const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
             headers: {
               apikey: supabaseAnonKey,
@@ -35,31 +36,25 @@ router.get('/events', async (req, res) => {
           });
           if (!response.ok) throw new Error('Invalid Supabase token');
           const user = await response.json();
-          // Assume valid admin since Supabase validated the token
-        } catch (err) {
-          return res.status(401).end();
+          userId = user.id;
         }
-      }
-    } else {
-      try {
+      } else {
         const decoded = jwt.verify(token, JWT_SECRET);
         const user = getUserById(decoded.sub);
         if (!user || user.role !== 'admin') {
           return res.status(403).end();
         }
-      } catch (err) {
-        return res.status(401).end();
+        userId = user.id;
       }
     }
-  }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
     const clientId = Date.now().toString() + Math.random().toString();
-    sseClients.set(clientId, { res, role: 'admin', userId: user.id });
+    sseClients.set(clientId, { res, role: 'admin', userId });
 
     // Send initial connection success message
     res.write('data: {"connected": true}\n\n');

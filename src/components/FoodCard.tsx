@@ -16,9 +16,9 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty }: FoodCard
   const recoveryImage = getRecoveryImage(item);
 
   return (
-    <div className="group bg-[var(--card-bg)] border-[0.5px] border-[var(--border)] rounded-[16px] overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.01] hover:border-[var(--red)]">
+    <div className="group bg-[var(--card-bg)] border border-white/5 rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.02] hover:border-[#d62b2b]/50">
       {/* Image with overlaid name */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden bg-[var(--charcoal)]">
+      <div className="relative w-full aspect-square overflow-hidden bg-[#141414]">
         <img
           src={item.image || recoveryImage}
           alt={item.name}

@@ -221,18 +221,18 @@ export default function App() {
 
       {/* Floating Checkout Button (Bottom) */}
       {!isAdminArea && !isCheckoutPage && cartData.count > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[50] w-full max-w-[280px] px-4 animate-in fade-in slide-in-from-bottom-5 duration-500">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[50] w-full max-w-[190px] px-2 animate-in fade-in slide-in-from-bottom-5 duration-500">
           <button
             onClick={() => navigate('/checkout')}
-            className="w-full bg-[var(--red)] text-white font-bebas text-xl py-4 rounded-full flex items-center justify-between px-8 tracking-[2px] shadow-[0_20px_40px_rgba(214,43,43,0.4)] hover:scale-105 active:scale-95 transition-all border border-white/10"
+            className="w-full bg-[var(--red)] text-white font-bebas text-base py-2 rounded-full flex items-center justify-between px-4 tracking-[1.5px] shadow-[0_15px_30px_rgba(214,43,43,0.4)] hover:scale-105 active:scale-95 transition-all border border-white/10"
           >
             <span>CHECKOUT</span>
-            <div className="flex items-center gap-3">
-              <div className="text-right leading-tight">
-                <div className="text-white/45 text-[10px]">{cartData.count} ITEMS</div>
-                <div className="text-white text-[12px] tracking-[1px]">₹{cartData.subtotal.toFixed(0)}</div>
+            <div className="flex items-center gap-1.5">
+              <div className="text-right leading-none">
+                <div className="text-white/45 text-[9px] mb-0.5">{cartData.count} ITEMS</div>
+                <div className="text-white text-[11px] tracking-[1px]">₹{cartData.subtotal.toFixed(0)}</div>
               </div>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </div>

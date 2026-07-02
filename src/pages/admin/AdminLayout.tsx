@@ -50,7 +50,7 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (!tokenRequired) return;
-    const es = new EventSource(`/api/events?token=${encodeURIComponent(tokenRequired)}`);
+    const es = new EventSource(`/api/admin/events?token=${encodeURIComponent(tokenRequired)}`);
     
     es.addEventListener('new_order', (e: MessageEvent) => {
       try {
@@ -147,24 +147,28 @@ export default function AdminLayout() {
               )}
             </button>
             {showNotifications && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-                  <span className="text-xs font-semibold uppercase tracking-[2px] text-white/60">Notifications</span>
+              <div className="absolute top-full right-0 mt-3 w-80 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-gradient-to-r from-[#ef8f2f]/10 to-transparent">
+                  <span className="text-xs font-bold uppercase tracking-[2px] text-[#ef8f2f]">Notifications</span>
                   {notifications.some((n) => !n.is_read) && (
                     <button
                       onClick={() => {
                         notifications.filter((n) => !n.is_read).forEach(n => handleMarkNotificationRead(n.id));
                         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
                       }}
-                      className="text-[10px] text-[#ef8f2f] hover:underline"
+                      className="text-[10px] text-white/50 hover:text-white transition-colors uppercase tracking-[1px]"
                     >
                       Mark all read
                     </button>
                   )}
                 </div>
-                <div className="max-h-72 overflow-y-auto">
+                <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
                   {notifications.length === 0 ? (
-                    <div className="p-6 text-center text-white/30 text-sm">No notifications yet</div>
+                    <div className="p-8 flex flex-col items-center justify-center text-center">
+                      <Bell size={24} className="text-white/10 mb-3" />
+                      <p className="text-white/30 text-sm font-medium">All caught up!</p>
+                      <p className="text-white/20 text-xs mt-1">No new notifications</p>
+                    </div>
                   ) : notifications.map((n) => (
                     <div
                       key={n.id}
@@ -172,13 +176,13 @@ export default function AdminLayout() {
                         if (!n.is_read) handleMarkNotificationRead(n.id);
                         setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: 1 } : x));
                       }}
-                      className={`px-4 py-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${n.is_read ? 'opacity-50' : ''}`}
+                      className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors group ${n.is_read ? 'opacity-60 bg-transparent' : 'bg-white/[0.02]'}`}
                     >
-                      <div className="flex items-start gap-2">
-                        <span className={`mt-0.5 flex-shrink-0 w-2 h-2 rounded-full ${n.type === 'new_order' ? 'bg-[#ef8f2f]' : 'bg-blue-400'}`} />
-                        <div>
-                          <p className="text-xs text-white/80">{n.message}</p>
-                          <p className="text-[10px] text-white/30 mt-0.5">{new Date(n.created_at).toLocaleString()}</p>
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-1 flex-shrink-0 w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)] ${n.type === 'new_order' ? 'bg-[#ef8f2f] shadow-[#ef8f2f]' : 'bg-blue-400 shadow-blue-400'}`} />
+                        <div className="flex-1">
+                          <p className={`text-xs ${n.is_read ? 'text-white/60' : 'text-white/90 font-medium group-hover:text-white'}`}>{n.message}</p>
+                          <p className="text-[10px] text-white/40 mt-1">{new Date(n.created_at).toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
@@ -195,12 +199,13 @@ export default function AdminLayout() {
               <button
                 key={key}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 relative ${
                   isActive
-                    ? 'bg-[#ef8f2f] text-black font-semibold'
+                    ? 'bg-gradient-to-r from-[#ef8f2f]/20 to-transparent text-[#ef8f2f] font-semibold'
                     : 'text-white/60 hover:bg-white/5 hover:text-white'
                 }`}
               >
+                {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ef8f2f] rounded-r-full" />}
                 <Icon size={18} /> {label}
               </button>
             );

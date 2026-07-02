@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { supabase } from '../../lib/supabaseClient';
-import { useSupabaseAuth } from '../../lib/runtime';
 import { useAuth } from '../../hooks/useAuth';
 import {
   XAxis,
@@ -47,13 +46,13 @@ const getStatusColor = (status: string) => {
 };
 
 const StatCard = ({ title, value, icon: Icon, trend, colorClass }: any) => (
-  <div className="bg-[#181818] border border-white/5 rounded-2xl p-6 flex items-center justify-between transition-all hover:border-white/10">
+  <div className="group bg-[#181818] border border-white/5 rounded-2xl p-6 flex items-center justify-between transition-all duration-300 hover:border-white/20 hover:bg-[#1c1c1c] hover:-translate-y-1 shadow-lg hover:shadow-2xl">
     <div>
-      <p className="text-[11px] uppercase tracking-[2px] text-white/50">{title}</p>
-      <h3 className="font-bebas text-5xl mt-2 tracking-wide">{value}</h3>
+      <p className="text-[11px] uppercase tracking-[2px] text-white/50 group-hover:text-white/70 transition-colors">{title}</p>
+      <h3 className="font-bebas text-5xl mt-2 tracking-wide group-hover:scale-[1.02] transition-transform origin-left">{value}</h3>
       {trend && <p className="text-xs text-green-400 mt-2">{trend}</p>}
     </div>
-    <div className={`p-4 rounded-xl bg-black/40 ${colorClass}`}>
+    <div className={`p-4 rounded-xl bg-black/40 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-inner ${colorClass}`}>
       <Icon size={24} />
     </div>
   </div>
@@ -73,52 +72,12 @@ export default function DashboardPage() {
     setLoading(true);
     setError('');
     try {
-      if (useSupabaseAuth) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString();
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
-        const [allOrdersRes, recentRes] = await Promise.all([
-          supabase.from('orders').select('id, status, total, created_at'),
-          supabase.from('orders').select('id, status, total, created_at, customer_name, order_number').order('created_at', { ascending: false }).limit(5),
-        ]);
-
-        const allOrders = allOrdersRes.data || [];
-        const todayOrders = allOrders.filter((o: any) => o.created_at >= todayStr);
-        const monthOrders = allOrders.filter((o: any) => o.created_at >= monthStart);
-        const completedToday = todayOrders.filter((o: any) => o.status === 'completed');
-        const monthlyCompleted = monthOrders.filter((o: any) => o.status === 'completed');
-
-        setSummary({
-          cards: {
-            pendingOrders: allOrders.filter((o: any) => o.status === 'pending').length,
-            processingOrders: allOrders.filter((o: any) => ['accepted', 'processing', 'preparing', 'ready'].includes(o.status)).length,
-            inTransitOrders: allOrders.filter((o: any) => o.status === 'in_transit').length,
-            completedToday: completedToday.length,
-            cancelledToday: todayOrders.filter((o: any) => o.status === 'cancelled').length,
-            todaysRevenue: completedToday.reduce((s: number, o: any) => s + Number(o.total), 0),
-            todaysOrders: todayOrders.length,
-            avgOrderValue: todayOrders.length > 0 ? todayOrders.reduce((s: number, o: any) => s + Number(o.total), 0) / todayOrders.length : 0,
-            monthlyRevenue: monthlyCompleted.reduce((s: number, o: any) => s + Number(o.total), 0),
-            newCustomersToday: 0,
-            returningCustomers: 0,
-            peakOrderingTime: '—',
-            bestSellingProduct: '—',
-            couponUsageToday: 0,
-            franchiseEnquiries: 0,
-          },
-          recentOrders: recentRes.data || [],
-        });
-        setAnalytics(null);
-      } else {
-        const [sumRes, anRes] = await Promise.all([
-          apiRequest<any>('/admin/dashboard/summary', { token: tokenRequired }),
-          apiRequest<any>('/admin/analytics', { token: tokenRequired }),
-        ]);
-        setSummary(sumRes);
-        setAnalytics(anRes);
-      }
+      const [sumRes, anRes] = await Promise.all([
+        apiRequest<any>('/admin/dashboard/summary', { token: tokenRequired }),
+        apiRequest<any>('/admin/analytics', { token: tokenRequired }),
+      ]);
+      setSummary(sumRes);
+      setAnalytics(anRes);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -143,9 +102,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
           {loading && <div className="text-xs text-white/30 animate-pulse">Refreshing…</div>}
-          {!useSupabaseAuth && (
-            <>
-              <button
+          <button
                 onClick={async () => {
                   try {
                     const res = await fetch('/api/admin/reports/export?type=orders&format=csv', {
@@ -187,8 +144,6 @@ export default function DashboardPage() {
               >
                 <Download size={14} /> Export Revenue
               </button>
-            </>
-          )}
         </div>
       </header>
 
@@ -198,17 +153,17 @@ export default function DashboardPage() {
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
-            { label: 'Pending', value: summary.cards.pendingOrders, color: 'border-red-500/40 bg-red-500/5', dot: 'bg-red-500', icon: AlertCircle },
-            { label: 'Processing', value: summary.cards.processingOrders, color: 'border-yellow-500/40 bg-yellow-500/5', dot: 'bg-yellow-400', icon: Clock },
-            { label: 'In Transit', value: summary.cards.inTransitOrders, color: 'border-purple-500/40 bg-purple-500/5', dot: 'bg-purple-400', icon: Truck },
-            { label: 'Completed Today', value: summary.cards.completedToday, color: 'border-green-500/40 bg-green-500/5', dot: 'bg-green-400', icon: CheckCircle },
-            { label: 'Cancelled Today', value: summary.cards.cancelledToday, color: 'border-gray-500/30 bg-gray-500/5', dot: 'bg-gray-400', icon: XCircle },
+            { label: 'Pending', value: summary.cards.pendingOrders, color: 'border-red-500/40 bg-red-500/10 hover:bg-red-500/20', dot: 'bg-red-500', icon: AlertCircle },
+            { label: 'Processing', value: summary.cards.processingOrders, color: 'border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20', dot: 'bg-yellow-400', icon: Clock },
+            { label: 'In Transit', value: summary.cards.inTransitOrders, color: 'border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20', dot: 'bg-purple-400', icon: Truck },
+            { label: 'Completed Today', value: summary.cards.completedToday, color: 'border-green-500/40 bg-green-500/10 hover:bg-green-500/20', dot: 'bg-green-400', icon: CheckCircle },
+            { label: 'Cancelled Today', value: summary.cards.cancelledToday, color: 'border-gray-500/30 bg-gray-500/10 hover:bg-gray-500/20', dot: 'bg-gray-400', icon: XCircle },
           ].map(({ label, value, color, dot }) => (
-            <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border ${color}`}>
-              <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dot} ${label === 'Pending' && value > 0 ? 'animate-pulse' : ''}`} />
+            <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-300 cursor-default ${color}`}>
+              <span className={`w-3 h-3 rounded-full flex-shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.5)] ${dot} ${label === 'Pending' && value > 0 ? 'animate-ping shadow-red-500' : ''}`} />
               <div>
-                <p className="text-[10px] uppercase tracking-[1.5px] text-white/50">{label}</p>
-                <p className="font-bebas text-3xl leading-none mt-0.5">{value ?? 0}</p>
+                <p className="text-[10px] uppercase tracking-[1.5px] text-white/60 font-medium">{label}</p>
+                <p className="font-bebas text-4xl leading-none mt-1 text-white shadow-black drop-shadow-md">{value ?? 0}</p>
               </div>
             </div>
           ))}

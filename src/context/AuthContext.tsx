@@ -153,7 +153,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [buildSupabaseAuthUser, persistSession]);
 
   const refreshUser = useCallback(async () => {
-    if (useSupabaseAuth) {
+    // If we have a local session with an admin role (which was logged in via adminLogin),
+    // and we are bypassing Supabase for it, don't let Supabase wipe it.
+    const current = readSessionFromStorage();
+    if (useSupabaseAuth && current?.user?.role !== 'admin') {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         persistSession(null);
@@ -191,7 +194,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, updatedSession) => {
-        void syncSupabaseSession(updatedSession);
+        // Do not wipe admin session on auth state changes
+        const current = readSessionFromStorage();
+        if (current?.user?.role !== 'admin') {
+          void syncSupabaseSession(updatedSession);
+        }
       });
 
       return () => {
@@ -314,7 +321,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        throw new Error('Invalid admin credentials.');
+        // Fallback to local admin login (for bypass mode)
+        const { token, user } = await authApi.adminLogin(input);
+        persistSession({ token, user }, input.rememberMe);
+        return user;
       }
 
       const user = await syncSupabaseSession(data.session);
