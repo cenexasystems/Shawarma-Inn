@@ -13,9 +13,9 @@ export default function AiVideosSection() {
         transition={{ duration: 0.5 }}
         className="mb-10 text-center"
       >
-        <p className="text-[11px] uppercase tracking-[3px] text-[#d62b2b]">In Motion</p>
+        <p className="text-[11px] uppercase tracking-[3px] text-[#d62b2b]">Our Signature</p>
         <h2 className="mt-3 text-4xl md:text-5xl font-bebas text-white tracking-[3px] uppercase">
-          AI <span className="text-[#d62b2b]">VIDEOS</span>
+          WELL-KNOWN <span className="text-[#d62b2b]">FOR</span>
         </h2>
       </motion.div>
 

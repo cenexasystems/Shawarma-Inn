@@ -158,6 +158,13 @@ h1, h2, h3, h4 {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ─── Brand scroll carousel animation ─────────────── */
+@keyframes brandScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+
 /* ─── Mobile hero — dedicated mobile gradient ────── */
 @media (max-width: 1023px) {
   .hero-mobile-gradient {
