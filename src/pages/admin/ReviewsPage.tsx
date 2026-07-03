@@ -20,7 +20,7 @@ export default function ReviewsPage() {
         .from('reviews')
         .select(`
           id, rating, comment, is_visible, created_at,
-          profiles(full_name, avatar_url),
+          profiles(name, avatar_url),
           menu_items(name)
         `)
         .order('created_at', { ascending: false });
@@ -33,7 +33,7 @@ export default function ReviewsPage() {
         review_text: r.comment,
         is_hidden: !r.is_visible,
         created_at: r.created_at,
-        name: r.profiles?.full_name || 'Anonymous User',
+        name: r.profiles?.name || 'Anonymous User',
         avatar_url: r.profiles?.avatar_url || null,
         item_name: r.menu_items?.name || null
       }));

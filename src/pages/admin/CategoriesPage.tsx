@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
   display_order: number;
   is_active: boolean;
@@ -99,7 +99,7 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete category "${name}"? This might break menu items associated with it.`)) return;
     try {
       const { error } = await supabase.from('categories').delete().eq('id', id);

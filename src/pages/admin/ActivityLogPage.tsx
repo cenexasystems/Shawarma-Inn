@@ -17,14 +17,14 @@ export default function ActivityLogPage() {
     setError('');
     try {
       const { data, error } = await supabase
-        .from('activity_logs')
+        .from('activity_log')
         .select(`
-          id, action, entity, entity_id, details, created_at,
-          profiles(full_name, email)
+          id, event_type, entity_type, entity_id, payload, created_at,
+          profiles(name)
         `)
         .order('created_at', { ascending: false })
         .limit(100);
-        
+
       if (error) throw error;
       setActivityLog(data || []);
     } catch (err) {
@@ -87,29 +87,28 @@ export default function ActivityLogPage() {
                   <td className="p-5 text-xs text-white/70">
                     <div className="flex items-center gap-2">
                        <div className="w-6 h-6 rounded-full bg-[#ef8f2f]/10 text-[#ef8f2f] flex items-center justify-center font-bebas text-sm border border-[#ef8f2f]/20">
-                         {log.profiles?.full_name ? log.profiles.full_name.charAt(0).toUpperCase() : 'S'}
+                         {log.profiles?.name ? log.profiles.name.charAt(0).toUpperCase() : 'S'}
                        </div>
                        <div>
-                         <p className="font-bold text-white">{log.profiles?.full_name || 'System'}</p>
-                         <p className="text-[9px] uppercase tracking-[1px] text-white/40">{log.profiles?.email || 'Auto'}</p>
+                         <p className="font-bold text-white">{log.profiles?.name || 'System'}</p>
                        </div>
                     </div>
                   </td>
                   <td className="p-5">
                     <span className="inline-block px-3 py-1 bg-[#ef8f2f]/10 text-[#ef8f2f] text-[9px] uppercase tracking-[2px] rounded border border-[#ef8f2f]/20 font-bold">
-                      {log.action || '—'}
+                      {log.event_type || '—'}
                     </span>
                   </td>
                   <td className="p-5 text-sm text-white/80">
-                    <span className="font-bold capitalize">{log.entity || '—'}</span>
+                    <span className="font-bold capitalize">{log.entity_type || '—'}</span>
                     {log.entity_id ? <p className="text-white/30 text-[9px] font-mono mt-1 break-all max-w-[150px]">{log.entity_id}</p> : null}
                   </td>
                   <td className="p-5 text-xs text-white/50 max-w-[300px]">
                     <div className="bg-black/40 border border-white/5 p-3 rounded-xl max-h-[80px] overflow-y-auto custom-scrollbar">
-                       {typeof log.details === 'object' ? (
-                          <pre className="text-[10px] font-mono text-white/60">{JSON.stringify(log.details, null, 2)}</pre>
+                       {typeof log.payload === 'object' ? (
+                          <pre className="text-[10px] font-mono text-white/60">{JSON.stringify(log.payload, null, 2)}</pre>
                        ) : (
-                          <span>{log.details || '—'}</span>
+                          <span>{log.payload || '—'}</span>
                        )}
                     </div>
                   </td>

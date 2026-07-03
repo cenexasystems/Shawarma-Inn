@@ -35,7 +35,7 @@ export default function UsersPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data as Profile[]);
+      setUsers((data as Profile[]) || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load users');
     } finally {

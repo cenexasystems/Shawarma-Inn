@@ -39,7 +39,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass }: any) => (
 );
 
 export default function DashboardPage() {
-  const { dateRange, pendingOrdersCount } = useAdminContext();
+  const { dateRange, pendingOrdersCount, refreshSignal } = useAdminContext();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -109,7 +109,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     void fetchDashboardData();
-  }, [dateRange]);
+  }, [dateRange, refreshSignal]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

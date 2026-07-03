@@ -16,6 +16,11 @@ dist-ssr
 data/*.sqlite
 data/*.sqlite-*
 
+# Local multer upload output (dev only; production storage is Supabase)
+public/images/menu/
+public/images/videos/
+public/videos/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -21,21 +21,12 @@ CREATE OR REPLACE VIEW public.menu_items_active AS
   SELECT * FROM public.menu_items 
   WHERE is_available = TRUE OR is_active = TRUE;
 
--- Also add to categories table the fields our ERP uses
-CREATE TABLE IF NOT EXISTS public.categories (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug          TEXT,
-  name          TEXT NOT NULL UNIQUE,
-  description   TEXT,
-  is_visible    BOOLEAN DEFAULT TRUE,
-  display_order INTEGER DEFAULT 0,
-  banner_image  TEXT,
-  category_image TEXT,
-  created_at    TIMESTAMPTZ DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;
+-- The `categories` table itself (columns, RLS) is created by
+-- supabase_migrations/004_erp_rebuild.sql — do not redefine it here.
+-- A second, differently-shaped `CREATE TABLE IF NOT EXISTS categories`
+-- used to live in this file; whichever script ran first silently won,
+-- leaving the other's column names (is_active/display_order vs.
+-- is_visible/banner_image) unusable depending on execution order.
 
 -- Grant public read access to menu items (no auth needed)
 ALTER TABLE public.menu_items DISABLE ROW LEVEL SECURITY;

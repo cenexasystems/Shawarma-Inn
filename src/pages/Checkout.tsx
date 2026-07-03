@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { usePublicSettings } from '../hooks/usePublicSettings';
 import { apiRequest } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
+import { useSupabaseAuth } from '../lib/runtime';
 import { playCheckoutSound } from '../utils/playCheckoutSound';
 import type { CartItem } from '../hooks/useCart';
 import CheckoutLayout from '../components/checkout/CheckoutLayout';
@@ -73,17 +75,61 @@ export default function Checkout({ cartData }: CheckoutProps) {
     };
   }, [subtotal, deliveryMethod, appliedCoupon, liveDeliveryCharge, livePackingCharge, gstActive, gstPercentage]);
 
+  const validateCouponViaSupabase = async (rawCode: string, itemsTotal: number) => {
+    const code = rawCode.trim().toUpperCase();
+    const { data: coupon, error: fetchError } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', code)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (fetchError || !coupon) {
+      throw new Error('Invalid or inactive coupon code.');
+    }
+
+    const now = new Date();
+    if (coupon.valid_from && new Date(coupon.valid_from) > now) {
+      throw new Error('This coupon is not active yet.');
+    }
+    if (coupon.valid_to && new Date(coupon.valid_to) < now) {
+      throw new Error('This coupon has expired.');
+    }
+    if (coupon.usage_limit !== null && coupon.used_count >= coupon.usage_limit) {
+      throw new Error('Coupon usage limit has been reached.');
+    }
+    if (coupon.min_order_value && itemsTotal < coupon.min_order_value) {
+      throw new Error(`Minimum order of ₹${coupon.min_order_value} required for this coupon.`);
+    }
+
+    let discount = 0;
+    if (coupon.discount_type === 'percentage') {
+      discount = itemsTotal * (Number(coupon.discount_value) / 100);
+    } else if (coupon.discount_type === 'fixed') {
+      discount = Number(coupon.discount_value);
+    }
+    if (coupon.max_discount) {
+      discount = Math.min(discount, Number(coupon.max_discount));
+    }
+    discount = Math.round(Math.min(discount, itemsTotal) * 100) / 100;
+
+    return { code: coupon.code as string, discount };
+  };
+
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
     setCouponLoading(true);
     setCouponMessage({ text: '', type: '' });
     try {
-      const result = await apiRequest<{ coupon: { code: string }; discount: number }>(
-        '/coupons/validate',
-        { method: 'POST', body: { code: couponInput.trim(), subtotal } }
-      );
-      setAppliedCoupon({ code: result.coupon.code, discount: result.discount });
-      setCouponMessage({ text: `"${result.coupon.code}" applied!`, type: 'success' });
+      const result = useSupabaseAuth
+        ? await validateCouponViaSupabase(couponInput.trim(), subtotal)
+        : await apiRequest<{ coupon: { code: string }; discount: number }>(
+            '/coupons/validate',
+            { method: 'POST', body: { code: couponInput.trim(), subtotal } }
+          ).then((r) => ({ code: r.coupon.code, discount: r.discount }));
+
+      setAppliedCoupon({ code: result.code, discount: result.discount });
+      setCouponMessage({ text: `"${result.code}" applied!`, type: 'success' });
       setCouponInput('');
     } catch (err) {
       setAppliedCoupon(null);
@@ -380,7 +426,6 @@ export default function Checkout({ cartData }: CheckoutProps) {
                 totals={totals}
                 saving={saving}
                 isCustomerLoggedIn={isCustomerLoggedIn}
-                deliveryMethod={deliveryMethod}
                 handlePlaceOrder={handlePlaceOrder}
                 appliedCoupon={appliedCoupon}
                 couponInput={couponInput}

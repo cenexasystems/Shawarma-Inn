@@ -9,7 +9,6 @@ interface CartSummaryProps {
   totals: CheckoutTotals;
   saving: boolean;
   isCustomerLoggedIn: boolean;
-  deliveryMethod: 'self_delivery' | 'we_arrange' | 'pickup';
   handlePlaceOrder: () => void;
   appliedCoupon: { code: string; discount: number } | null;
   couponInput: string;
@@ -25,7 +24,6 @@ export default function CartSummary({
   totals,
   saving,
   isCustomerLoggedIn,
-  deliveryMethod,
   handlePlaceOrder,
   appliedCoupon,
   couponInput,
