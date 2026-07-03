@@ -40,13 +40,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const buildSupabaseAuthUser = useCallback(async (supabaseUser: User): Promise<AuthUser> => {
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('profiles')
       .select('name, phone, avatar_url, provider, role')
       .eq('id', supabaseUser.id)
       .maybeSingle<ProfileRow>();
 
     const meta = supabaseUser.user_metadata as Record<string, unknown> | undefined;
+
+    // The DB trigger that creates a profiles row on signup can fail silently
+    // (see migration 001's handle_new_user). Without a profiles row, orders,
+    // reviews, etc. all fail their foreign key to profiles(id) -- so self-heal
+    // here rather than leaving the user in a broken half-signed-up state.
+    if (!profile) {
+      const { data: created } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: supabaseUser.id,
+            name: (meta?.full_name as string | undefined) || (meta?.name as string | undefined) || null,
+            phone: (meta?.phone as string | undefined) || null,
+            avatar_url: (meta?.avatar_url as string | undefined) || null,
+            provider: (supabaseUser.app_metadata?.provider as string | undefined) || 'email',
+          },
+          { onConflict: 'id' },
+        )
+        .select('name, phone, avatar_url, provider, role')
+        .maybeSingle<ProfileRow>();
+      profile = created ?? null;
+    }
     const name = profile?.name || meta?.full_name || meta?.name || null;
     const role = (profile?.role === 'admin' ? 'admin' : 'user') as 'user' | 'admin';
 
