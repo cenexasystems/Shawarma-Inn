@@ -17,6 +17,7 @@ import OffersPage from './pages/OffersPage';
 import ContactPage from './pages/ContactPage';
 import { useCart } from './hooks/useCart';
 import { useAuth } from './hooks/useAuth';
+import { AdminProvider } from './context/AdminContext';
 import { runAutomaticMigration, initializeWithHealthCheck } from './lib/supabaseMigration';
 
 const Profile = lazy(() => import('./pages/Profile'));
@@ -37,6 +38,8 @@ const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
 const ActivityLogPage = lazy(() => import('./pages/admin/ActivityLogPage'));
 const PosBilling = lazy(() => import('./pages/PosBilling'));
 const Analytics = lazy(() => import('./pages/Analytics'));
+const ReportsPage = lazy(() => import('./pages/admin/ReportsPage'));
+const NotificationsPage = lazy(() => import('./pages/admin/NotificationsPage'));
 
 function ProtectedAdminRoute({ children }: { children: ReactNode }) {
   const { isAdmin, loading } = useAuth();
@@ -173,9 +176,11 @@ export default function App() {
           path="/admin"
           element={
             <ProtectedAdminRoute>
-              <Suspense fallback={<Loader />}>
-                <AdminLayout />
-              </Suspense>
+              <AdminProvider>
+                <Suspense fallback={<Loader />}>
+                  <AdminLayout />
+                </Suspense>
+              </AdminProvider>
             </ProtectedAdminRoute>
           }
         >
@@ -189,6 +194,8 @@ export default function App() {
           <Route path="reviews" element={<Suspense fallback={<Loader />}><ReviewsPage /></Suspense>} />
           <Route path="franchise" element={<Suspense fallback={<Loader />}><FranchisePage /></Suspense>} />
           <Route path="videos" element={<Suspense fallback={<Loader />}><VideosPage /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<Loader />}><ReportsPage /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<Loader />}><NotificationsPage /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<Loader />}><SettingsPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<Loader />}><ActivityLogPage /></Suspense>} />
         </Route>

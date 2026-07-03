@@ -84,7 +84,7 @@ export default function Branches() {
            {activeBranch ? (
              <iframe
                key={activeBranch.id}
-               src={`https://maps.google.com/maps?q=${encodeURIComponent(activeBranch.address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+               src={`https://maps.google.com/maps?q=${encodeURIComponent(activeBranch.mapQuery || activeBranch.address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                width="100%"
                height="100%"
                style={{ border: 0 }}

@@ -8,8 +8,8 @@ import type { Branch } from '../types';
 
 const branches: Branch[] = branchesData as Branch[];
 
-const buildEmbedMapUrl = (address: string) =>
-  `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+const buildEmbedMapUrl = (branch: Branch) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(branch.mapQuery || branch.address)}&output=embed`;
 
 export default function MapsSection() {
   const navigate = useNavigate();
@@ -108,7 +108,7 @@ export default function MapsSection() {
                 transition={{ duration: 0.35 }}
                 className="relative z-10"
               >
-                <BranchMap mapUrl={buildEmbedMapUrl(activeBranch.address)} />
+                <BranchMap mapUrl={buildEmbedMapUrl(activeBranch)} />
               </motion.div>
             </AnimatePresence>
           </div>

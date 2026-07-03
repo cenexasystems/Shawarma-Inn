@@ -1,34 +1,16 @@
 import { useEffect, useState } from 'react';
 import {
   Package,
-  Users,
-  Tag,
-  Star,
   TrendingUp,
   IndianRupee,
   CheckCircle,
   Clock,
   XCircle,
   Truck,
-  AlertCircle,
-  Download
+  AlertCircle
 } from 'lucide-react';
-import { apiRequest } from '../../lib/api';
-import { useAuth } from '../../hooks/useAuth';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line
-} from 'recharts';
-
-const COLORS = ['#ef8f2f', '#dc2626', '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899'];
+import { useAdminContext } from '../../context/AdminContext';
+import { supabase } from '../../lib/supabase';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -44,251 +26,175 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const StatCard = ({ title, value, icon: Icon, trend, colorClass }: any) => (
-  <div className="group relative bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex items-center justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(239,143,47,0.1)] hover:bg-white/[0.04] overflow-hidden">
-    <div className={`absolute -top-10 -right-10 w-40 h-40 bg-current opacity-[0.03] rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150 group-hover:opacity-[0.06] ${colorClass}`} />
+const StatCard = ({ title, value, icon: Icon, colorClass }: any) => (
+  <div className="group relative bg-[#181818] border border-white/5 rounded-2xl p-6 flex items-center justify-between transition-all duration-300 hover:bg-white/[0.04] overflow-hidden">
     <div className="relative z-10">
-      <p className="text-[10px] uppercase tracking-[2px] text-white/50 group-hover:text-white/70 transition-colors font-semibold">{title}</p>
-      <h3 className="font-bebas text-5xl mt-2 tracking-wide text-white drop-shadow-md group-hover:scale-[1.02] transition-transform origin-left">{value}</h3>
-      {trend && <p className="text-xs text-green-400 mt-2 font-medium">{trend}</p>}
+      <p className="text-[10px] uppercase tracking-[2px] text-white/50 font-medium">{title}</p>
+      <h3 className="font-bebas text-4xl mt-2 tracking-wide text-white drop-shadow-md">{value}</h3>
     </div>
-    <div className={`relative z-10 p-4 rounded-xl bg-black/40 border border-white/5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] ${colorClass}`}>
+    <div className={`relative z-10 p-3 rounded-xl bg-black/40 border border-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] ${colorClass}`}>
       <Icon size={24} />
     </div>
   </div>
 );
 
 export default function DashboardPage() {
-  const { token } = useAuth();
-  const tokenRequired = token || '';
+  const { dateRange, pendingOrdersCount } = useAdminContext();
   
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [summary, setSummary] = useState<any>(null);
-  const [analytics, setAnalytics] = useState<any>(null);
+  
+  // Stats
+  const [opsStats, setOpsStats] = useState({ processing: 0, inTransit: 0, completedToday: 0, cancelledToday: 0 });
+  const [revenue, setRevenue] = useState(0);
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [avgValue, setAvgValue] = useState(0);
+  
+  // Charts
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
-  const loadData = async () => {
-    if (!tokenRequired) return;
+  const fetchDashboardData = async () => {
     setLoading(true);
     setError('');
+    
     try {
-      const [sumRes, anRes] = await Promise.all([
-        apiRequest<any>('/admin/dashboard/summary', { token: tokenRequired }),
-        apiRequest<any>('/admin/analytics', { token: tokenRequired }),
+      // Operations (Current Queue) - independent of Date Filter
+      const todayStart = new Date();
+      todayStart.setHours(0,0,0,0);
+      
+      const [
+        { count: processing },
+        { count: inTransit },
+        { count: completedToday },
+        { count: cancelledToday }
+      ] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['accepted', 'processing', 'preparing', 'ready']),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'in_transit'),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'completed').gte('created_at', todayStart.toISOString()),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'cancelled').gte('created_at', todayStart.toISOString()),
       ]);
-      setSummary(sumRes);
-      setAnalytics(anRes);
+
+      setOpsStats({
+        processing: processing || 0,
+        inTransit: inTransit || 0,
+        completedToday: completedToday || 0,
+        cancelledToday: cancelledToday || 0,
+      });
+
+      // Filtered Stats (depends on dateRange)
+      const { data: filteredOrders, error: ordersErr } = await supabase
+        .from('orders')
+        .select('*')
+        .gte('created_at', dateRange.from)
+        .lte('created_at', dateRange.to)
+        .order('created_at', { ascending: false });
+
+      if (ordersErr) throw ordersErr;
+
+      const completedOrders = filteredOrders.filter(o => o.status === 'completed');
+      const totalRev = completedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+      
+      setRevenue(totalRev);
+      setOrdersCount(filteredOrders.length);
+      setAvgValue(completedOrders.length > 0 ? totalRev / completedOrders.length : 0);
+      setRecentOrders(filteredOrders.slice(0, 10));
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      console.error(err);
+      setError('Failed to fetch dashboard metrics.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadData();
-    const interval = setInterval(() => { void loadData(); }, 30000);
-    return () => clearInterval(interval);
-  }, [tokenRequired]);
-
-  const categoryData = analytics?.categoryDistribution || [];
+    void fetchDashboardData();
+  }, [dateRange]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <header className="flex items-start justify-between">
-        <div>
-          <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Business Overview</h2>
-          <p className="text-sm text-white/50 mt-1">Real-time metrics calculated securely from completed orders.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-          {loading && <div className="text-xs text-white/30 animate-pulse">Refreshing…</div>}
-          <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch('/api/admin/reports/export?type=orders&format=csv', {
-                      headers: { Authorization: `Bearer ${tokenRequired}` }
-                    });
-                    if (!res.ok) throw new Error('Export failed');
-                    const blob = await res.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
-                    a.click();
-                  } catch (err) {
-                    alert('Failed to export orders');
-                  }
-                }}
-                className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-[2px] text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
-              >
-                <Download size={14} /> Export Orders
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch('/api/admin/reports/export?type=revenue&format=csv', {
-                      headers: { Authorization: `Bearer ${tokenRequired}` }
-                    });
-                    if (!res.ok) throw new Error('Export failed');
-                    const blob = await res.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `revenue-export-${new Date().toISOString().split('T')[0]}.csv`;
-                    a.click();
-                  } catch (err) {
-                    alert('Failed to export revenue');
-                  }
-                }}
-                className="px-4 py-2 bg-[var(--red)]/10 border border-[var(--red)]/20 rounded-xl text-xs font-bold uppercase tracking-[2px] text-[var(--red)] hover:bg-[var(--red)]/20 transition-all flex items-center gap-2"
-              >
-                <Download size={14} /> Export Revenue
-              </button>
-        </div>
+      <header>
+        <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Control Room</h2>
+        <p className="text-sm text-white/50 mt-1">Live restaurant operations and metrics.</p>
       </header>
 
       {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
 
-      {/* Live Operations Status Strip */}
-      {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {[
-            { label: 'Pending', value: summary.cards.pendingOrders, color: 'border-red-500/20 bg-red-500/[0.05] hover:bg-red-500/10 hover:border-red-500/40', dot: 'bg-red-500 shadow-[0_0_10px_#ef4444]', icon: AlertCircle },
-            { label: 'Processing', value: summary.cards.processingOrders, color: 'border-yellow-500/20 bg-yellow-500/[0.05] hover:bg-yellow-500/10 hover:border-yellow-500/40', dot: 'bg-yellow-400 shadow-[0_0_10px_#facc15]', icon: Clock },
-            { label: 'In Transit', value: summary.cards.inTransitOrders, color: 'border-purple-500/20 bg-purple-500/[0.05] hover:bg-purple-500/10 hover:border-purple-500/40', dot: 'bg-purple-400 shadow-[0_0_10px_#c084fc]', icon: Truck },
-            { label: 'Completed Today', value: summary.cards.completedToday, color: 'border-green-500/20 bg-green-500/[0.05] hover:bg-green-500/10 hover:border-green-500/40', dot: 'bg-green-400 shadow-[0_0_10px_#4ade80]', icon: CheckCircle },
-            { label: 'Cancelled Today', value: summary.cards.cancelledToday, color: 'border-gray-500/20 bg-gray-500/[0.05] hover:bg-gray-500/10 hover:border-gray-500/40', dot: 'bg-gray-400 shadow-[0_0_10px_#9ca3af]', icon: XCircle },
-          ].map(({ label, value, color, dot }) => (
-            <div key={label} className={`group flex items-center justify-between p-5 rounded-2xl border backdrop-blur-sm transition-all duration-300 cursor-default ${color}`}>
-              <div>
-                <p className="text-[10px] uppercase tracking-[1.5px] text-white/50 font-bold group-hover:text-white/70 transition-colors">{label}</p>
-                <p className="font-bebas text-4xl leading-none mt-2 text-white shadow-black drop-shadow-md">{value ?? 0}</p>
-              </div>
-              <span className={`w-3 h-3 rounded-full flex-shrink-0 ${dot} ${label === 'Pending' && value > 0 ? 'animate-pulse' : ''}`} />
+      {/* Live Operations Status Strip - Always Today/Live */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {[
+          { label: 'Pending', value: pendingOrdersCount, color: 'border-red-500/20 bg-red-500/[0.05]', dot: 'bg-red-500 shadow-[0_0_10px_#ef4444]', icon: AlertCircle },
+          { label: 'Processing', value: opsStats.processing, color: 'border-yellow-500/20 bg-yellow-500/[0.05]', dot: 'bg-yellow-400 shadow-[0_0_10px_#facc15]', icon: Clock },
+          { label: 'In Transit', value: opsStats.inTransit, color: 'border-purple-500/20 bg-purple-500/[0.05]', dot: 'bg-purple-400 shadow-[0_0_10px_#c084fc]', icon: Truck },
+          { label: 'Completed (Today)', value: opsStats.completedToday, color: 'border-green-500/20 bg-green-500/[0.05]', dot: 'bg-green-400 shadow-[0_0_10px_#4ade80]', icon: CheckCircle },
+          { label: 'Cancelled (Today)', value: opsStats.cancelledToday, color: 'border-gray-500/20 bg-gray-500/[0.05]', dot: 'bg-gray-400 shadow-[0_0_10px_#9ca3af]', icon: XCircle },
+        ].map(({ label, value, color, dot }) => (
+          <div key={label} className={`group flex items-center justify-between p-5 rounded-2xl border backdrop-blur-sm transition-all duration-300 cursor-default ${color}`}>
+            <div>
+              <p className="text-[10px] uppercase tracking-[1.5px] text-white/50 font-bold">{label}</p>
+              <p className="font-bebas text-4xl leading-none mt-2 text-white shadow-black drop-shadow-md">{value}</p>
             </div>
-          ))}
-        </div>
-      )}
+            <span className={`w-3 h-3 rounded-full flex-shrink-0 ${dot} ${label === 'Pending' && value > 0 ? 'animate-pulse' : ''}`} />
+          </div>
+        ))}
+      </div>
 
-      {/* Loading skeleton */}
-      {!summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 animate-pulse">
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-[#181818] border border-white/5 rounded-2xl p-6 animate-pulse">
               <div className="h-3 w-24 bg-white/10 rounded mb-3" />
               <div className="h-10 w-16 bg-white/10 rounded" />
             </div>
           ))}
         </div>
-      )}
-
-      {summary && (
+      ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Today's Revenue" value={`₹${summary.cards.todaysRevenue.toLocaleString()}`} icon={IndianRupee} colorClass="text-green-400" />
-            <StatCard title="Today's Orders" value={summary.cards.todaysOrders} icon={Package} colorClass="text-[#ef8f2f]" />
-            <StatCard title="Avg Order Value" value={`₹${summary.cards.avgOrderValue?.toLocaleString() ?? 0}`} icon={TrendingUp} colorClass="text-blue-400" />
-            <StatCard title="Monthly Revenue" value={`₹${summary.cards.monthlyRevenue.toLocaleString()}`} icon={IndianRupee} colorClass="text-purple-400" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <StatCard title="Total Revenue" value={`₹${revenue.toLocaleString()}`} icon={IndianRupee} colorClass="text-green-400" />
+            <StatCard title="Total Orders" value={ordersCount} icon={Package} colorClass="text-[#ef8f2f]" />
+            <StatCard title="Avg Order Value" value={`₹${Math.round(avgValue).toLocaleString()}`} icon={TrendingUp} colorClass="text-blue-400" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="New / Returning" value={`${summary.cards.newCustomersToday} / ${summary.cards.returningCustomers}`} icon={Users} colorClass="text-pink-400" />
-            <StatCard title="Peak Hour" value={summary.cards.peakOrderingTime} icon={Clock} colorClass="text-yellow-400" />
-            <StatCard title="Best Seller (Mo)" value={summary.cards.bestSellingProduct} icon={Star} colorClass="text-orange-400" />
-            <StatCard title="Coupons / Leads" value={`${summary.cards.couponUsageToday} / ${summary.cards.franchiseEnquiries}`} icon={Tag} colorClass="text-indigo-400" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-[#181818] border border-white/5 rounded-2xl p-6 overflow-hidden">
+              <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 mb-4">Recent Orders (Filtered)</h3>
+              {recentOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-white/20">
+                  <Package size={32} className="mb-2 opacity-30" />
+                  <p className="text-sm">No orders in this period</p>
+                </div>
+              ) : (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 pr-2">
+                {recentOrders.map((o: any) => (
+                  <div key={o.id} className="flex items-center justify-between p-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors rounded-xl border border-white/5">
+                    <div>
+                      <p className="font-medium text-sm">#{o.id.split('-')[0]} - {o.customer_name || 'Guest'}</p>
+                      <p className="text-xs text-white/40 mt-1">{new Date(o.created_at).toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bebas text-lg text-[#ef8f2f]">₹{Number(o.total || 0).toLocaleString()}</p>
+                      <span className={`inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider border ${getStatusColor(o.status)}`}>
+                        {o.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              )}
+            </div>
+            
+            <div className="bg-[#181818] border border-white/5 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+              <h3 className="text-xl font-bebas text-white/80 mb-2 tracking-[2px]">Need deeper analytics?</h3>
+              <p className="text-xs text-white/50 mb-6">Visit the dedicated Analytics and Reports sections for complete graphs, category breakdowns, and data exports.</p>
+              <div className="flex gap-4">
+                <a href="/admin/analytics" className="px-4 py-2 border border-[#ef8f2f]/30 text-[#ef8f2f] hover:bg-[#ef8f2f]/10 rounded-xl text-xs uppercase tracking-[2px] font-bold transition-colors">
+                  View Analytics
+                </a>
+              </div>
+            </div>
           </div>
         </>
-      )}
-
-      {analytics && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-[#181818] border border-white/5 rounded-2xl p-6">
-          <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 mb-6">Revenue Trend (30 Days)</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics.revenueByDay}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                <XAxis dataKey="day" stroke="#ffffff50" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#ffffff50" tick={{ fontSize: 12 }} />
-                <RechartsTooltip contentStyle={{ backgroundColor: '#101010', borderColor: '#ffffff20', color: '#fff' }} />
-                <Line type="monotone" dataKey="revenue" stroke="#ef8f2f" strokeWidth={3} dot={{ r: 4, fill: '#101010', stroke: '#ef8f2f', strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="bg-[#181818] border border-white/5 rounded-2xl p-6">
-          <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 mb-6">Revenue by Category</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>
-                  {categoryData.map((_: any, index: number) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                </Pie>
-                <RechartsTooltip contentStyle={{ backgroundColor: '#101010', borderColor: '#ffffff20', color: '#fff' }} formatter={(val: any) => `₹${Number(val).toLocaleString()}`} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2 justify-center">
-            {categoryData.slice(0, 5).map((entry: any, index: number) => (
-              <div key={entry.name} className="flex items-center gap-1.5 text-xs text-white/70">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                {entry.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      )}
-
-      {analytics && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-[#181818] border border-white/5 rounded-2xl p-6 overflow-hidden">
-          <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 mb-4">Top Selling Products</h3>
-          {analytics.topProducts?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-white/20">
-              <TrendingUp size={32} className="mb-2 opacity-30" />
-              <p className="text-sm">No sales data yet</p>
-            </div>
-          ) : (
-          <div className="space-y-4">
-            {analytics.topProducts?.slice(0, 5).map((p: any, i: number) => (
-              <div key={i} className="flex items-center justify-between group p-3 hover:bg-white/5 rounded-xl transition-colors">
-                <div>
-                  <p className="font-semibold">{p.name}</p>
-                  <p className="text-xs text-white/40">{p.qty} sold</p>
-                </div>
-                <p className="text-[#ef8f2f] font-bebas text-xl">₹{p.revenue.toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
-          )}
-        </div>
-        <div className="bg-[#181818] border border-white/5 rounded-2xl p-6 overflow-hidden">
-          <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 mb-4">Recent Orders</h3>
-          {(!summary?.recentOrders?.length) ? (
-            <div className="flex flex-col items-center justify-center h-32 text-white/20">
-              <Package size={32} className="mb-2 opacity-30" />
-              <p className="text-sm">No orders yet</p>
-            </div>
-          ) : (
-          <div className="space-y-4">
-            {summary?.recentOrders?.slice(0, 5).map((o: any) => (
-              <div key={o.id} className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
-                <div>
-                  <p className="font-semibold text-sm">#{o.order_number} - {o.customer_name || 'Guest'}</p>
-                  <p className="text-xs text-white/40 mt-1">{new Date(o.created_at).toLocaleString()}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bebas text-xl text-[#ef8f2f]">₹{o.total.toLocaleString()}</p>
-                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border ${getStatusColor(o.status)}`}>
-                    {o.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          )}
-        </div>
-      </div>
       )}
     </div>
   );

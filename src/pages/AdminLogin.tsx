@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { canUseAdminApi } from '../lib/runtime';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -47,12 +46,7 @@ export default function AdminLogin() {
       }
       navigate('/admin');
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Failed to sign in as admin';
-      if (raw.toLowerCase().includes('request failed') || raw.toLowerCase().includes('requires the local backend api')) {
-        setError('Admin login needs backend API. Ensure the Express server is running on port 5000.');
-      } else {
-        setError(raw);
-      }
+      setError(err instanceof Error ? err.message : 'Failed to sign in as admin');
     } finally {
       setSaving(false);
     }
@@ -77,13 +71,6 @@ export default function AdminLogin() {
           onSubmit={onSubmit}
           className="bg-[#181818] border border-white/10 rounded-[24px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
         >
-          {!canUseAdminApi && (
-            <div className="mb-6 p-3 rounded-xl bg-amber-900/20 border border-amber-500/20">
-              <p className="text-amber-300/90 text-xs leading-relaxed text-center">
-                Admin dashboard requires the Express backend on port 5000.
-              </p>
-            </div>
-          )}
 
           {sessionExpiredNotice && (
             <div className="mb-6 p-3 rounded-xl bg-blue-900/20 border border-blue-500/20">

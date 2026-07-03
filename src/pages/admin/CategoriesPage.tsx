@@ -1,29 +1,40 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Search, Plus, Check, PowerOff, Edit3 } from 'lucide-react';
-import { apiRequest } from '../../lib/api';
+import { useEffect, useState } from 'react';
+import { Search, Plus, FolderTree, Edit3, Trash2 } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
-import { CategoryDrawer } from '../../components/admin/CategoryDrawer';
+
+interface Category {
+  id: number;
+  name: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
 
 export default function CategoriesPage() {
-  const { token } = useAuth();
-  const tokenRequired = token || '';
+  const { isAdmin } = useAuth();
   
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Drawer state
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formData, setFormData] = useState({ name: '', display_order: 0, is_active: true });
 
-  // Filters
   const [searchTerm, setSearchTerm] = useState('');
 
-  const loadData = async () => {
-    if (!tokenRequired) return;
+  const loadCategories = async () => {
+    if (!isAdmin) return;
     setLoading(true);
     try {
-      const catRes = await apiRequest<any[]>('/admin/categories', { token: tokenRequired });
-      setCategories(catRes || []);
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('display_order', { ascending: true });
+        
+      if (error) throw error;
+      setCategories(data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -32,111 +43,208 @@ export default function CategoriesPage() {
   };
 
   useEffect(() => {
-    void loadData();
-  }, [tokenRequired]);
+    void loadCategories();
+  }, [isAdmin]);
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter(cat => 
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (cat.description && cat.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [categories, searchTerm]);
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const openDrawer = (category: any = null) => {
-    setEditingCategory(category);
-    setDrawerOpen(true);
+  const openModal = (category: Category | null = null) => {
+    if (category) {
+      setEditingCategory(category);
+      setFormData({ 
+        name: category.name, 
+        display_order: category.display_order || 0, 
+        is_active: category.is_active 
+      });
+    } else {
+      setEditingCategory(null);
+      setFormData({ 
+        name: '', 
+        display_order: (categories.length > 0 ? Math.max(...categories.map(c => c.display_order || 0)) + 1 : 1), 
+        is_active: true 
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) return;
+
+    try {
+      if (editingCategory) {
+        const { error } = await supabase
+          .from('categories')
+          .update(formData)
+          .eq('id', editingCategory.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('categories')
+          .insert(formData);
+        if (error) throw error;
+      }
+      closeModal();
+      loadCategories();
+    } catch (err) {
+      alert('Failed to save category');
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete category "${name}"? This might break menu items associated with it.`)) return;
+    try {
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) throw error;
+      loadCategories();
+    } catch (err) {
+      alert('Failed to delete category');
+      console.error(err);
+    }
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Categories</h1>
-          <p className="text-zinc-400 mt-1">Manage your menu categories and their display order.</p>
+          <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Menu Categories</h2>
+          <p className="text-white/50 text-sm mt-1">Manage database-driven categories for your menu.</p>
         </div>
         <button 
-          onClick={() => openDrawer()}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors whitespace-nowrap shadow-lg shadow-orange-900/20"
+          onClick={() => openModal()}
+          className="bg-[#ef8f2f] hover:bg-[#ef8f2f]/90 text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all uppercase tracking-[1px] text-sm shadow-[0_0_20px_rgba(239,143,47,0.3)] hover:shadow-[0_0_30px_rgba(239,143,47,0.5)]"
         >
           <Plus className="w-5 h-5" /> Add Category
         </button>
       </div>
 
       {/* Toolbar */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="w-5 h-5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+      <div className="bg-[#181818] border border-white/5 rounded-2xl p-4">
+        <div className="relative w-full md:w-96">
+          <Search className="w-5 h-5 text-white/40 absolute left-4 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
             placeholder="Search categories..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+            className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-[#ef8f2f] transition-all"
           />
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-zinc-800/50 border-b border-zinc-800">
-                <th className="p-4 text-sm font-semibold text-zinc-400">Category</th>
-                <th className="p-4 text-sm font-semibold text-zinc-400">Display Order</th>
-                <th className="p-4 text-sm font-semibold text-zinc-400 text-center">Visible</th>
-                <th className="p-4 text-sm font-semibold text-zinc-400 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={4} className="p-8 text-center text-zinc-500">Loading categories...</td></tr>
-              ) : filteredCategories.length === 0 ? (
-                <tr><td colSpan={4} className="p-8 text-center text-zinc-500">No categories found.</td></tr>
-              ) : (
-                filteredCategories.map(cat => (
-                  <tr key={cat.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors group cursor-pointer" onClick={() => openDrawer(cat)}>
-                    <td className="p-4">
-                      <div className="flex items-center gap-4">
-                        {cat.banner_image ? (
-                          <img src={cat.banner_image} alt={cat.name} className="w-16 h-10 rounded object-cover bg-zinc-800 border border-zinc-700 flex-shrink-0" />
-                        ) : (
-                          <div className="w-16 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs text-zinc-600">No Img</div>
-                        )}
-                        <div>
-                          <div className="font-bold text-white">{cat.name}</div>
-                          <div className="text-xs text-zinc-500">{cat.slug || 'No slug'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-zinc-300">
-                      {cat.display_order}
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${cat.is_active || cat.is_visible ? 'bg-green-500/10 text-green-500' : 'bg-zinc-800 text-zinc-500'}`}>
-                        {(cat.is_active || cat.is_visible) ? <Check className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      <button className="p-2 text-zinc-500 hover:text-white bg-zinc-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {loading ? (
+           [...Array(4)].map((_, i) => (
+             <div key={i} className="bg-[#181818] border border-white/5 rounded-2xl p-6 h-32 animate-pulse flex flex-col justify-between">
+               <div className="w-10 h-10 bg-white/10 rounded-xl" />
+               <div className="w-24 h-4 bg-white/10 rounded" />
+             </div>
+           ))
+        ) : filteredCategories.length === 0 ? (
+          <div className="col-span-full p-12 flex flex-col items-center justify-center text-center bg-[#181818] border border-white/5 rounded-2xl">
+            <FolderTree size={48} className="text-white/10 mb-4" />
+            <p className="text-white/40 text-lg font-bebas tracking-[2px]">No categories found.</p>
+          </div>
+        ) : (
+          filteredCategories.map((cat) => (
+            <div key={cat.id} className="group bg-[#181818] border border-white/5 hover:border-white/20 hover:bg-white/[0.02] rounded-2xl p-6 transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px]">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#ef8f2f]/5 rounded-full blur-2xl group-hover:bg-[#ef8f2f]/10 transition-colors pointer-events-none" />
+              
+              <div className="flex justify-between items-start z-10">
+                <div className="w-12 h-12 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-[#ef8f2f] shadow-inner">
+                  <FolderTree size={20} />
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => openModal(cat)} className="p-2 bg-black/40 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors">
+                    <Edit3 size={14} />
+                  </button>
+                  <button onClick={() => handleDelete(cat.id, cat.name)} className="p-2 bg-black/40 hover:bg-red-500/20 rounded-lg text-white/50 hover:text-red-400 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="z-10 mt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-white tracking-wide">{cat.name}</h3>
+                  <span className={`text-[9px] uppercase font-bold tracking-[1px] px-2 py-0.5 rounded-full border ${cat.is_active ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
+                    {cat.is_active ? 'Active' : 'Hidden'}
+                  </span>
+                </div>
+                <p className="text-xs text-white/40 mt-1 uppercase tracking-[1px]">Order: {cat.display_order}</p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
-      <CategoryDrawer 
-        isOpen={drawerOpen} 
-        onClose={() => setDrawerOpen(false)} 
-        category={editingCategory} 
-        onSave={() => { setDrawerOpen(false); loadData(); }} 
-      />
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal} />
+          <div className="relative bg-[#121212] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="font-bebas text-3xl tracking-[2px] uppercase text-white mb-6">
+              {editingCategory ? 'Edit Category' : 'New Category'}
+            </h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[1px] font-bold text-white/50">Category Name</label>
+                <input 
+                  type="text" 
+                  value={formData.name} 
+                  onChange={e => setFormData({...formData, name: e.target.value})} 
+                  required 
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#ef8f2f] transition-all" 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[1px] font-bold text-white/50">Display Order</label>
+                <input 
+                  type="number" 
+                  value={formData.display_order} 
+                  onChange={e => setFormData({...formData, display_order: Number(e.target.value)})} 
+                  required 
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#ef8f2f] transition-all" 
+                />
+              </div>
+
+              <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 cursor-pointer hover:bg-white/[0.04] transition-colors mt-4">
+                <div>
+                  <span className="text-white text-sm font-bold block">Available</span>
+                  <span className="text-[10px] uppercase tracking-[1px] text-white/40 block mt-1">Show on customer menu</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={formData.is_active} 
+                  onChange={e => setFormData({...formData, is_active: e.target.checked})} 
+                  className="w-5 h-5 accent-green-500 cursor-pointer" 
+                />
+              </label>
+
+              <div className="flex gap-3 pt-4 border-t border-white/5">
+                <button type="button" onClick={closeModal} className="flex-1 py-3 px-4 rounded-xl font-bold uppercase tracking-[1px] text-xs text-white/60 hover:bg-white/5 hover:text-white transition-colors border border-transparent hover:border-white/10">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 bg-[#ef8f2f] hover:bg-[#ef8f2f]/90 text-black py-3 px-4 rounded-xl font-bold uppercase tracking-[1px] text-xs transition-all shadow-lg shadow-[#ef8f2f]/20">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -28,6 +28,7 @@ export interface Branch {
   imageUrl?: string;
   image?: string;
   mapUrl?: string;
+  mapQuery?: string;
   maps?: string;
   badge?: string;
   instagram?: string;

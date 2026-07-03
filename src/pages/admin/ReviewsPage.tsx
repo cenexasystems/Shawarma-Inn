@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Star, Eye, EyeOff, Trash2 } from 'lucide-react';
-import { apiRequest } from '../../lib/api';
+import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function ReviewsPage() {
-  const { token } = useAuth();
-  const tokenRequired = token || '';
+  const { isAdmin } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -13,12 +12,33 @@ export default function ReviewsPage() {
   const [reviews, setReviews] = useState<any[]>([]);
 
   const loadData = async () => {
-    if (!tokenRequired) return;
+    if (!isAdmin) return;
     setLoading(true);
     setError('');
     try {
-      const revRes = await apiRequest<any>('/admin/reviews', { token: tokenRequired });
-      setReviews(revRes.reviews || []);
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          id, rating, comment, is_visible, created_at,
+          profiles(full_name, avatar_url),
+          menu_items(name)
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      const formattedReviews = (data || []).map((r: any) => ({
+        id: r.id,
+        rating: r.rating,
+        review_text: r.comment,
+        is_hidden: !r.is_visible,
+        created_at: r.created_at,
+        name: r.profiles?.full_name || 'Anonymous User',
+        avatar_url: r.profiles?.avatar_url || null,
+        item_name: r.menu_items?.name || null
+      }));
+      
+      setReviews(formattedReviews);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load reviews');
     } finally {
@@ -28,21 +48,27 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     void loadData();
-  }, [tokenRequired]);
+  }, [isAdmin]);
 
-  const handleToggleReviewVisibility = async (id: number) => {
+  const handleToggleReviewVisibility = async (id: string, currentVisibility: boolean) => {
     try {
-      await apiRequest(`/admin/reviews/${id}/hide`, { method: 'PATCH', token: tokenRequired });
+      const { error } = await supabase
+        .from('reviews')
+        .update({ is_visible: !currentVisibility })
+        .eq('id', id);
+        
+      if (error) throw error;
       void loadData();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to toggle review visibility');
     }
   };
 
-  const handleDeleteReview = async (id: number) => {
+  const handleDeleteReview = async (id: string) => {
     if (!window.confirm('Delete this review?')) return;
     try {
-      await apiRequest(`/admin/reviews/${id}`, { method: 'DELETE', token: tokenRequired });
+      const { error } = await supabase.from('reviews').delete().eq('id', id);
+      if (error) throw error;
       void loadData();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete review');
@@ -50,40 +76,59 @@ export default function ReviewsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 relative z-10">
       <header>
         <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Customer Reviews</h2>
+        <p className="text-white/50 text-sm mt-1">Manage and moderate customer feedback across your menu items.</p>
       </header>
 
       {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
-      {loading && <div className="text-xs text-white/30 animate-pulse">Loading reviews…</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reviews.map(r => (
-          <div key={r.id} className={`bg-[#181818] border p-6 rounded-2xl transition-all ${!r.is_hidden ? 'border-white/10' : 'border-white/5 opacity-50 grayscale'}`}>
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center font-bebas text-xl text-[#ef8f2f]">
-                  {r.avatar_url ? <img src={r.avatar_url} alt={r.name} className="w-full h-full object-cover" /> : r.name.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm leading-tight">{r.name}</h4>
-                  <p className="text-[10px] text-white/40">{new Date(r.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={14} className={i < r.rating ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'} />
-                ))}
-              </div>
-            </div>
-            <p className="text-sm text-white/70 italic mb-6">"{r.review_text}"</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading && reviews.length === 0 ? (
+           [...Array(3)].map((_, i) => (
+             <div key={i} className="bg-[#181818] border border-white/5 rounded-2xl p-6 h-48 animate-pulse" />
+           ))
+        ) : reviews.length === 0 ? (
+          <div className="col-span-full p-12 text-center bg-[#181818] border border-white/5 rounded-2xl text-white/40">
+            No reviews found.
+          </div>
+        ) : reviews.map(r => (
+          <div key={r.id} className={`bg-[#181818] border p-6 rounded-2xl transition-all relative overflow-hidden flex flex-col justify-between ${!r.is_hidden ? 'border-white/5 hover:border-white/10' : 'border-red-500/10 grayscale opacity-60'}`}>
+            <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl pointer-events-none ${!r.is_hidden ? 'bg-white/5' : 'bg-red-500/5'}`} />
             
-            <div className="flex justify-end gap-2 border-t border-white/5 pt-4">
-               <button onClick={() => handleToggleReviewVisibility(r.id)} className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${r.is_hidden ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'}`}>
-                  {r.is_hidden ? <><Eye size={14} /> Approve</> : <><EyeOff size={14} /> Hide</>}
+            <div className="relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center font-bebas text-2xl text-[#ef8f2f] shadow-inner">
+                    {r.avatar_url ? <img src={r.avatar_url} alt={r.name} className="w-full h-full object-cover" /> : r.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm leading-tight text-white">{r.name}</h4>
+                    <p className="text-[10px] text-white/40 uppercase tracking-[1px] mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} className={i < r.rating ? 'text-yellow-400 fill-yellow-400 drop-shadow-sm' : 'text-white/10'} />
+                  ))}
+                </div>
+              </div>
+              
+              {r.item_name && (
+                <div className="mb-3 inline-block px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px] uppercase tracking-[1.5px] text-white/50">
+                  {r.item_name}
+                </div>
+              )}
+              
+              <p className="text-sm text-white/80 italic mb-6 leading-relaxed">"{r.review_text}"</p>
+            </div>
+            
+            <div className="flex justify-end gap-3 border-t border-white/5 pt-4 relative z-10 mt-auto">
+               <button onClick={() => handleToggleReviewVisibility(r.id, !r.is_hidden)} className={`px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[1px] flex items-center gap-2 transition-colors ${r.is_hidden ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'}`}>
+                  {r.is_hidden ? <><Eye size={14} /> Approve Review</> : <><EyeOff size={14} /> Hide Review</>}
                 </button>
-                <button onClick={() => handleDeleteReview(r.id)} className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center gap-2">
+                <button onClick={() => handleDeleteReview(r.id)} className="px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[1px] bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center gap-2 transition-colors">
                   <Trash2 size={14} /> Delete
                 </button>
             </div>
