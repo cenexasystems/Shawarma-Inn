@@ -1,21 +1,40 @@
 import { useState, useEffect } from 'react';
-import { apiRequest } from '../../lib/api';
+import { supabase } from '../../lib/supabaseClient';
 import { Play, Plus, Trash2, Edit, UploadCloud, Loader2 } from 'lucide-react';
 
-export default function VideoManager({ tokenRequired }: { tokenRequired: string }) {
-  const [videos, setVideos] = useState<any[]>([]);
+const STORAGE_BUCKET = 'testimonial-videos';
+
+interface TestimonialVideo {
+  id: string;
+  title: string;
+  url: string;
+  thumbnail_url: string | null;
+  is_active: boolean;
+}
+
+function publicUrl(path: string): string {
+  return supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+export default function VideoManager() {
+  const [videos, setVideos] = useState<TestimonialVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ title: '', url: '', thumbnail_url: '', is_active: 1 });
+  const [formData, setFormData] = useState({ title: '', url: '', thumbnail_url: '', is_active: true });
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingThumb, setUploadingThumb] = useState(false);
+  const [error, setError] = useState('');
 
   const fetchVideos = async () => {
     try {
       setLoading(true);
-      const res = await apiRequest<any>('/admin/videos', { token: tokenRequired });
-      setVideos(res.videos || []);
+      const { data, error } = await supabase
+        .from('testimonial_videos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setVideos(data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -24,21 +43,37 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
   };
 
   useEffect(() => {
-    fetchVideos();
-  }, [tokenRequired]);
+    void fetchVideos();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       if (editId) {
-        await apiRequest(`/admin/videos/${editId}`, { method: 'PUT', body: formData, token: tokenRequired });
+        const { error } = await supabase
+          .from('testimonial_videos')
+          .update({
+            title: formData.title,
+            url: formData.url,
+            thumbnail_url: formData.thumbnail_url || null,
+            is_active: formData.is_active,
+          })
+          .eq('id', editId);
+        if (error) throw error;
       } else {
-        await apiRequest('/admin/videos', { method: 'POST', body: formData, token: tokenRequired });
+        const { error } = await supabase.from('testimonial_videos').insert({
+          title: formData.title,
+          url: formData.url,
+          thumbnail_url: formData.thumbnail_url || null,
+          is_active: formData.is_active,
+        });
+        if (error) throw error;
       }
       setIsEditing(false);
       fetchVideos();
     } catch (err) {
-      alert('Error saving video');
+      setError(err instanceof Error ? err.message : 'Error saving video');
     }
   };
 
@@ -46,20 +81,15 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingVideo(true);
+    setError('');
     try {
-      const body = new FormData();
-      body.append('video', file);
-      const res = await fetch('/api/admin/videos/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tokenRequired}` },
-        body,
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      setFormData((prev) => ({ ...prev, url: data.url }));
+      const path = `videos/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: false });
+      if (error) throw error;
+      setFormData((prev) => ({ ...prev, url: publicUrl(path) }));
     } catch (err) {
       console.error(err);
-      alert('Failed to upload video');
+      setError(err instanceof Error ? err.message : 'Failed to upload video');
     } finally {
       setUploadingVideo(false);
       e.target.value = '';
@@ -70,20 +100,15 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingThumb(true);
+    setError('');
     try {
-      const body = new FormData();
-      body.append('thumbnail', file);
-      const res = await fetch('/api/admin/videos/upload-thumbnail', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tokenRequired}` },
-        body,
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      setFormData((prev) => ({ ...prev, thumbnail_url: data.url }));
+      const path = `thumbnails/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: false });
+      if (error) throw error;
+      setFormData((prev) => ({ ...prev, thumbnail_url: publicUrl(path) }));
     } catch (err) {
       console.error(err);
-      alert('Failed to upload thumbnail');
+      setError(err instanceof Error ? err.message : 'Failed to upload thumbnail');
     } finally {
       setUploadingThumb(false);
       e.target.value = '';
@@ -93,10 +118,11 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this video?')) return;
     try {
-      await apiRequest(`/admin/videos/${id}`, { method: 'DELETE', token: tokenRequired });
+      const { error } = await supabase.from('testimonial_videos').delete().eq('id', id);
+      if (error) throw error;
       fetchVideos();
     } catch (err) {
-      alert('Error deleting video');
+      alert(err instanceof Error ? err.message : 'Error deleting video');
     }
   };
 
@@ -108,8 +134,9 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
         <h2 className="text-2xl font-bebas tracking-wide uppercase text-white">Testimonial Videos</h2>
         <button
           onClick={() => {
-            setFormData({ title: '', url: '', thumbnail_url: '', is_active: 1 });
+            setFormData({ title: '', url: '', thumbnail_url: '', is_active: true });
             setEditId(null);
+            setError('');
             setIsEditing(true);
           }}
           className="flex items-center gap-2 bg-[#d62b2b] text-white px-4 py-2 rounded-xl text-sm font-bold uppercase tracking-[1px] hover:bg-[#bf2323] transition-colors"
@@ -117,6 +144,8 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
           <Plus size={16} /> Add Video
         </button>
       </div>
+
+      {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
 
       {isEditing && (
         <form onSubmit={handleSubmit} className="bg-[#181818] border border-white/10 p-6 rounded-2xl space-y-4">
@@ -171,8 +200,8 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
           <div className="flex items-center gap-2 text-sm text-white/70">
             <input
               type="checkbox"
-              checked={formData.is_active === 1}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
             />
             Active
           </div>
@@ -219,6 +248,7 @@ export default function VideoManager({ tokenRequired }: { tokenRequired: string 
                   onClick={() => {
                     setFormData({ title: vid.title, url: vid.url, thumbnail_url: vid.thumbnail_url || '', is_active: vid.is_active });
                     setEditId(vid.id);
+                    setError('');
                     setIsEditing(true);
                   }}
                   className="p-1.5 bg-white/10 text-white rounded hover:bg-white/20"

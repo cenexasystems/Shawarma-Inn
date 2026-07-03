@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Quote } from 'lucide-react';
-import { apiRequest } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
 
 function TestimonialCard({ item }: { item: any }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -70,8 +70,13 @@ export default function VideoTestimonials() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const res = await apiRequest<any>('/videos');
-        setTestimonials(res.videos || []);
+        const { data, error } = await supabase
+          .from('testimonial_videos')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        setTestimonials(data || []);
       } catch (err) {
         console.error('Failed to fetch videos', err);
       }

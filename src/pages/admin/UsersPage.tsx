@@ -45,6 +45,35 @@ export default function UsersPage() {
 
   useEffect(() => {
     void loadData();
+
+    const channel = supabase
+      .channel('public:profiles:admin-users')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'profiles' },
+        (payload) => {
+          setUsers((prev) => [payload.new as Profile, ...prev]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
+        (payload) => {
+          setUsers((prev) => prev.map((u) => (u.id === payload.new.id ? { ...u, ...(payload.new as Profile) } : u)));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'profiles' },
+        (payload) => {
+          setUsers((prev) => prev.filter((u) => u.id !== (payload.old as { id: string }).id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const toggleRole = async (userId: string, currentRole: string) => {

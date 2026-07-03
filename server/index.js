@@ -10,7 +10,6 @@ import { JWT_SECRET } from './config/env.js';
 import { broadcastSSE, broadcastSSEToUser } from './events/sse.js';
 import jwt from 'jsonwebtoken';
 import { getDateRangeSql } from './utils/filterEngine.js';
-import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1920,101 +1919,9 @@ app.put('/api/admin/settings', adminRequired, (req, res) => {
   return res.json({ settings: rows, sections });
 });
 
-// Video upload (testimonial video file + thumbnail image)
-const videoUploadDir = path.join(rootDir, 'public', 'videos');
-const videoThumbUploadDir = path.join(rootDir, 'public', 'images', 'videos');
-fs.mkdirSync(videoUploadDir, { recursive: true });
-fs.mkdirSync(videoThumbUploadDir, { recursive: true });
-
-const videoStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, videoUploadDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`),
-});
-const uploadVideoFile = multer({
-  storage: videoStorage,
-  limits: { fileSize: 100 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('video/')) return cb(new Error('Only video files are allowed'));
-    cb(null, true);
-  },
-});
-
-const videoThumbStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, videoThumbUploadDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`),
-});
-const uploadVideoThumb = multer({
-  storage: videoThumbStorage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) return cb(new Error('Only image files are allowed'));
-    cb(null, true);
-  },
-});
-
-app.post('/api/admin/videos/upload', adminRequired, uploadVideoFile.single('video'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No video uploaded' });
-  res.json({ url: `/videos/${req.file.filename}` });
-});
-
-app.post('/api/admin/videos/upload-thumbnail', adminRequired, uploadVideoThumb.single('thumbnail'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No thumbnail uploaded' });
-  res.json({ url: `/images/videos/${req.file.filename}` });
-});
-
-// AI Videos API
-app.get('/api/admin/videos', adminRequired, (req, res) => {
-  try {
-    const videos = db.prepare('SELECT * FROM testimonial_videos ORDER BY created_at DESC').all();
-    res.json({ videos });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/admin/videos', adminRequired, (req, res) => {
-  const { title, url, thumbnail_url, is_active } = req.body;
-  if (!title || !url) return res.status(400).json({ error: 'Title and URL are required' });
-  try {
-    const info = db.prepare('INSERT INTO testimonial_videos (title, url, thumbnail_url, is_active) VALUES (?, ?, ?, ?)').run(title, url, thumbnail_url || null, is_active === undefined ? 1 : is_active);
-    const video = db.prepare('SELECT * FROM testimonial_videos WHERE id = ?').get(info.lastInsertRowid);
-    res.json({ video });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.put('/api/admin/videos/:id', adminRequired, (req, res) => {
-  const { id } = req.params;
-  const { title, url, thumbnail_url, is_active } = req.body;
-  if (!title || !url) return res.status(400).json({ error: 'Title and URL are required' });
-  try {
-    db.prepare('UPDATE testimonial_videos SET title = ?, url = ?, thumbnail_url = ?, is_active = ? WHERE id = ?').run(title, url, thumbnail_url || null, is_active, id);
-    const video = db.prepare('SELECT * FROM testimonial_videos WHERE id = ?').get(id);
-    if (!video) return res.status(404).json({ error: 'Video not found' });
-    res.json({ video });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/admin/videos/:id', adminRequired, (req, res) => {
-  try {
-    db.prepare('DELETE FROM testimonial_videos WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/videos', (req, res) => {
-  try {
-    const videos = db.prepare('SELECT * FROM testimonial_videos WHERE is_active = 1 ORDER BY created_at DESC').all();
-    res.json({ videos });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Testimonial videos moved to Supabase (table + Storage bucket, see
+// supabase_migrations/006_testimonial_videos.sql) — this local-disk/SQLite
+// backend never persisted on Vercel's ephemeral serverless filesystem.
 
 const distPath = path.join(rootDir, 'dist');
 if (fs.existsSync(distPath)) {
