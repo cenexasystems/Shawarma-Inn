@@ -1,10 +1,31 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Hero() {
+const RIBBON_ITEMS = [
+  { icon: '🔥', text: 'FLAME GRILLED' },
+  { icon: '🫓', text: 'SIGNATURE WRAPS' },
+  { icon: '🌿', text: 'FRESH INGREDIENTS' },
+  { icon: '📍', text: 'MATHUR BRANCH' },
+  { icon: '⚡', text: 'FAST DELIVERY' },
+  { icon: '💚', text: 'ORDER ON WHATSAPP' },
+  { icon: '💰', text: 'SAVE vs SWIGGY' },
+  { icon: '⭐', text: '4.9 RATED' },
+  { icon: '🇱🇧', text: 'AUTHENTIC LEBANESE' },
+];
+
+// Reserved height of the global sticky checkout bar (App.tsx) — keeps the
+// ribbon from sitting underneath it when the cart bar is visible on load.
+const CART_BAR_RESERVE = 'calc(5.5rem + env(safe-area-inset-bottom, 0px))';
+
+interface HeroProps {
+  cartCount?: number;
+}
+
+export default function Hero({ cartCount = 0 }: HeroProps) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const hasCartItems = cartCount > 0;
 
   const ensurePlayback = () => {
     const video = videoRef.current;
@@ -161,7 +182,7 @@ export default function Hero() {
         </div>
 
         {/* Right Column — Image Card */}
-        <div className="relative z-20 w-full h-full flex items-center justify-center px-12 py-8 pb-16">
+        <div className="relative z-20 w-full h-full flex flex-col items-center justify-center gap-6 px-12 py-8 pb-16">
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-80 h-80 rounded-full bg-[var(--red)]/20 blur-[100px]" />
           </div>
@@ -215,50 +236,40 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Mute toggle — desktop */}
+          {/* Sound control — beside the hero media, in normal flow (never overlaps the card or floats loose) */}
           <button
             onClick={toggleMute}
-            title={isMuted ? 'Unmute' : 'Mute'}
-            className="absolute bottom-12 left-12 z-30 w-14 h-14 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/10 transition-all shadow-2xl hover:scale-110 active:scale-95"
+            title={isMuted ? 'Turn sound on' : 'Turn sound off'}
+            aria-label={isMuted ? 'Sound off. Click to turn sound on.' : 'Sound on. Click to turn sound off.'}
+            aria-pressed={!isMuted}
+            className="relative z-20 w-12 h-12 rounded-full border border-white/15 bg-white/5 backdrop-blur-2xl flex items-center justify-center text-white hover:bg-white/15 hover:border-white/30 transition-all shadow-xl hover:scale-110 active:scale-95"
           >
-            {isMuted ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="relative w-5 h-5 grid place-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`sound-toggle-icon absolute w-5 h-5 ${isMuted ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
               </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`sound-toggle-icon absolute w-5 h-5 ${isMuted ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               </svg>
-            )}
+            </span>
           </button>
         </div>
       </div>
 
-      {/* ─── BRAND SCROLL CAROUSEL — anchored at bottom of first screen view ─── */}
+      {/* ─── ANNOUNCEMENT RIBBON — desktop only; offset up when the sticky checkout bar is showing ─── */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent"
-        style={{ paddingBottom: '0' }}
+        className="hidden lg:block absolute left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent transition-[bottom] duration-300"
+        style={{ bottom: hasCartItems ? CART_BAR_RESERVE : 0 }}
       >
-        <div className="border-t border-white/8 bg-black/60 backdrop-blur-md py-4 overflow-hidden">
-          {/* Double-looped marquee for seamless scroll */}
-          <div className="flex whitespace-nowrap" style={{ animation: 'brandScroll 28s linear infinite' }}>
+        <div className="marquee-wrap border-t border-white/8 bg-black/60 backdrop-blur-md py-5">
+          <div className="marquee-track flex whitespace-nowrap">
             {[...Array(2)].map((_, loopIdx) => (
-              <div key={loopIdx} className="flex shrink-0 items-center">
-                {[
-                  { icon: '🔥', text: 'FLAME GRILLED' },
-                  { icon: '🫓', text: 'SIGNATURE WRAPS' },
-                  { icon: '🌿', text: 'FRESH INGREDIENTS' },
-                  { icon: '📍', text: 'MATHUR BRANCH' },
-                  { icon: '⚡', text: 'FAST DELIVERY' },
-                  { icon: '💚', text: 'ORDER ON WHATSAPP' },
-                  { icon: '💰', text: 'SAVE vs SWIGGY' },
-                  { icon: '⭐', text: '4.9 RATED' },
-                  { icon: '🇱🇧', text: 'AUTHENTIC LEBANESE' },
-                ].map((item, i) => (
-                  <span key={i} className="inline-flex items-center gap-2 mx-6">
-                    <span className="text-sm">{item.icon}</span>
-                    <span className="font-bebas text-[13px] tracking-[4px] text-white/60 uppercase">{item.text}</span>
-                    <span className="w-1 h-1 rounded-full bg-[var(--red)]/60 ml-2" />
+              <div key={loopIdx} className="flex shrink-0 items-center" aria-hidden={loopIdx === 1}>
+                {RIBBON_ITEMS.map((item, i) => (
+                  <span key={i} className="inline-flex items-center gap-2.5 mx-7">
+                    <span className="text-base">{item.icon}</span>
+                    <span className="font-bebas text-sm tracking-[4px] text-white/65 uppercase">{item.text}</span>
+                    <span className="w-1 h-1 rounded-full bg-[var(--red)]/60 ml-2.5" />
                   </span>
                 ))}
               </div>
@@ -275,7 +286,10 @@ export default function Hero() {
         style={{
           minHeight: '100svh',
           paddingTop: '80px',
-          paddingBottom: 'max(2.5rem, calc(2.5rem + env(safe-area-inset-bottom, 0px)))',
+          paddingBottom: hasCartItems
+            ? CART_BAR_RESERVE
+            : 'max(2.5rem, calc(2.5rem + env(safe-area-inset-bottom, 0px)))',
+          transition: 'padding-bottom 0.3s ease',
         }}
       >
         {/* Brand + Mathur Branch stacked */}
@@ -349,35 +363,54 @@ export default function Hero() {
           </button>
         </div>
 
-        {/* Rating pill — bottom left of CTAs */}
-        <div className="flex items-center gap-2 mt-5">
-          <div className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <svg key={i} className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
+        {/* Rating pill + sound control — inline, in-flow so it never overlaps the FAB/checkout bar */}
+        <div className="flex items-center justify-between gap-3 mt-5">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <span className="text-white/60 font-body text-xs tracking-wider">4.9 · Top Rated in Mathur</span>
           </div>
-          <span className="text-white/60 font-body text-xs tracking-wider">4.9 · Top Rated in Mathur</span>
+
+          {/* Sound control — mobile, integrated in-flow beside the rating row */}
+          <button
+            onClick={toggleMute}
+            title={isMuted ? 'Turn sound on' : 'Turn sound off'}
+            aria-label={isMuted ? 'Sound off. Click to turn sound on.' : 'Sound on. Click to turn sound off.'}
+            aria-pressed={!isMuted}
+            className="shrink-0 w-10 h-10 rounded-full border border-white/15 bg-white/5 backdrop-blur-xl flex items-center justify-center text-white/80 transition-all active:scale-90"
+          >
+            <span className="relative w-4 h-4 grid place-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`sound-toggle-icon absolute w-4 h-4 ${isMuted ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`sound-toggle-icon absolute w-4 h-4 ${isMuted ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </span>
+          </button>
         </div>
 
-        {/* Mute toggle — mobile, bottom right, above WhatsApp FAB */}
-        <button
-          onClick={toggleMute}
-          title={isMuted ? 'Unmute' : 'Mute'}
-          className="absolute bottom-safe-4 right-20 z-30 w-11 h-11 rounded-full border border-white/15 bg-black/50 backdrop-blur-xl flex items-center justify-center text-white/70 transition-all active:scale-90"
-          style={{ bottom: 'max(1rem, calc(1rem + env(safe-area-inset-bottom, 0px)))' }}
-        >
-          {isMuted ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-          )}
-        </button>
+        {/* Mobile announcement ribbon — in normal flow, edge-to-edge bleed, never overlaps fixed UI */}
+        <div className="marquee-wrap -mx-5 mt-6 border-y border-white/8 bg-black/50 backdrop-blur-md py-3.5">
+          <div className="marquee-track marquee-track--compact flex whitespace-nowrap">
+            {[...Array(2)].map((_, loopIdx) => (
+              <div key={loopIdx} className="flex shrink-0 items-center" aria-hidden={loopIdx === 1}>
+                {RIBBON_ITEMS.map((item, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 mx-4">
+                    <span className="text-xs">{item.icon}</span>
+                    <span className="font-bebas text-[11px] tracking-[3px] text-white/60 uppercase">{item.text}</span>
+                    <span className="w-1 h-1 rounded-full bg-[var(--red)]/60 ml-1.5" />
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
     </header>

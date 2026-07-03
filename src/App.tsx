@@ -124,8 +124,17 @@ export default function App() {
       )}
 
       {/* Hero only on home route */}
-      {!isAdminArea && isHome && <Hero />}
+      {!isAdminArea && isHome && <Hero cartCount={cartData.count} />}
 
+      <div
+        style={{
+          paddingBottom:
+            !isAdminArea && !isCheckoutPage && cartData.count > 0
+              ? 'calc(5.5rem + env(safe-area-inset-bottom, 0px))'
+              : undefined,
+          transition: 'padding-bottom 0.3s ease',
+        }}
+      >
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<Menu cartData={cartData} />} />
@@ -220,25 +229,35 @@ export default function App() {
           }
         />
       </Routes>
+      </div>
 
-      {/* Floating Checkout Button (Bottom) */}
+      {/* Sticky bottom checkout bar — animates in only while the cart has items */}
       {!isAdminArea && !isCheckoutPage && cartData.count > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[50] w-[90%] max-w-[170px] animate-in fade-in slide-in-from-bottom-5 duration-500">
-          <button
-            onClick={() => navigate('/checkout')}
-            className="w-full bg-[var(--red)] text-white font-bebas text-sm py-1.5 rounded-full flex items-center justify-between px-3 tracking-[1px] shadow-[0_15px_30px_rgba(214,43,43,0.4)] hover:scale-105 active:scale-95 transition-all border border-white/10"
-          >
-            <span>CHECKOUT</span>
-            <div className="flex items-center gap-1.5">
-              <div className="text-right leading-none">
-                <div className="text-white/45 text-[9px] mb-0.5">{cartData.count} ITEMS</div>
-                <div className="text-white text-[11px] tracking-[1px]">₹{cartData.subtotal.toFixed(0)}</div>
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 animate-in fade-in slide-in-from-bottom-6 duration-500"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <div className="mx-auto max-w-2xl px-3 pb-3 pt-2 sm:px-4">
+            <button
+              onClick={() => navigate('/checkout')}
+              className="w-full flex items-center justify-between gap-3 bg-black/70 backdrop-blur-2xl border border-white/10 rounded-2xl px-5 py-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--red)] text-white text-xs font-bold font-body shrink-0">
+                  {cartData.count}
+                </span>
+                <span className="font-bebas text-white text-[15px] tracking-[2px] uppercase">
+                  ₹{cartData.subtotal.toFixed(0)}
+                </span>
               </div>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </div>
-          </button>
+              <span className="flex items-center gap-1.5 font-bebas text-[var(--red)] text-base tracking-[2px] uppercase">
+                Checkout
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </span>
+            </button>
+          </div>
         </div>
       )}
 
