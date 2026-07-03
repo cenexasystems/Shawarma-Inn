@@ -10,7 +10,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAdminContext } from '../../context/AdminContext';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabaseClient';
 
 const getStatusColor = (status: string) => {
   switch (status) {

@@ -82,30 +82,6 @@ export default function CartSummary({
         handleRemoveCoupon={handleRemoveCoupon}
       />
 
-      {/* Payment Method */}
-      <div className="mb-6">
-        <label className="block text-[10px] font-bold uppercase tracking-[4px] mb-3 text-white/60 font-body">Payment Method</label>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between bg-[#25D366]/10 border border-[#25D366]/50 rounded-xl p-4 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full border-2 border-[#25D366] flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[#25D366]" />
-              </div>
-              <span className="font-bebas tracking-wide text-white text-lg">Pay via WhatsApp</span>
-            </div>
-            <div className="flex gap-2">
-              <svg className="h-5 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.224-3.82c1.516.903 3.09 1.38 4.711 1.381 5.452 0 9.889-4.437 9.892-9.889.002-2.646-1.027-5.132-2.9-6.999-1.874-1.868-4.363-2.896-7.005-2.897-5.451 0-9.888 4.437-9.89 9.889-.001 1.761.464 3.479 1.345 5.006l-1.022 3.733 3.869-1.014zm11.351-7.73c-.161-.081-1.12-.553-1.293-.617-.174-.064-.3-.097-.426.091-.125.189-.485.617-.595.744-.109.127-.218.143-.379.062-.161-.081-.679-.251-1.293-.8-.478-.426-.801-.951-.894-1.114-.093-.163-.01-.251.071-.331.073-.072.161-.189.242-.284.081-.094.108-.161.161-.27.053-.109.027-.204-.013-.284-.04-.081-.426-1.026-.584-1.405-.154-.373-.306-.322-.426-.328l-.364-.006c-.125 0-.329.047-.501.236-.172.189-.657.642-.657 1.565 0 .923.671 1.815.766 1.943.094.127 1.32 2.016 3.198 2.826.447.193.795.308 1.068.394.448.143.855.123 1.176.075.358-.053 1.12-.458 1.279-.901.16-.442.16-.821.112-.901-.049-.081-.177-.128-.338-.209z" /></svg>
-            </div>
-          </div>
-          <div className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${deliveryMethod === 'pickup' ? 'bg-black/40 border-white/5 cursor-pointer hover:border-white/20' : 'bg-black/20 border-white/5 opacity-50 cursor-not-allowed'}`}>
-            <div className="w-4 h-4 rounded-full border-2 border-white/20" />
-            <span className="font-bebas tracking-wide text-white/80 text-lg">Cash on Delivery</span>
-            {deliveryMethod !== 'pickup' && (
-              <span className="ml-auto text-[9px] text-red-400 font-bold uppercase tracking-wider">Store Pickup Only</span>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Bill Details */}
       <div className="space-y-3 font-body text-sm mb-6">
