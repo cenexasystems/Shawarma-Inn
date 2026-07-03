@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Save, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiRequest } from '../../lib/api';
-import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabaseClient';
+
+const STORAGE_BUCKET = 'menu-images';
 
 interface CategoryDrawerProps {
   isOpen: boolean;
@@ -12,7 +13,6 @@ interface CategoryDrawerProps {
 }
 
 export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDrawerProps) {
-  const { token } = useAuth();
   const [formData, setFormData] = useState<any>({});
   const [uploading, setUploading] = useState(false);
 
@@ -22,12 +22,11 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
     } else {
       setFormData({
         name: '',
-        slug: '',
         description: '',
-        is_visible: true,
+        is_active: true,
         display_order: 0,
-        banner_image: '',
-        category_image: '',
+        banner_url: '',
+        image_url: '',
       });
     }
   }, [category]);
@@ -46,22 +45,17 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
     setUploading(true);
     try {
       const file = e.target.files[0];
-      const formDataUpload = new FormData();
-      formDataUpload.append('image', file);
-
-      const res = await fetch('/admin/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formDataUpload,
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      setFormData({ ...formData, [fieldName]: data.imageUrl });
+      const path = `categories/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      setFormData({ ...formData, [fieldName]: data.publicUrl });
     } catch (err) {
       console.error(err);
-      alert('Failed to upload image');
+      alert(err instanceof Error ? `Failed to upload image: ${err.message}` : 'Failed to upload image');
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -69,22 +63,20 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
     e.preventDefault();
     try {
       const payload = {
-        ...formData,
-        display_order: Number(formData.display_order),
+        name: formData.name,
+        description: formData.description || null,
+        is_active: Boolean(formData.is_active),
+        display_order: Number(formData.display_order) || 0,
+        banner_url: formData.banner_url || null,
+        image_url: formData.image_url || null,
       };
 
       if (formData.id) {
-        await apiRequest(`/admin/categories/${formData.id}`, {
-          method: 'PUT',
-          token,
-          body: payload,
-        });
+        const { error } = await supabase.from('categories').update(payload).eq('id', formData.id);
+        if (error) throw error;
       } else {
-        await apiRequest('/admin/categories', {
-          method: 'POST',
-          token,
-          body: payload,
-        });
+        const { error } = await supabase.from('categories').insert(payload);
+        if (error) throw error;
       }
       onSave();
     } catch (err) {
@@ -127,11 +119,6 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
                 </div>
                 
                 <div className="space-y-2 col-span-2">
-                  <label className="text-sm font-medium text-zinc-400">SEO Slug</label>
-                  <input type="text" name="slug" value={formData.slug || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-orange-500 transition-all" />
-                </div>
-
-                <div className="space-y-2 col-span-2">
                   <label className="text-sm font-medium text-zinc-400">Description</label>
                   <textarea name="description" value={formData.description || ''} onChange={handleChange} rows={3} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-orange-500 transition-all resize-none" />
                 </div>
@@ -146,13 +133,13 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
               <div className="space-y-2 border-t border-zinc-800 pt-6">
                 <label className="text-sm font-medium text-zinc-400">Banner Image (Optional)</label>
                 <div className="relative aspect-[3/1] rounded-xl border-2 border-dashed border-zinc-700 hover:border-orange-500 transition-colors overflow-hidden bg-zinc-800 group">
-                  {formData.banner_image ? (
+                  {formData.banner_url ? (
                     <>
-                      <img src={formData.banner_image} alt="Banner" className="w-full h-full object-cover" />
+                      <img src={formData.banner_url} alt="Banner" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <label className="cursor-pointer bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-orange-700">
                           <Upload className="w-4 h-4" /> Replace
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'banner_image')} disabled={uploading} />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'banner_url')} disabled={uploading} />
                         </label>
                       </div>
                     </>
@@ -160,7 +147,7 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
                     <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
                       <ImageIcon className="w-8 h-8 text-zinc-500 mb-2" />
                       <span className="text-sm text-zinc-400 font-medium">Click to upload banner</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'banner_image')} disabled={uploading} />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'banner_url')} disabled={uploading} />
                     </label>
                   )}
                 </div>
@@ -173,7 +160,7 @@ export function CategoryDrawer({ isOpen, onClose, category, onSave }: CategoryDr
                     <span className="text-white font-medium block">Visible</span>
                     <span className="text-sm text-zinc-400 block">Show this category on website</span>
                   </div>
-                  <input type="checkbox" name="is_visible" checked={formData.is_visible || false} onChange={handleChange} className="w-5 h-5 accent-orange-600 cursor-pointer" />
+                  <input type="checkbox" name="is_active" checked={formData.is_active || false} onChange={handleChange} className="w-5 h-5 accent-orange-600 cursor-pointer" />
                 </label>
               </div>
 

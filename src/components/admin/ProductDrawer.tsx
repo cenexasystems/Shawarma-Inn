@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Save, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
-import { useAuth } from '../../hooks/useAuth';
+
+const STORAGE_BUCKET = 'menu-images';
 
 interface ProductDrawerProps {
   isOpen: boolean;
@@ -13,7 +14,6 @@ interface ProductDrawerProps {
 }
 
 export function ProductDrawer({ isOpen, onClose, product, categories, onSave }: ProductDrawerProps) {
-  const { token } = useAuth();
   const [formData, setFormData] = useState<any>({});
   const [uploading, setUploading] = useState(false);
 
@@ -52,25 +52,17 @@ export function ProductDrawer({ isOpen, onClose, product, categories, onSave }: 
     setUploading(true);
     try {
       const file = e.target.files[0];
-      const formDataUpload = new FormData();
-      formDataUpload.append('image', file);
-
-      // Keep using the local backend for image upload since it saves to public folder
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataUpload,
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      setFormData({ ...formData, image_url: data.imageUrl });
+      const path = `products/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      setFormData({ ...formData, image_url: data.publicUrl });
     } catch (err) {
       console.error(err);
-      alert('Failed to upload image. Make sure Express server is running for uploads.');
+      alert(err instanceof Error ? `Failed to upload image: ${err.message}` : 'Failed to upload image.');
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 

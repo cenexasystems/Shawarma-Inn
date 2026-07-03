@@ -83,21 +83,56 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, [audioContext]);
 
   const playOscillator = (ctx: AudioContext) => {
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
-    osc.frequency.setValueAtTime(1108.73, ctx.currentTime + 0.1); // C#6
-    
-    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
+    // Loud kitchen-alarm siren: 4 two-tone bursts at full volume,
+    // doubled an octave up, run through a compressor so it stays
+    // loud without clipping.
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-12, ctx.currentTime);
+    compressor.ratio.setValueAtTime(12, ctx.currentTime);
+    compressor.connect(ctx.destination);
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(1.0, ctx.currentTime);
+    master.connect(compressor);
+
+    const BURSTS = 4;
+    const BURST_LEN = 0.55;
+    const GAP = 0.18;
+
+    for (let i = 0; i < BURSTS; i++) {
+      const start = ctx.currentTime + i * (BURST_LEN + GAP);
+      const end = start + BURST_LEN;
+
+      const gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(0.0001, start);
+      gainNode.gain.exponentialRampToValueAtTime(1.0, start + 0.02);
+      gainNode.gain.setValueAtTime(1.0, end - 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, end);
+      gainNode.connect(master);
+
+      // Main two-tone siren (A5 <-> E6)
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      for (let t = 0; t < BURST_LEN; t += 0.12) {
+        osc.frequency.setValueAtTime(t % 0.24 < 0.12 ? 880 : 1318.5, start + t);
+      }
+      osc.connect(gainNode);
+      osc.start(start);
+      osc.stop(end);
+
+      // Octave-up layer for extra cut-through
+      const oscHigh = ctx.createOscillator();
+      oscHigh.type = 'sawtooth';
+      for (let t = 0; t < BURST_LEN; t += 0.12) {
+        oscHigh.frequency.setValueAtTime(t % 0.24 < 0.12 ? 1760 : 2637, start + t);
+      }
+      const highGain = ctx.createGain();
+      highGain.gain.setValueAtTime(0.6, start);
+      oscHigh.connect(highGain);
+      highGain.connect(gainNode);
+      oscHigh.start(start);
+      oscHigh.stop(end);
+    }
   };
 
   const loadPendingOrders = useCallback(async () => {
