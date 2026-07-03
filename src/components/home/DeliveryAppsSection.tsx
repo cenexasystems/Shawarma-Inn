@@ -41,18 +41,18 @@ export default function DeliveryAppsSection() {
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {deliveryApps.map((app) => (
             <motion.a
               key={app.name}
               href={app.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex min-h-[220px] items-center gap-6 bg-[#151515] border border-white/10 p-8 md:p-10 rounded-3xl transition-all duration-300 hover:-translate-y-2 hover:border-white/25"
+              className="group flex flex-col md:flex-row items-center text-center md:text-left gap-5 md:gap-6 bg-[#151515] border border-white/10 p-6 md:p-10 rounded-3xl transition-all duration-300 hover:-translate-y-2 hover:border-white/25"
               whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${app.glow}` }}
               transition={{ duration: 0.3 }}
             >
-              <div className="h-36 w-56 shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white shadow-xl">
+              <div className="h-28 w-44 md:h-36 md:w-56 shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white shadow-xl">
                 <img
                   src={app.image}
                   alt={app.name}
@@ -61,7 +61,7 @@ export default function DeliveryAppsSection() {
               </div>
               <div className="min-w-0 flex-1">
                 <span className="block text-[11px] uppercase tracking-[2px] font-bold text-white/40 group-hover:text-white/60 transition-colors">{app.label}</span>
-                <span className="mt-3 flex items-center gap-2 font-bebas text-3xl tracking-[1px] text-white">
+                <span className="mt-3 flex items-center justify-center md:justify-start gap-2 font-bebas text-3xl tracking-[1px] text-white">
                   {app.name}
                   <ExternalLink className={`h-5 w-5 ${app.accentClass}`} />
                 </span>
