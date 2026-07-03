@@ -17,22 +17,42 @@ export default function CustomersPage() {
     if (!isAdmin) return;
     setLoading(true);
     try {
-      // Aggregate customers from orders table
-      const { data: orders, error } = await supabase
-        .from('orders')
-        .select('id, customer_name, customer_phone, customer_email, total, created_at, status')
-        .not('status', 'eq', 'cancelled');
-        
-      if (error) throw error;
-      
+      // Every signed-up user is a customer, whether or not they've ordered yet.
+      const [{ data: profiles, error: profilesError }, { data: orders, error: ordersError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, name, phone, role, created_at')
+          .eq('role', 'user'),
+        supabase
+          .from('orders')
+          .select('id, user_id, customer_name, customer_phone, customer_email, total, created_at, status')
+          .not('status', 'eq', 'cancelled'),
+      ]);
+
+      if (profilesError) throw profilesError;
+      if (ordersError) throw ordersError;
+
       const customerMap = new Map<string, any>();
-      
-      (orders || []).forEach(order => {
-        const phone = order.customer_phone || 'Unknown';
-        
-        if (!customerMap.has(phone)) {
-          customerMap.set(phone, {
-            id: phone,
+
+      (profiles || []).forEach((profile) => {
+        customerMap.set(profile.id, {
+          id: profile.id,
+          name: profile.name,
+          phone: profile.phone,
+          email: null,
+          total_orders: 0,
+          lifetime_spend: 0,
+          last_order: null,
+          joined_date: profile.created_at,
+        });
+      });
+
+      (orders || []).forEach((order) => {
+        const key = order.user_id || order.customer_phone || 'Unknown';
+
+        if (!customerMap.has(key)) {
+          customerMap.set(key, {
+            id: key,
             name: order.customer_name,
             phone: order.customer_phone,
             email: order.customer_email,
@@ -42,21 +62,22 @@ export default function CustomersPage() {
             joined_date: order.created_at,
           });
         }
-        
-        const cust = customerMap.get(phone);
+
+        const cust = customerMap.get(key);
         cust.total_orders += 1;
         if (order.status === 'completed') {
-           cust.lifetime_spend += Number(order.total || 0);
+          cust.lifetime_spend += Number(order.total || 0);
         }
-        
+
         const orderDate = new Date(order.created_at).getTime();
-        if (orderDate > new Date(cust.last_order).getTime()) {
+        if (!cust.last_order || orderDate > new Date(cust.last_order).getTime()) {
           cust.last_order = order.created_at;
-          // Use latest name/email in case they updated it
+          // Use latest order's name/phone/email in case they updated it
           cust.name = order.customer_name || cust.name;
+          cust.phone = order.customer_phone || cust.phone;
           cust.email = order.customer_email || cust.email;
         }
-        
+
         if (orderDate < new Date(cust.joined_date).getTime()) {
           cust.joined_date = order.created_at;
         }
