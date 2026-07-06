@@ -304,12 +304,6 @@ export default function PosBilling() {
                 <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
               </div>
             )}
-            {GST_ACTIVE && (
-              <div className="flex justify-between text-white/70">
-                <span>Tax ({GST_PERCENTAGE}%)</span>
-                <span className="font-bold text-[#4ade80]">₹{tax.toFixed(2)}</span>
-              </div>
-            )}
             <div className="flex justify-between items-end border-t border-white/10 pt-2">
               <p className="font-bebas text-2xl tracking-[2px]">TOTAL</p>
               <p className="font-bebas text-5xl text-[#ef8f2f]">₹{total.toFixed(2)}</p>

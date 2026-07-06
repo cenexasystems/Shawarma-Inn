@@ -329,20 +329,12 @@ export default function Profile() {
                               <span>₹{item.subtotal}</span>
                             </div>
                           ))}
-                          {(Number(order.discount_amount) > 0 || Number(order.gst_amount) > 0) && (
+                          {Number(order.discount_amount) > 0 && (
                             <div className="pt-2 mt-1 border-t border-white/5 space-y-1">
-                              {Number(order.discount_amount) > 0 && (
-                                <div className="flex justify-between text-xs text-green-400">
-                                  <span>Discount {order.coupon_code ? `(${order.coupon_code})` : ''}</span>
-                                  <span>-₹{Number(order.discount_amount).toLocaleString()}</span>
-                                </div>
-                              )}
-                              {Number(order.gst_amount) > 0 && (
-                                <div className="flex justify-between text-xs text-white/40">
-                                  <span>GST</span>
-                                  <span>₹{Number(order.gst_amount).toLocaleString()}</span>
-                                </div>
-                              )}
+                              <div className="flex justify-between text-xs text-green-400">
+                                <span>Discount {order.coupon_code ? `(${order.coupon_code})` : ''}</span>
+                                <span>-₹{Number(order.discount_amount).toLocaleString()}</span>
+                              </div>
                             </div>
                           )}
                           {order.notes && (

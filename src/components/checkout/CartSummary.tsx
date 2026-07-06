@@ -91,19 +91,6 @@ export default function CartSummary({
             <span>Discount</span><span>-₹{totals.discount.toFixed(2)}</span>
           </div>
         )}
-        <div className="flex justify-between text-white/60">
-          <span>Delivery</span><span>₹{totals.deliveryCharge.toFixed(2)}</span>
-        </div>
-        {totals.packingCharge > 0 && (
-          <div className="flex justify-between text-white/60">
-            <span>Packing</span><span>₹{totals.packingCharge.toFixed(2)}</span>
-          </div>
-        )}
-        {totals.gstEnabled && (
-          <div className="flex justify-between text-white/60">
-            <span>GST ({totals.gstPercentage}%)</span><span>₹{totals.gst.toFixed(2)}</span>
-          </div>
-        )}
       </div>
 
       <div className="flex justify-between items-end pt-5 border-t border-white/5 mb-6">

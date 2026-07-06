@@ -173,12 +173,6 @@ export default function OrderDrawer({
                     <span>-₹{Number(order.discount_amount).toLocaleString()}</span>
                   </div>
                 )}
-                {Number(order.gst_amount) > 0 && (
-                  <div className="flex justify-between"><span>GST</span><span>₹{Number(order.gst_amount).toLocaleString()}</span></div>
-                )}
-                {Number(order.packing_charge) > 0 && (
-                  <div className="flex justify-between"><span>Packing</span><span>₹{Number(order.packing_charge).toLocaleString()}</span></div>
-                )}
                 <div className="flex justify-between pt-2 border-t border-white/5 text-white font-bold text-sm">
                   <span>Total</span>
                   <span className="font-bebas text-xl text-[#ef8f2f]">₹{Number(order.total).toLocaleString()}</span>
