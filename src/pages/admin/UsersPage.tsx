@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { User, Search, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/Table';
 
 interface Profile {
   id: string;
@@ -128,112 +133,111 @@ export default function UsersPage() {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Admin & Users</h2>
-          <p className="text-gray-500 text-sm mt-1">Manage system administrators, roles, and access.</p>
-        </div>
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
+    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+      <PageHeader 
+        title="Admin & Users"
+        subtitle="Manage system administrators, roles, and access."
+      />
+
+      {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[12px] text-sm border border-erp-danger/20 mb-6">{error}</div>}
+
+      <Card className="p-4 mb-8">
+        <div className="relative w-full md:w-96">
+          <Input
+            icon={Search}
             placeholder="Search users..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors placeholder:text-gray-400 shadow-sm"
           />
         </div>
-      </header>
+      </Card>
 
-      {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
-
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-x-auto shadow-sm">
-        <table className="w-full text-sm min-w-[800px]">
-          <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-[2px] border-b border-gray-200">
-            <tr>
-              <th className="p-4 text-left font-bold">User Details</th>
-              <th className="p-4 text-center font-bold">Status</th>
-              <th className="p-4 text-center font-bold">Role</th>
-              <th className="p-4 text-center font-bold">Joined Date</th>
-              <th className="p-4 text-right font-bold">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
+      <Card noPadding className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User Details</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-center">Role</TableHead>
+              <TableHead className="text-center">Joined Date</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading && users.length === 0 ? (
               [...Array(3)].map((_, i) => (
-                <tr key={`skel-${i}`} className="animate-pulse">
-                  <td className="p-4"><div className="h-5 w-32 bg-gray-200 rounded mb-2" /></td>
-                  <td className="p-4"><div className="h-5 w-24 bg-gray-200 rounded mx-auto" /></td>
-                  <td className="p-4"><div className="h-5 w-16 bg-gray-200 rounded mx-auto" /></td>
-                  <td className="p-4"><div className="h-5 w-24 bg-gray-200 rounded mx-auto" /></td>
-                  <td className="p-4"><div className="h-5 w-24 bg-gray-200 rounded ml-auto" /></td>
-                </tr>
+                <TableRow key={`skel-${i}`} className="animate-pulse">
+                  <TableCell><div className="h-5 w-32 bg-gray-200 rounded mb-2" /></TableCell>
+                  <TableCell><div className="h-5 w-24 bg-gray-200 rounded mx-auto" /></TableCell>
+                  <TableCell><div className="h-5 w-16 bg-gray-200 rounded mx-auto" /></TableCell>
+                  <TableCell><div className="h-5 w-24 bg-gray-200 rounded mx-auto" /></TableCell>
+                  <TableCell><div className="h-5 w-24 bg-gray-200 rounded ml-auto" /></TableCell>
+                </TableRow>
               ))
             ) : filteredUsers.length === 0 ? (
-              <tr><td colSpan={5} className="p-8 text-center text-gray-500 font-medium">No users found.</td></tr>
+              <TableRow><TableCell colSpan={5} className="p-16 text-center text-erp-muted font-medium">No users found.</TableCell></TableRow>
             ) : (
               filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4">
-                    <div className="font-bold text-gray-900 flex items-center gap-2">
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <div className="font-bold text-erp-text flex items-center gap-2">
                       {u.name || 'Unknown User'} 
-                      {u.id === currentUser?.id && <span className="text-[10px] bg-[#183025]/10 text-[#183025] px-2 py-0.5 rounded-full border border-[#183025]/20 font-bold">You</span>}
+                      {u.id === currentUser?.id && <span className="text-[10px] bg-erp-primary/10 text-erp-primary px-2 py-0.5 rounded-full border border-erp-primary/20 font-bold uppercase tracking-[1px]">You</span>}
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5 font-medium">{u.phone || 'No phone'}</div>
+                    <div className="text-xs text-erp-muted mt-0.5 font-medium">{u.phone || 'No phone'}</div>
                     <div className="text-[10px] text-gray-400 font-mono mt-1">{u.id}</div>
-                  </td>
-                  <td className="p-4 text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                      {(u.status || 'active') === 'active' ? (
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-bold tracking-wider border border-green-200 shadow-sm">
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-erp-success/10 text-erp-success rounded-full text-[10px] font-bold tracking-[1px] border border-erp-success/20 uppercase">
                          <CheckCircle size={12} /> ACTIVE
                        </span>
                      ) : (
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold tracking-wider border border-gray-200 shadow-sm">
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-erp-muted rounded-full text-[10px] font-bold tracking-[1px] border border-gray-200 uppercase">
                          <XCircle size={12} /> DISABLED
                        </span>
                      )}
-                  </td>
-                  <td className="p-4 text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     {u.role === 'admin' ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-bold tracking-wider border border-red-200 shadow-sm">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-erp-danger/10 text-erp-danger rounded-full text-[10px] font-bold tracking-[1px] border border-erp-danger/20 uppercase">
                         <ShieldAlert size={12} /> ADMIN
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold tracking-wider border border-gray-200 shadow-sm">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-erp-muted rounded-full text-[10px] font-bold tracking-[1px] border border-gray-200 uppercase">
                         <User size={12} /> USER
                       </span>
                     )}
-                  </td>
-                  <td className="p-4 text-center text-xs text-gray-500 font-medium">
+                  </TableCell>
+                  <TableCell className="text-center text-[13px] text-erp-muted font-medium">
                     {new Date(u.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button
-                      onClick={() => toggleStatus(u.id, u.status || 'active')}
-                      disabled={u.id === currentUser?.id}
-                      className="text-[11px] font-bold tracking-[1px] uppercase px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-700 shadow-sm"
-                    >
-                      {(u.status || 'active') === 'active' ? 'Disable' : 'Enable'}
-                    </button>
-                    <button
-                      onClick={() => toggleRole(u.id, u.role)}
-                      disabled={u.id === currentUser?.id}
-                      className={`text-[11px] font-bold tracking-[1px] uppercase px-4 py-2 rounded-lg border transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
-                        u.role === 'admin' 
-                          ? 'border-red-200 text-red-600 hover:bg-red-50' 
-                          : 'border-gray-200 text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {u.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
-                    </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleStatus(u.id, u.status || 'active')}
+                        disabled={u.id === currentUser?.id}
+                      >
+                        {(u.status || 'active') === 'active' ? 'Disable' : 'Enable'}
+                      </Button>
+                      <Button
+                        variant={u.role === 'admin' ? 'danger' : 'outline'}
+                        size="sm"
+                        onClick={() => toggleRole(u.id, u.role)}
+                        disabled={u.id === currentUser?.id}
+                      >
+                        {u.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

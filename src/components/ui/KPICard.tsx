@@ -7,6 +7,7 @@ export interface KPICardProps {
   icon: LucideIcon;
   iconColor?: string;
   iconBgColor?: string;
+  subtitle?: string;
   className?: string;
 }
 
@@ -20,7 +21,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`bg-white border border-erp-border flex items-center justify-between gap-4 h-[86px] p-[18px] rounded-[14px] shadow-sm ${className}`}>
+    <div className={`bg-white border border-erp-border flex items-center justify-between gap-6 p-[24px] rounded-[16px] shadow-sm ${className}`}>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <p className="text-[11px] font-bold text-erp-muted uppercase tracking-[1px] truncate mb-1">
           {title}
@@ -30,6 +31,9 @@ export const KPICard: React.FC<KPICardProps> = ({
             {value}
           </h3>
         </div>
+        {subtitle && (
+          <p className="text-[11px] text-erp-muted mt-2 font-medium tracking-[0.5px]">{subtitle}</p>
+        )}
       </div>
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBgColor}`}>
         <Icon size={24} className={iconColor} strokeWidth={1.5} />

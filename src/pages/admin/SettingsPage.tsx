@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { Save, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
 
 interface SettingsData {
   whatsapp_number: string;
@@ -123,174 +127,164 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 relative z-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Settings</h2>
-          <p className="text-sm text-gray-500 mt-1">Configure restaurant details, pricing, and operating hours.</p>
-        </div>
-        <button
-          onClick={handleSaveSettings}
-          disabled={saving}
-          className="bg-[#183025] hover:bg-[#254636] text-white px-6 py-3 rounded-xl font-bold uppercase tracking-[1px] text-sm flex items-center gap-2 transition-all shadow-sm disabled:opacity-50"
-        >
-          <Save size={18} />
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
-      </header>
+    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+      <PageHeader 
+        title="Settings"
+        subtitle="Configure restaurant details, pricing, and operating hours."
+        action={
+          <Button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            icon={Save}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        }
+      />
 
-      {error && <div className="text-red-600 bg-red-50 p-4 rounded-xl text-sm border border-red-200 flex items-center gap-2"><AlertCircle size={16}/> {error}</div>}
-      {success && <div className="text-green-700 bg-green-50 p-4 rounded-xl text-sm border border-green-200">Settings saved successfully!</div>}
+      {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[12px] text-sm border border-erp-danger/20 flex items-center gap-2 mb-6"><AlertCircle size={16}/> {error}</div>}
+      {success && <div className="text-erp-success bg-erp-success/10 p-4 rounded-[12px] text-sm border border-erp-success/20 flex items-center gap-2 mb-6"><AlertCircle size={16}/> Settings saved successfully!</div>}
 
       {loading ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[400px] shadow-sm">
-          <div className="w-8 h-8 border-2 border-[#183025] border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-gray-500 uppercase tracking-[2px] font-bold text-xs">Loading Settings...</p>
-        </div>
+        <Card className="p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-8 h-8 border-2 border-erp-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-erp-muted uppercase tracking-[2px] font-bold text-[11px]">Loading Settings...</p>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* General Settings */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">General & Contact</h3>
+          <Card className="p-6">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">General & Contact</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">WhatsApp Order Number</label>
-                <input
+                <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">WhatsApp Order Number</label>
+                <Input
                   type="text"
                   value={settings.whatsapp_number}
                   onChange={(e) => updateSetting('whatsapp_number', null, e.target.value)}
                   placeholder="+91..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Business Hours */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Operating Hours</h3>
+          <Card className="p-6">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Operating Hours</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Opening Time</label>
-                  <input
+                  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Opening Time</label>
+                  <Input
                     type="time"
                     value={settings.business_hours.openingTime}
                     onChange={(e) => updateSetting('business_hours', 'openingTime', e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Closing Time</label>
-                  <input
+                  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Closing Time</label>
+                  <Input
                     type="time"
                     value={settings.business_hours.closingTime}
                     onChange={(e) => updateSetting('business_hours', 'closingTime', e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
                   />
                 </div>
               </div>
-              <label className="flex items-center justify-between p-4 rounded-xl bg-white border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm group">
+              <label className="flex items-center justify-between p-4 rounded-[14px] bg-white border border-erp-border cursor-pointer hover:bg-gray-50 transition-colors mt-4 shadow-sm group">
                 <div>
-                  <span className="text-gray-900 text-sm font-bold block">Temporarily Closed</span>
-                  <span className="text-[10px] uppercase tracking-[1px] text-gray-500 block mt-1">Pause all incoming orders</span>
+                  <span className="text-erp-text text-[13px] font-bold block">Temporarily Closed</span>
+                  <span className="text-[11px] uppercase tracking-[1px] text-erp-muted block mt-1">Pause all incoming orders</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.business_hours.isClosed}
                   onChange={(e) => updateSetting('business_hours', 'isClosed', e.target.checked)}
-                  className="w-5 h-5 accent-red-600 cursor-pointer"
+                  className="w-5 h-5 accent-erp-danger cursor-pointer"
                 />
               </label>
             </div>
-          </div>
+          </Card>
 
           {/* Pricing & Fees */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Pricing & Fees</h3>
+          <Card className="p-6">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Pricing & Fees</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Delivery Charges (₹)</label>
-                <input
+                <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Delivery Charges (₹)</label>
+                <Input
                   type="number"
                   value={settings.delivery_charges}
                   onChange={(e) => updateSetting('delivery_charges', null, Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors font-bebas text-lg"
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">GST Percentage (%)</label>
-                <input
+                <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">GST Percentage (%)</label>
+                <Input
                   type="number"
                   value={settings.gst_percentage}
                   onChange={(e) => updateSetting('gst_percentage', null, Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors font-bebas text-lg"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Social Links */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Social Links</h3>
+          <Card className="p-6">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Social Links</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Instagram URL</label>
-                <input
+                <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Instagram URL</label>
+                <Input
                   type="url"
                   value={settings.social_links.instagram}
                   onChange={(e) => updateSetting('social_links', 'instagram', e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Facebook URL</label>
-                <input
+                <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Facebook URL</label>
+                <Input
                   type="url"
                   value={settings.social_links.facebook}
                   onChange={(e) => updateSetting('social_links', 'facebook', e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* SEO */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm lg:col-span-2">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Search Engine Optimization (SEO)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="p-6 lg:col-span-2">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Search Engine Optimization (SEO)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Meta Title</label>
-                  <input
+                  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Meta Title</label>
+                  <Input
                     type="text"
                     value={settings.seo.title}
                     onChange={(e) => updateSetting('seo', 'title', e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Meta Keywords</label>
-                  <input
+                  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Meta Keywords</label>
+                  <Input
                     type="text"
                     value={settings.seo.keywords}
                     onChange={(e) => updateSetting('seo', 'keywords', e.target.value)}
                     placeholder="shawarma, food, restaurant..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors placeholder:text-gray-400"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Meta Description</label>
+                <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Meta Description</label>
                 <textarea
                   value={settings.seo.description}
                   onChange={(e) => updateSetting('seo', 'description', e.target.value)}
                   rows={4}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#183025] transition-colors resize-none"
+                  className="w-full bg-gray-50 border border-erp-border rounded-[14px] px-4 py-3 text-[14px] text-erp-text focus:outline-none focus:border-erp-primary transition-colors resize-none"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
         </div>
       )}
