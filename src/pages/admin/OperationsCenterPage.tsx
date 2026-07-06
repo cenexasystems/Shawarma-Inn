@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, MapPin, Copy, Package, MessageCircle, Phone, Search, ChevronDown } from 'lucide-react';
+import { RefreshCw, MapPin, Copy, Package, MessageCircle, Phone, Search, Clock, CheckCircle } from 'lucide-react';
 import { OperationsFilterProvider, useOperationsFilter, formatOrderId } from '../../context/OperationsFilterContext';
 import { RightDrawer } from '../../design-system/DrawerSystem';
-import { Button } from '../../design-system/ButtonSystem';
+import { Button } from '../../components/ui/Button';
+import { KPICard } from '../../components/ui/KPICard';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
+import { Select } from '../../components/ui/Select';
+import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -83,23 +88,23 @@ function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
           <div className="flex gap-[12px]">
             {phone && (
               <>
-                <Button variant="secondary" fullWidth onClick={() => window.open(`tel:${phone}`)}>
-                  <Phone size={18} className="mr-2" /> Call
+                <Button variant="secondary" className="w-full" onClick={() => window.open(`tel:${phone}`)} icon={Phone}>
+                  Call
                 </Button>
-                <Button className="bg-[#128C7E] hover:bg-[#128C7E]/90 text-white" fullWidth onClick={() => window.open(`https://wa.me/${phone}?text=${getWhatsAppMsg(order)}`, '_blank')}>
-                  <MessageCircle size={18} className="mr-2" /> WhatsApp
+                <Button className="w-full bg-[#128C7E] hover:bg-[#128C7E]/90 text-white border-none" onClick={() => window.open(`https://wa.me/${phone}?text=${getWhatsAppMsg(order)}`, '_blank')} icon={MessageCircle}>
+                  WhatsApp
                 </Button>
               </>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-[12px]">
-            <Button variant={order.status === 'pending' ? 'primary' : 'secondary'} onClick={() => handleUpdate('processing')} disabled={['processing', 'completed', 'cancelled'].includes(order.status)}>
+          <div className="grid grid-cols-3 gap-erp-12">
+            <Button variant={order.status === 'pending' ? 'primary' : 'secondary'} className="w-full" onClick={() => handleUpdate('processing')} disabled={['processing', 'completed', 'cancelled'].includes(order.status)}>
               Process
             </Button>
-            <Button variant={order.status === 'processing' ? 'primary' : 'secondary'} onClick={() => handleUpdate('completed')} disabled={['completed', 'cancelled'].includes(order.status)}>
+            <Button variant={order.status === 'processing' ? 'primary' : 'secondary'} className="w-full" onClick={() => handleUpdate('completed')} disabled={['completed', 'cancelled'].includes(order.status)}>
               Complete
             </Button>
-            <Button variant="danger" onClick={() => handleUpdate('cancelled')} disabled={['completed', 'cancelled'].includes(order.status)}>
+            <Button variant="danger" className="w-full" onClick={() => handleUpdate('cancelled')} disabled={['completed', 'cancelled'].includes(order.status)}>
               Cancel
             </Button>
           </div>
@@ -223,213 +228,160 @@ function OperationsCenterContent() {
   
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-  const getStatusColor = (status: string) => {
-    switch(status.toLowerCase()) {
-      case 'processing': return 'text-[#2563EB] border-[#2563EB]';
-      case 'pending': return 'text-[#EAB308] border-[#EAB308]';
-      case 'completed': return 'text-[#16A34A] border-[#16A34A]';
-      case 'cancelled': return 'text-[#DC2626] border-[#DC2626]';
-      default: return 'text-gray-600 border-gray-600';
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#FDFDFD] font-inter p-8 max-w-[1600px] mx-auto">
-      {/* Top Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0">
-            <MessageCircle className="text-[#128C7E]" size={24} />
-          </div>
-          <h1 className="text-2xl font-[800] text-[#1a1a1a]">WhatsApp Center</h1>
-          {kpi.pending > 0 && (
-            <span className="px-3 py-1 bg-[#FFF8E6] text-[#EAB308] text-xs font-[700] rounded-full border border-[#FFE4A0]">
-              {kpi.pending} pending
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-[#F4F4F5] rounded-full p-1">
-            {(['all', 'today', 'week', 'month', 'year', 'custom'] as const).map(preset => (
-              <button
-                key={preset}
-                onClick={() => setDatePreset(preset)}
-                className={`px-4 py-1.5 rounded-full text-xs font-[600] tracking-wide uppercase transition-all ${
-                  datePreset === preset 
-                    ? 'bg-[#18181B] text-white shadow-sm' 
-                    : 'text-[#71717A] hover:text-[#18181B]'
-                }`}
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
-
-          {datePreset === 'custom' && (
-            <div className="flex items-center gap-2">
-              <input 
-                type="date" 
-                className="bg-white border border-[#E4E4E7] rounded-full px-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-[#18181B]"
-                value={customDateRange.from ? customDateRange.from.split('T')[0] : ''}
-                onChange={(e) => setCustomDateRange({ ...customDateRange, from: e.target.value ? new Date(e.target.value).toISOString() : null })}
-              />
-              <span className="text-[#A1A1AA] text-xs">to</span>
-              <input 
-                type="date" 
-                className="bg-white border border-[#E4E4E7] rounded-full px-3 py-1.5 text-xs text-[#18181B] focus:outline-none focus:border-[#18181B]"
-                value={customDateRange.to ? customDateRange.to.split('T')[0] : ''}
-                onChange={(e) => setCustomDateRange({ ...customDateRange, to: e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : null })}
-              />
+    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+      
+      <PageHeader 
+        title="WhatsApp Center"
+        subtitle="Manage and respond to customer requests in real time"
+        action={
+          <>
+            <div className="flex items-center bg-white border border-erp-border rounded-full p-1 shadow-sm">
+              {(['all', 'today', 'week', 'month', 'year', 'custom'] as const).map(preset => (
+                <button
+                  key={preset}
+                  onClick={() => setDatePreset(preset)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-[600] tracking-wide transition-all ${
+                    datePreset === preset 
+                      ? 'bg-erp-primary text-white shadow-sm' 
+                      : 'text-erp-muted hover:text-erp-text'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
             </div>
-          )}
 
-          <button 
-            onClick={() => fetchOrders(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E4E4E7] rounded-full text-sm font-[600] text-[#18181B] hover:bg-[#F4F4F5] transition-colors"
-          >
-            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-            Refresh
-          </button>
-        </div>
-      </div>
+            {datePreset === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input 
+                  type="date" 
+                  className="bg-white border border-erp-border rounded-full px-3 py-1.5 text-xs text-erp-text focus:outline-none focus:border-erp-primary"
+                  value={customDateRange.from ? customDateRange.from.split('T')[0] : ''}
+                  onChange={(e) => setCustomDateRange({ ...customDateRange, from: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                />
+                <span className="text-erp-muted text-xs">to</span>
+                <input 
+                  type="date" 
+                  className="bg-white border border-erp-border rounded-full px-3 py-1.5 text-xs text-erp-text focus:outline-none focus:border-erp-primary"
+                  value={customDateRange.to ? customDateRange.to.split('T')[0] : ''}
+                  onChange={(e) => setCustomDateRange({ ...customDateRange, to: e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : null })}
+                />
+              </div>
+            )}
+
+            <Button variant="secondary" onClick={() => fetchOrders(true)} icon={RefreshCw} isLoading={refreshing}>
+              Refresh
+            </Button>
+          </>
+        }
+      />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        {/* Total Requests */}
-        <div className="bg-white rounded-3xl border border-[#F4F4F5] p-6 flex flex-col items-center justify-center text-center shadow-sm">
-          <span className="text-xs font-[700] text-[#71717A] uppercase tracking-[1.5px] mb-2">Total Requests</span>
-          <span className="text-5xl font-[800] text-[#18181B]">{kpi.total}</span>
-        </div>
-        
-        {/* Pending */}
-        <div className="bg-[#FFFDF6] rounded-3xl border border-[#FEF3C7] p-6 flex flex-col items-center justify-center text-center shadow-sm">
-          <span className="text-xs font-[700] text-[#D97706] uppercase tracking-[1.5px] mb-2">Pending</span>
-          <span className="text-5xl font-[800] text-[#D97706]">{kpi.pending}</span>
-        </div>
-
-        {/* Contacted/Processing */}
-        <div className="bg-[#F4F8FF] rounded-3xl border border-[#DBEAFE] p-6 flex flex-col items-center justify-center text-center shadow-sm">
-          <span className="text-xs font-[700] text-[#2563EB] uppercase tracking-[1.5px] mb-2">Contacted</span>
-          <span className="text-5xl font-[800] text-[#2563EB]">{kpi.contacted}</span>
-        </div>
-
-        {/* Completed */}
-        <div className="bg-[#F2FDF5] rounded-3xl border border-[#DCFCE7] p-6 flex flex-col items-center justify-center text-center shadow-sm">
-          <span className="text-xs font-[700] text-[#16A34A] uppercase tracking-[1.5px] mb-2">Completed</span>
-          <span className="text-5xl font-[800] text-[#16A34A]">{kpi.completed}</span>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-erp-24 mb-erp-32">
+        <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="All time" />
+        <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="Needs action" />
+        <KPICard title="Contacted" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="In conversation" />
+        <KPICard title="Completed" value={kpi.completed} icon={CheckCircle} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Successfully done" />
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-3xl shadow-sm border border-[#F4F4F5] overflow-hidden flex flex-col">
+      <div className="bg-erp-card rounded-erp shadow-erp border border-erp-border overflow-hidden flex flex-col">
         
         {/* Table Header Area */}
-        <div className="px-6 py-5 border-b border-[#F4F4F5] flex items-center justify-between bg-white">
+        <div className="px-erp-24 py-erp-16 border-b border-erp-border flex items-center justify-between bg-erp-card">
           <div className="flex items-center gap-3">
-            <MessageCircle size={20} className="text-[#16A34A]" />
-            <h2 className="text-lg font-[800] text-[#18181B]">Customer Requests</h2>
-            <span className="px-2 py-0.5 bg-[#F4F4F5] text-[#71717A] text-xs font-[600] rounded-full">
+            <MessageCircle size={20} className="text-erp-primary" />
+            <h2 className="text-[18px] font-semibold text-erp-text font-inter">Customer Requests</h2>
+            <span className="px-2 py-0.5 bg-gray-100 text-erp-muted text-xs font-semibold rounded-full">
               {kpi.total} requests
             </span>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-[#A1A1AA]" size={16} />
-            <input
-              type="text"
+          <div className="w-[280px]">
+            <Input 
+              icon={Search} 
               placeholder="Search requests..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-[280px] h-[36px] bg-[#F4F4F5] border-transparent rounded-full pl-9 pr-4 text-sm font-[500] text-[#18181B] focus:bg-white focus:border-[#E4E4E7] focus:outline-none focus:ring-2 focus:ring-[#E4E4E7]/50 transition-all"
             />
           </div>
         </div>
 
         {/* Table List */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr className="bg-[#EEF6F0]">
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap">Order ID</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap">Customer</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap">Phone</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] min-w-[200px]">Address</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap text-center">Products</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap">Est. Total</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap">Date & Time</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap">Status</th>
-                <th className="px-6 py-4 text-xs font-[800] text-[#173A2A] uppercase tracking-[1px] whitespace-nowrap text-center">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F4F4F5]">
-              {orders.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-[#71717A] text-sm">
-                    No requests found matching your filters.
-                  </td>
-                </tr>
-              ) : (
-                orders.map((order) => {
-                  const productCount = order.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
-                  
-                  return (
-                    <tr key={order.id} className="hover:bg-[#FAFAFA] transition-colors group">
-                      <td className="px-6 py-4">
-                        <span className="font-[700] text-sm text-[#18181B] whitespace-nowrap">{formatOrderId(order)}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-[500] text-[#18181B]">{order.customer_name || 'Guest'}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-[500] text-[#18181B]">{order.customer_phone || '-'}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-[#52525B] max-w-[250px] truncate" title={order.delivery_address || '-'}>
-                          {order.delivery_address || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F4F4F5] text-xs font-[700] text-[#52525B]">
-                          {productCount}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-[700] text-[#18181B]">₹{(order.total || 0).toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-[500] text-[#52525B] whitespace-nowrap">{formatDate(order.created_at)}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="relative inline-block w-[140px]">
-                          <select
-                            value={order.status.toLowerCase()}
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                            className={`appearance-none w-full bg-transparent border border-transparent font-[700] text-[11px] uppercase tracking-[1px] px-3 py-1.5 rounded-full cursor-pointer transition-all hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${getStatusColor(order.status)}`}
-                          >
-                            <option value="pending" className="text-black font-semibold">PENDING</option>
-                            <option value="processing" className="text-black font-semibold">PROCESSING</option>
-                            <option value="completed" className="text-black font-semibold">COMPLETED</option>
-                            <option value="cancelled" className="text-black font-semibold">CANCELLED</option>
-                          </select>
-                          <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${getStatusColor(order.status).split(' ')[0]}`} />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="px-4 py-1.5 bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] hover:bg-[#DBEAFE] text-xs font-[700] rounded-full transition-colors whitespace-nowrap"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Order ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Address</TableHead>
+              <TableHead className="text-center">Products</TableHead>
+              <TableHead>Est. Total</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-12 text-erp-muted">
+                  No requests found matching your filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              orders.map((order) => {
+                const productCount = order.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+                
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-bold whitespace-nowrap">{formatOrderId(order)}</TableCell>
+                    <TableCell>{order.customer_name || 'Guest'}</TableCell>
+                    <TableCell>{order.customer_phone || '-'}</TableCell>
+                    <TableCell>
+                      <div className="max-w-[200px] truncate" title={order.delivery_address || '-'}>
+                        {order.delivery_address || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-600">
+                        {productCount}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-bold">₹{(order.total || 0).toLocaleString()}</TableCell>
+                    <TableCell className="text-erp-muted whitespace-nowrap">{formatDate(order.created_at)}</TableCell>
+                    <TableCell>
+                      <div className="w-[140px]">
+                        <Select
+                          value={order.status.toLowerCase()}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateOrderStatus(order.id, e.target.value)}
+                          options={[
+                            { label: 'PENDING', value: 'pending' },
+                            { label: 'PROCESSING', value: 'processing' },
+                            { label: 'COMPLETED', value: 'completed' },
+                            { label: 'CANCELLED', value: 'cancelled' },
+                          ]}
+                          className={
+                            order.status === 'pending' ? 'text-erp-warning border-erp-warning/20 bg-erp-warning/5' :
+                            order.status === 'processing' ? 'text-erp-blue border-erp-blue/20 bg-erp-blue/5' :
+                            order.status === 'completed' ? 'text-erp-success border-erp-success/20 bg-erp-success/5' :
+                            'text-erp-danger border-erp-danger/20 bg-erp-danger/5'
+                          }
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <OrderDrawer

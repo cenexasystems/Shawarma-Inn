@@ -54,13 +54,13 @@ export default {
         'secondary-fixed': '#e3e2df',
         'on-secondary': '#30312e',
         erp: {
-          bg: '#F7F8FA',
-          card: '#FFFFFF',
-          primary: '#173A2A',
-          accent: '#E63946',
+          bg: '#F7F8FA', // Base Background
+          card: '#FFFFFF', // Surface
+          primary: '#163A2E', // Primary (Dark Green)
+          accent: '#D89B2B', // Accent
           text: '#111827',
           muted: '#6B7280',
-          border: '#EAECEF',
+          border: '#E8EBEF', // Border
           success: '#16A34A',
           warning: '#F59E0B',
           danger: '#EF4444',
@@ -91,10 +91,11 @@ export default {
         lg: '2rem',
         xl: '3rem',
         full: '9999px',
-        'erp': '22px',
+        'erp': '18px', // Default card radius
+        'erp-input': '14px', // Input radius
       },
       boxShadow: {
-        'erp': '0 8px 30px rgba(0,0,0,0.05)',
+        'erp': '0 6px 24px rgba(0,0,0,0.05)',
       },
       keyframes: {
         shine: {

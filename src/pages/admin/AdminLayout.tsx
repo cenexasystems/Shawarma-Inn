@@ -39,7 +39,7 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="flex h-screen bg-erp-bg text-erp-text overflow-hidden font-inter">
+    <div className="flex h-screen bg-erp-bg text-erp-text overflow-hidden font-inter w-full max-w-[1680px] mx-auto relative shadow-2xl">
       
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -56,8 +56,8 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <motion.aside 
-        animate={{ width: collapsed ? 80 : 280 }}
-        transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+        animate={{ width: collapsed ? 78 : 220 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.25 }}
         className={`fixed inset-y-0 left-0 bg-white border-r border-erp-border flex flex-col shrink-0 z-[70] lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform lg:transition-none`}
       >
         {/* Floating Sidebar Toggle Button */}
@@ -82,7 +82,7 @@ export default function AdminLayout() {
         </div>
         
         {/* Navigation */}
-        <nav className="flex-1 py-[24px] px-[16px] space-y-[4px] overflow-y-auto">
+        <nav className="flex-1 py-[24px] px-[12px] space-y-1 overflow-y-auto">
           {NAV_ITEMS.map(({ key, path, icon: Icon, label }) => {
             const isActive = path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path);
             return (
@@ -93,10 +93,10 @@ export default function AdminLayout() {
                 className="w-full relative group"
               >
                 {isActive && (
-                  <motion.div layoutId="sidebar-active" className="absolute inset-0 bg-erp-primary rounded-[12px] shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+                  <motion.div layoutId="sidebar-active" className="absolute inset-0 bg-erp-primary rounded-full shadow-sm" transition={{ type: 'spring', bounce: 0, duration: 0.25 }} />
                 )}
-                <div className={`relative flex items-center gap-[16px] px-[16px] py-[12px] rounded-[12px] text-[15px] transition-all duration-200 font-inter font-[600] ${collapsed ? 'justify-center' : ''} ${
-                  isActive ? 'text-white' : 'text-erp-muted group-hover:bg-erp-bg group-hover:text-erp-text'
+                <div className={`relative flex items-center gap-[12px] px-[16px] py-[10px] rounded-full text-[14px] transition-colors duration-150 font-inter font-semibold ${collapsed ? 'justify-center' : ''} ${
+                  isActive ? 'text-white' : 'text-erp-muted group-hover:bg-gray-100 group-hover:text-erp-text'
                 }`}>
                   <motion.div whileHover={{ scale: isActive ? 1 : 1.1 }} className="shrink-0 flex items-center justify-center">
                     <Icon size={22} />
