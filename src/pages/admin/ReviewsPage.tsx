@@ -89,7 +89,7 @@ export default function ReviewsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading && reviews.length === 0 ? (
            [...Array(3)].map((_, i) => (
-             <Card key={i} className="h-48 animate-pulse" />
+             <Card key={i} className="h-48 animate-pulse flex" />
            ))
         ) : reviews.length === 0 ? (
           <div className="col-span-full p-16 text-center bg-white border border-dashed border-erp-border rounded-erp text-erp-muted font-medium">

@@ -1,11 +1,9 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Card } from './Card';
 
 export interface KPICardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
   icon: LucideIcon;
   iconColor?: string;
   iconBgColor?: string;

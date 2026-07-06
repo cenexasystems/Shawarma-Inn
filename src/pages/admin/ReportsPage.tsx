@@ -3,8 +3,6 @@ import { Download, TrendingUp, IndianRupee, Tag, ShoppingBag } from 'lucide-reac
 import { supabase } from '../../lib/supabaseClient';
 import { useAdminContext } from '../../context/AdminContext';
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
