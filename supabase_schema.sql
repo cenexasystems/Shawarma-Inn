@@ -76,8 +76,11 @@ CREATE TABLE IF NOT EXISTS public.orders (
   total            NUMERIC(10,2) NOT NULL,
   status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','processing','preparing','ready','in_transit','completed','cancelled')),
   notes            TEXT,
+  payment_method   TEXT DEFAULT 'cash',
   created_at       TIMESTAMPTZ DEFAULT NOW(),
-  updated_at       TIMESTAMPTZ DEFAULT NOW()
+  updated_at       TIMESTAMPTZ DEFAULT NOW(),
+  acknowledged_at  TIMESTAMPTZ,
+  order_number     BIGINT GENERATED ALWAYS AS IDENTITY
 );
 
 -- Add missing columns if orders table already existed without them
@@ -87,6 +90,19 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS coupon_code     TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10,2) NOT NULL DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS packing_charge  NUMERIC(10,2) NOT NULL DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS updated_at      TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_method  TEXT DEFAULT 'cash';
+
+-- 5.1 KDS SETTINGS
+CREATE TABLE IF NOT EXISTS public.kds_settings (
+  user_id                      UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
+  sound_url                    TEXT,
+  volume                       INTEGER NOT NULL DEFAULT 100 CHECK (volume BETWEEN 0 AND 100),
+  repeat_interval_sec          INTEGER NOT NULL DEFAULT 10 CHECK (repeat_interval_sec >= 0),
+  is_muted                     BOOLEAN NOT NULL DEFAULT FALSE,
+  enable_browser_notifications BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 -- 6. ORDER ITEMS
 CREATE TABLE IF NOT EXISTS public.order_items (
@@ -99,6 +115,16 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   subtotal      NUMERIC(10,2) GENERATED ALWAYS AS (price * quantity) STORED
 );
 
+-- 7. ORDER EVENTS (History/Timeline)
+CREATE TABLE IF NOT EXISTS public.order_events (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id      UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  status        TEXT NOT NULL,
+  notes         TEXT,
+  admin_id      UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ==========================================================
 -- ROW LEVEL SECURITY
 -- ==========================================================
@@ -109,6 +135,8 @@ ALTER TABLE public.orders          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menu_items      DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.branches        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.kds_settings    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_events    ENABLE ROW LEVEL SECURITY;
 
 -- Helper: check if the calling user is an admin
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -172,6 +200,20 @@ CREATE POLICY "order_items_select_own" ON public.order_items FOR SELECT
 CREATE POLICY "order_items_insert_own" ON public.order_items FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND o.user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "order_events_select" ON public.order_events;
+CREATE POLICY "order_events_select" ON public.order_events FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND o.user_id = auth.uid())
+  OR public.is_admin()
+);
+
+DROP POLICY IF EXISTS "order_events_insert" ON public.order_events;
+CREATE POLICY "order_events_insert" ON public.order_events FOR INSERT WITH CHECK (
+  public.is_admin() OR auth.uid() IS NOT NULL
+);
+
+DROP POLICY IF EXISTS "kds_settings_all" ON public.kds_settings;
+CREATE POLICY "kds_settings_all" ON public.kds_settings FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
 -- ==========================================================
 -- TRIGGER: auto-upsert profile on new auth user
 -- ==========================================================
@@ -205,6 +247,30 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- ==========================================================
+-- TRIGGER: auto-log order status changes
+-- ==========================================================
+CREATE OR REPLACE FUNCTION public.log_order_status_change()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF (TG_OP = 'INSERT') OR (TG_OP = 'UPDATE' AND OLD.status IS DISTINCT FROM NEW.status) THEN
+    INSERT INTO public.order_events (order_id, status, notes, admin_id)
+    VALUES (
+      NEW.id,
+      NEW.status,
+      CASE WHEN TG_OP = 'INSERT' THEN 'Order Created' ELSE 'Status updated to ' || NEW.status END,
+      CASE WHEN public.is_admin() THEN auth.uid() ELSE NULL END
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_order_status_change ON public.orders;
+CREATE TRIGGER on_order_status_change
+  AFTER INSERT OR UPDATE ON public.orders
+  FOR EACH ROW EXECUTE PROCEDURE public.log_order_status_change();
 
 -- ==========================================================
 -- GRANT ADMIN ROLE

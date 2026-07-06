@@ -1,6 +1,6 @@
 import { MessageCircle } from 'lucide-react';
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
+const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
 
 interface WhatsAppFabProps {
   /** When true (cart bar visible), lift the FAB above the cart bar */

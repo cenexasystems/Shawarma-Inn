@@ -10,8 +10,8 @@ const branches = [
   'Kodungaiyur'
 ];
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
-const CONTACT_PHONE = '8778024010';
+const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
+const CONTACT_PHONE = '6382877479';
 
 export default function ContactPage() {
   return (

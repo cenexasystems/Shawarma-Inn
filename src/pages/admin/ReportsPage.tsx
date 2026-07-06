@@ -110,12 +110,12 @@ export default function ReportsPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Reports & Analytics</h2>
-          <p className="text-white/50 text-sm mt-1">Deep dive into your sales and performance metrics.</p>
+          <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Reports & Analytics</h2>
+          <p className="text-gray-500 text-sm mt-1">Deep dive into your sales and performance metrics.</p>
         </div>
         <button 
           onClick={handleExport}
-          className="bg-black/40 border border-white/10 hover:bg-white/5 text-white px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-[1px] flex items-center gap-2 transition-colors"
+          className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-[1px] flex items-center gap-2 transition-colors shadow-sm"
         >
           <Download className="w-4 h-4" /> Export CSV
         </button>
@@ -125,19 +125,19 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Revenue', value: `₹${metrics.revenue.toLocaleString()}`, icon: IndianRupee, color: 'text-green-400' },
-          { label: 'Completed Orders', value: metrics.totalOrders.toLocaleString(), icon: ShoppingBag, color: 'text-[#ef8f2f]' },
-          { label: 'Avg Order Value', value: `₹${Math.round(metrics.avgOrder).toLocaleString()}`, icon: TrendingUp, color: 'text-blue-400' },
-          { label: 'Cancelled Orders', value: metrics.cancelledCount.toLocaleString(), icon: Tag, color: 'text-red-400' },
+          { label: 'Total Revenue', value: `₹${metrics.revenue.toLocaleString()}`, icon: IndianRupee, color: 'text-green-600' },
+          { label: 'Completed Orders', value: metrics.totalOrders.toLocaleString(), icon: ShoppingBag, color: 'text-[#183025]' },
+          { label: 'Avg Order Value', value: `₹${Math.round(metrics.avgOrder).toLocaleString()}`, icon: TrendingUp, color: 'text-blue-600' },
+          { label: 'Cancelled Orders', value: metrics.cancelledCount.toLocaleString(), icon: Tag, color: 'text-red-500' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-[#181818] border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
-            <div className={`absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors pointer-events-none`} />
+          <div key={label} className="bg-white border border-gray-200 rounded-2xl p-6 relative overflow-hidden group shadow-sm">
+            <div className={`absolute -right-4 -top-4 w-24 h-24 bg-gray-50 rounded-full blur-2xl group-hover:bg-gray-100 transition-colors pointer-events-none`} />
             <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase tracking-[2px] text-white/50 font-bold mb-2">{label}</p>
-                <h3 className="font-bebas text-4xl leading-none text-white">{value}</h3>
+                <p className="text-[10px] uppercase tracking-[2px] text-gray-500 font-bold mb-2">{label}</p>
+                <h3 className="font-bebas text-4xl leading-none text-gray-900">{value}</h3>
               </div>
-              <div className="p-3 bg-black/40 border border-white/5 rounded-xl shadow-inner">
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
                 <Icon size={24} className={color} />
               </div>
             </div>
@@ -146,44 +146,44 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <div className="h-96 bg-[#181818] border border-white/5 rounded-2xl animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-[#ef8f2f] border-t-transparent rounded-full animate-spin" />
+        <div className="h-96 bg-white border border-gray-200 rounded-2xl animate-pulse flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 border-2 border-[#183025] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-[#181818] border border-white/5 rounded-2xl p-6">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 font-bold mb-6">Revenue Trend</h3>
+          <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Revenue Trend</h3>
             <div className="h-[300px] w-full">
               {metrics.revenueData.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-white/20">No data available</div>
+                <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={metrics.revenueData}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#183025" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#183025" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickMargin={10} axisLine={false} tickLine={false} />
-                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickFormatter={(v) => `₹${v}`} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
+                    <XAxis dataKey="date" stroke="rgba(0,0,0,0.4)" fontSize={10} tickMargin={10} axisLine={false} tickLine={false} />
+                    <YAxis stroke="rgba(0,0,0,0.4)" fontSize={10} tickFormatter={(v) => `₹${v}`} axisLine={false} tickLine={false} />
                     <RechartsTooltip 
-                      contentStyle={{ backgroundColor: '#121212', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      itemStyle={{ color: '#10b981', fontWeight: 'bold' }}
+                      contentStyle={{ backgroundColor: '#fff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ color: '#183025', fontWeight: 'bold' }}
                     />
-                    <Area type="monotone" dataKey="total" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                    <Area type="monotone" dataKey="total" stroke="#183025" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
             </div>
           </div>
 
-          <div className="bg-[#181818] border border-white/5 rounded-2xl p-6">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-white/50 font-bold mb-6">Top Selling Items</h3>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Top Selling Items</h3>
             <div className="h-[300px] w-full">
               {metrics.topItems.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-white/20">No data available</div>
+                <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -201,8 +201,8 @@ export default function ReportsPage() {
                       ))}
                     </Pie>
                     <RechartsTooltip 
-                      contentStyle={{ backgroundColor: '#121212', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      itemStyle={{ color: '#fff' }}
+                      contentStyle={{ backgroundColor: '#fff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ color: '#111827' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -212,10 +212,10 @@ export default function ReportsPage() {
               {metrics.topItems.map((item, idx) => (
                 <div key={item.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                    <span className="text-white/80 line-clamp-1">{item.name}</span>
+                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                    <span className="text-gray-600 line-clamp-1">{item.name}</span>
                   </div>
-                  <span className="font-bold">{item.value}x</span>
+                  <span className="font-bold text-gray-900">{item.value}x</span>
                 </div>
               ))}
             </div>

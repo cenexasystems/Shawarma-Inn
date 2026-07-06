@@ -5,15 +5,12 @@
  *   1. Premium Commercial Assets (Local exact match in imageMap overrides EVERYTHING)
  *   2. DB image_url — absolute HTTP/S URL (e.g. admin-set Supabase Storage CDN link)
  *   3. DB image_url — Supabase Storage path (e.g. "menu-images/shawarma/…") → resolved via SDK
- *   4. Category fallback → correct-category Unsplash pool (never crosses food types)
- *
- * Rule: a milkshake will NEVER show a burger image.
- *       A shawarma will NEVER show a pizza image.
+ *   4. Coming Soon Placeholder — The absolute final fallback. Never guess with generic foods.
  */
 
 import { supabase } from '../lib/supabaseClient';
 import type { MenuItem } from '../types';
-import { imageMap, categoryFallbackMap } from './imageMap';
+import { imageMap, fallbackPlaceholder, categoryFallbackMap } from './imageMap';
 
 // ─── Supabase Storage ─────────────────────────────────────────────────────────
 
@@ -35,10 +32,9 @@ function isStoragePath(s: string): boolean {
 /**
  * Resolves the best image URL for a menu item.
  * Priority:
- * 1. DB image_url (absolute or Supabase Storage)
- * 2. Exact match in imageMap by slug or name
- * 3. Category fallback in categoryFallbackMap
- * 4. Absolute ultimate fallback (Shawarma)
+ * 1. Exact match in imageMap by slug or name
+ * 2. DB image_url (absolute or Supabase Storage)
+ * 3. Coming Soon fallback placeholder
  */
 export function resolveMenuImage(
   item: Pick<MenuItem, 'name' | 'category'> & { image?: string; image_url?: string | null; slug?: string },
@@ -57,20 +53,13 @@ export function resolveMenuImage(
     if (dbUrl.startsWith('http://') || dbUrl.startsWith('https://')) return dbUrl;
   }
 
-  // 3. Name-based smart fallback (prevent cross-contamination)
-  const nameLower = item.name.toLowerCase();
-  if (nameLower.includes('plate')) {
-    return imageMap['classic-shawarma-plate'];
-  }
-  if (nameLower.includes('roll') || nameLower.includes('shawarma')) {
-    return imageMap['classic-shawarma-roll'];
+  // 3. Strict category fallback (prevent empty images but maintain cuisine accuracy)
+  if (item.category && categoryFallbackMap[item.category]) {
+    return categoryFallbackMap[item.category];
   }
 
-  // Category fallback
-  if (categoryFallbackMap[item.category]) return categoryFallbackMap[item.category];
-
-  // Absolute fallback
-  return categoryFallbackMap['Shawarma'];
+  // 4. Absolute fallback placeholder (never guess or use cross-category foods)
+  return fallbackPlaceholder;
 }
 
 /**
@@ -78,17 +67,12 @@ export function resolveMenuImage(
  */
 export function getRecoveryImage(item: Pick<MenuItem, 'name' | 'category'> & { slug?: string }): string {
   const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  
   if (imageMap[slug]) return imageMap[slug];
 
-  const nameLower = item.name.toLowerCase();
-  if (nameLower.includes('plate')) {
-    return imageMap['classic-shawarma-plate'];
-  }
-  if (nameLower.includes('roll') || nameLower.includes('shawarma')) {
-    return imageMap['classic-shawarma-roll'];
+  if (item.category && categoryFallbackMap[item.category]) {
+    return categoryFallbackMap[item.category];
   }
 
-  if (categoryFallbackMap[item.category]) return categoryFallbackMap[item.category];
-  return categoryFallbackMap['Shawarma'];
+  return fallbackPlaceholder;
 }
-

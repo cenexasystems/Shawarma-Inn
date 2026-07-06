@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { getRangeForPreset, type DateRangePreset, type DateRange } from '../utils/dateRanges';
@@ -9,20 +9,40 @@ export type { DateRange };
 const STORAGE_KEY_TYPE = 'admin_date_range_type';
 const STORAGE_KEY_CUSTOM = 'admin_date_range_custom';
 
+interface KDSSettings {
+  sound_url: string;
+  volume: number;
+  repeat_interval_sec: number;
+  is_muted: boolean;
+  enable_browser_notifications: boolean;
+}
+
+const DEFAULT_SETTINGS: KDSSettings = {
+  sound_url: '/restaurant-bell.mp3',
+  volume: 100,
+  repeat_interval_sec: 10,
+  is_muted: false,
+  enable_browser_notifications: true
+};
+
 interface AdminContextValue {
   dateRangeType: DateRangeType;
   dateRange: DateRange;
   setDateRangeType: (type: DateRangeType, customRange?: DateRange) => void;
   pendingOrdersCount: number;
   unacknowledgedAlerts: any[];
-  acknowledgeAlert: (orderId: string) => void;
+  acknowledgeAlert: (orderId: string) => Promise<void>;
   refreshSignal: number;
+  kdsSettings: KDSSettings;
+  updateKDSSettings: (newSettings: Partial<KDSSettings>) => Promise<void>;
+  testAlert: () => void;
+  stopTestAlert: () => void;
 }
 
 const AdminContext = createContext<AdminContextValue | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   const [dateRangeType, setDateRangeTypeState] = useState<DateRangeType>(() => {
     const stored = localStorage.getItem(STORAGE_KEY_TYPE) as DateRangeType | null;
@@ -46,8 +66,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [unacknowledgedAlerts, setUnacknowledgedAlerts] = useState<any[]>([]);
-  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [kdsSettings, setKdsSettings] = useState<KDSSettings>(DEFAULT_SETTINGS);
+  const kdsSettingsRef = useRef<KDSSettings>(DEFAULT_SETTINGS);
+
+  // Audio setup
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const loopIntervalRef = useRef<number | null>(null);
 
   const setDateRangeType = useCallback((type: DateRangeType, customRange?: DateRange) => {
     setDateRangeTypeState(type);
@@ -62,89 +87,85 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setDateRange(getRangeForPreset(type));
   }, []);
 
-  const playAlert = useCallback(() => {
+  const fetchKDSSettings = useCallback(async () => {
+    if (!user) return;
     try {
-      if (!audioContext) {
-        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-        if (Ctx) {
-          const ctx = new Ctx();
-          setAudioContext(ctx);
-          playOscillator(ctx);
+      const { data, error } = await supabase
+        .from('kds_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching KDS settings:', error);
+      }
+        
+      if (data) {
+        let soundUrl = data.sound_url || DEFAULT_SETTINGS.sound_url;
+        if (soundUrl.includes('actions.google.com')) {
+          soundUrl = DEFAULT_SETTINGS.sound_url;
         }
-      } else {
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-        playOscillator(audioContext);
+        
+        const loadedSettings = {
+          sound_url: soundUrl,
+          volume: data.volume ?? DEFAULT_SETTINGS.volume,
+          repeat_interval_sec: data.repeat_interval_sec ?? DEFAULT_SETTINGS.repeat_interval_sec,
+          is_muted: data.is_muted ?? DEFAULT_SETTINGS.is_muted,
+          enable_browser_notifications: data.enable_browser_notifications ?? DEFAULT_SETTINGS.enable_browser_notifications
+        };
+        setKdsSettings(loadedSettings);
+        kdsSettingsRef.current = loadedSettings;
       }
     } catch (err) {
-      console.warn("Audio play failed:", err);
+      console.error('Error fetching KDS settings:', err);
     }
-  }, [audioContext]);
+  }, [user]);
 
-  const playOscillator = (ctx: AudioContext) => {
-    // Loud kitchen-alarm siren: 4 two-tone bursts at full volume,
-    // doubled an octave up, run through a compressor so it stays
-    // loud without clipping.
-    const compressor = ctx.createDynamicsCompressor();
-    compressor.threshold.setValueAtTime(-12, ctx.currentTime);
-    compressor.ratio.setValueAtTime(12, ctx.currentTime);
-    compressor.connect(ctx.destination);
-
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(1.0, ctx.currentTime);
-    master.connect(compressor);
-
-    const BURSTS = 4;
-    const BURST_LEN = 0.55;
-    const GAP = 0.18;
-
-    for (let i = 0; i < BURSTS; i++) {
-      const start = ctx.currentTime + i * (BURST_LEN + GAP);
-      const end = start + BURST_LEN;
-
-      const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0.0001, start);
-      gainNode.gain.exponentialRampToValueAtTime(1.0, start + 0.02);
-      gainNode.gain.setValueAtTime(1.0, end - 0.05);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, end);
-      gainNode.connect(master);
-
-      // Main two-tone siren (A5 <-> E6)
-      const osc = ctx.createOscillator();
-      osc.type = 'square';
-      for (let t = 0; t < BURST_LEN; t += 0.12) {
-        osc.frequency.setValueAtTime(t % 0.24 < 0.12 ? 880 : 1318.5, start + t);
-      }
-      osc.connect(gainNode);
-      osc.start(start);
-      osc.stop(end);
-
-      // Octave-up layer for extra cut-through
-      const oscHigh = ctx.createOscillator();
-      oscHigh.type = 'sawtooth';
-      for (let t = 0; t < BURST_LEN; t += 0.12) {
-        oscHigh.frequency.setValueAtTime(t % 0.24 < 0.12 ? 1760 : 2637, start + t);
-      }
-      const highGain = ctx.createGain();
-      highGain.gain.setValueAtTime(0.6, start);
-      oscHigh.connect(highGain);
-      highGain.connect(gainNode);
-      oscHigh.start(start);
-      oscHigh.stop(end);
+  const updateKDSSettings = useCallback(async (newSettings: Partial<KDSSettings>) => {
+    if (!user) return;
+    const updated = { ...kdsSettings, ...newSettings };
+    setKdsSettings(updated);
+    kdsSettingsRef.current = updated;
+    
+    try {
+      const { error } = await supabase
+        .from('kds_settings')
+        .upsert({
+          user_id: user.id,
+          ...updated,
+          updated_at: new Date().toISOString()
+        });
+        
+      if (error) console.error('Error updating settings:', error);
+    } catch (err) {
+      console.error('Failed to update KDS settings', err);
     }
-  };
+  }, [user, kdsSettings]);
 
   const loadPendingOrders = useCallback(async () => {
     if (!isAdmin) return;
     try {
-      const { count, error } = await supabase
+      // 24 hour lookback for unacknowledged orders failsafe
+      const yesterday = new Date();
+      yesterday.setHours(yesterday.getHours() - 24);
+
+      const { data, count, error } = await supabase
         .from('orders')
-        .select('*', { count: 'exact', head: true })
+        .select('*', { count: 'exact' })
         .eq('status', 'pending');
         
-      if (!error && count !== null) {
-        setPendingOrdersCount(count);
+      if (!error && data) {
+        setPendingOrdersCount(count || 0);
+        
+        // Find unacknowledged orders from the last 24h
+        const unacked = data.filter(o => !o.acknowledged_at && new Date(o.created_at) > yesterday);
+        setUnacknowledgedAlerts(unacked);
+        
+        if (unacked.length > 0) {
+          startAlertLoop();
+        } else {
+          stopAlertLoop();
+        }
       }
     } catch (err) {
       console.error('Error fetching pending orders:', err);
@@ -153,9 +174,87 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isAdmin) {
+      fetchKDSSettings();
       loadPendingOrders();
     }
-  }, [isAdmin, loadPendingOrders]);
+    return () => stopAlertLoop();
+  }, [isAdmin, fetchKDSSettings, loadPendingOrders]);
+
+  // Handle browser notification permissions
+  useEffect(() => {
+    if (isAdmin && kdsSettings.enable_browser_notifications) {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, [isAdmin, kdsSettings.enable_browser_notifications]);
+
+  // Audio playing logic
+  const playSingleAlert = useCallback(() => {
+    const settings = kdsSettingsRef.current;
+    if (settings.is_muted) return;
+    
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    const audio = audioRef.current;
+    
+    // Set src if different
+    if (audio.src !== settings.sound_url && !audio.src.endsWith(settings.sound_url)) {
+      audio.src = settings.sound_url;
+    }
+    
+    audio.volume = settings.volume / 100;
+    
+    audio.play().catch(err => {
+      console.warn("Audio play failed (maybe require user interaction first):", err);
+    });
+  }, []);
+
+  const startAlertLoop = useCallback(() => {
+    // Play immediately
+    playSingleAlert();
+    
+    // Clear any existing loop
+    if (loopIntervalRef.current) {
+      clearInterval(loopIntervalRef.current);
+    }
+    
+    let playCount = 1;
+
+    // Start repeating
+    const settings = kdsSettingsRef.current;
+    if (settings.repeat_interval_sec > 0) {
+      loopIntervalRef.current = window.setInterval(() => {
+        playCount++;
+        if (playCount > 3) {
+          if (loopIntervalRef.current) clearInterval(loopIntervalRef.current);
+          return;
+        }
+        playSingleAlert();
+      }, settings.repeat_interval_sec * 1000);
+    }
+  }, [playSingleAlert]);
+
+  const stopAlertLoop = useCallback(() => {
+    if (loopIntervalRef.current) {
+      clearInterval(loopIntervalRef.current);
+      loopIntervalRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  }, []);
+
+  const triggerBrowserNotification = useCallback((order: any) => {
+    if (kdsSettings.enable_browser_notifications && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('New Order Received!', {
+        body: `Order #${order.id.split('-')[0]} from ${order.customer_name || 'Guest'}`,
+        icon: '/favicon.svg'
+      });
+    }
+  }, [kdsSettings.enable_browser_notifications]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -168,16 +267,29 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           setPendingOrdersCount((prev) => prev + 1);
-          setUnacknowledgedAlerts((prev) => [...prev, payload.new]);
+          setUnacknowledgedAlerts((prev) => {
+            const newAlerts = [...prev, payload.new];
+            // Restart loop if we just got a new order
+            startAlertLoop();
+            triggerBrowserNotification(payload.new);
+            return newAlerts;
+          });
           setRefreshSignal((prev) => prev + 1);
-          playAlert();
         }
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'orders' },
-        () => {
+        (payload) => {
           // Re-evaluate pending count on status change
+          // Also if an order is acknowledged remotely, we should remove it from alerts
+          setUnacknowledgedAlerts(prev => {
+            const filtered = prev.filter(a => a.id !== payload.new.id || !payload.new.acknowledged_at);
+            if (filtered.length === 0) {
+              stopAlertLoop();
+            }
+            return filtered;
+          });
           loadPendingOrders();
           setRefreshSignal((prev) => prev + 1);
         }
@@ -187,11 +299,37 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, [isAdmin, loadPendingOrders, playAlert]);
+  }, [isAdmin, loadPendingOrders, startAlertLoop, stopAlertLoop, triggerBrowserNotification]);
 
-  const acknowledgeAlert = useCallback((orderId: string) => {
-    setUnacknowledgedAlerts((prev) => prev.filter((a) => a.id !== orderId));
-  }, []);
+  const acknowledgeAlert = useCallback(async (orderId: string) => {
+    // Optimistic UI update
+    setUnacknowledgedAlerts((prev) => {
+      const next = prev.filter((a) => a.id !== orderId);
+      if (next.length === 0) {
+        stopAlertLoop();
+      }
+      return next;
+    });
+
+    try {
+      await supabase
+        .from('orders')
+        .update({ acknowledged_at: new Date().toISOString() })
+        .eq('id', orderId);
+    } catch (err) {
+      console.error('Failed to acknowledge order:', err);
+    }
+  }, [stopAlertLoop]);
+
+  const testAlert = useCallback(() => {
+    startAlertLoop();
+  }, [startAlertLoop]);
+  
+  const stopTestAlert = useCallback(() => {
+    if (unacknowledgedAlerts.length === 0) {
+      stopAlertLoop();
+    }
+  }, [unacknowledgedAlerts.length, stopAlertLoop]);
 
   const value = useMemo<AdminContextValue>(() => ({
     dateRangeType,
@@ -201,7 +339,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     unacknowledgedAlerts,
     acknowledgeAlert,
     refreshSignal,
-  }), [dateRangeType, dateRange, setDateRangeType, pendingOrdersCount, unacknowledgedAlerts, acknowledgeAlert, refreshSignal]);
+    kdsSettings,
+    updateKDSSettings,
+    testAlert,
+    stopTestAlert
+  }), [
+    dateRangeType, dateRange, setDateRangeType, pendingOrdersCount, 
+    unacknowledgedAlerts, acknowledgeAlert, refreshSignal, 
+    kdsSettings, updateKDSSettings, testAlert, stopTestAlert
+  ]);
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }

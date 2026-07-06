@@ -4,7 +4,7 @@ import { TrendingUp, Megaphone, GraduationCap, Handshake, CheckCircle2 } from 'l
 import jsPDF from 'jspdf';
 import { franchiseApi } from '../lib/api';
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
+const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
 
 const highlights = [
   {

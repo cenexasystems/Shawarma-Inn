@@ -238,10 +238,13 @@ export const useOrders = () => {
           return { success: false, error: 'Please sign in before placing an order.' };
         }
 
+        const randomOrderNumber = Math.floor(Math.random() * 900000) + 100000;
+
         const { data: insertedOrder, error: insertOrderError } = await supabase
           .from('orders')
           .insert({
             user_id: String(user.id),
+            order_number: randomOrderNumber,
             delivery_address: params.deliveryAddress,
             delivery_type: params.deliveryType ?? 'store_pickup',
             customer_name: params.customerName,

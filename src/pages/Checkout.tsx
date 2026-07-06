@@ -25,7 +25,7 @@ interface CheckoutProps {
   cartData?: CheckoutCartData;
 }
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '918778024010';
+const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
 
 export default function Checkout({ cartData }: CheckoutProps) {
   if (!cartData) return null;

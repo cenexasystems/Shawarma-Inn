@@ -19,7 +19,15 @@ import chipotleRoll from '../assets/Chipotle shawarma.jpeg';
 import chipotlePlate from '../assets/Chipotle Plate.png';
 import sweetChilliRoll from '../assets/Sweet chilli shawarma.png';
 import sweetChilliPlate from '../assets/sweet chilli shawarma.jpeg';
-import shawarmaFallback from '../assets/shawarma_loader.png';
+
+// Premium accurate Lebanese vegetarian items
+import vegShawarma from '../assets/veg_shawarma.png';
+import paneerShawarma from '../assets/paneer_shawarma.png';
+import vegPlatter from '../assets/veg_platter.png';
+import paneerPlatter from '../assets/paneer_platter.png';
+import comingSoonPlaceholder from '../assets/coming_soon_placeholder.png';
+
+export const fallbackPlaceholder = comingSoonPlaceholder;
 
 export const imageMap: Record<string, string> = {
   // Classic Shawarma
@@ -96,53 +104,19 @@ export const imageMap: Record<string, string> = {
   'plate-shawarma-add-on-kuboos-reg': classicPlate,
   'plate-shawarma-add-on-kuboos-spl': classicPlate,
 
-  // Paneer / Veg Fallbacks (if no assets provided, use classic for now, or fallback)
-  'paneer-shawarma': shawarmaFallback,
-  'paneer-platter': shawarmaFallback,
-  'veg-shawarma': shawarmaFallback,
-  'veg-platter': shawarmaFallback,
-
-  // Burgers (Visually distinct for different variants)
-  'veg-burger': 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=600&h=450&fit=crop&q=75&auto=format',
-  'hot-glaze-veg-burger': 'https://images.unsplash.com/photo-1586816001966-79b736744398?w=600&h=450&fit=crop&q=75&auto=format',
-  'chipotle-veg-burger': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=450&fit=crop&q=75&auto=format',
-  'jalapeno-veg-burger': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&h=450&fit=crop&q=75&auto=format',
-  'thousand-island-veg-burger': 'https://images.unsplash.com/photo-1594212202999-928cc29d4d5e?w=600&h=450&fit=crop&q=75&auto=format',
-  'sweet-chilli-veg-burger': 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=600&h=450&fit=crop&q=75&auto=format',
-  
-  'paneer-burger': 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=600&h=450&fit=crop&q=75&auto=format',
-  'double-veg-burger': 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&h=450&fit=crop&q=75&auto=format',
-  'double-paneer-burger': 'https://images.unsplash.com/photo-1549611682-1fa0884617df?w=600&h=450&fit=crop&q=75&auto=format',
-  
-  'chicken-burger': 'https://images.unsplash.com/photo-1615719413546-198b25453f85?w=600&h=450&fit=crop&q=75&auto=format',
-  'hot-glaze-chicken-burger': 'https://images.unsplash.com/photo-1608767221051-2b9d18f35a2f?w=600&h=450&fit=crop&q=75&auto=format',
-  'bbq-chicken-burger': 'https://images.unsplash.com/photo-1596622527583-83674c5ea27c?w=600&h=450&fit=crop&q=75&auto=format',
-  'chipotle-chicken-burger': 'https://images.unsplash.com/photo-1588665045137-b9560fec9224?w=600&h=450&fit=crop&q=75&auto=format',
-  'jalapeno-chicken-burger': 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=600&h=450&fit=crop&q=75&auto=format',
-  'thousand-island-chicken-burger': 'https://images.unsplash.com/photo-1550950158-d0d960dff51b?w=600&h=450&fit=crop&q=75&auto=format',
-  'sweet-chilli-chicken-burger': 'https://images.unsplash.com/photo-1594212202999-928cc29d4d5e?w=600&h=450&fit=crop&q=75&auto=format',
-  'popcorn-chicken-burger': 'https://images.unsplash.com/photo-1563720224240-27cb09919f91?w=600&h=450&fit=crop&q=75&auto=format',
-  'zinger-chicken-burger': 'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=600&h=450&fit=crop&q=75&auto=format',
-  'double-chicken-burger': 'https://images.unsplash.com/photo-1542866165-f98292d37c8e?w=600&h=450&fit=crop&q=75&auto=format',
-  'burger-add-on-cheese': 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=600&h=450&fit=crop&q=75&auto=format',
-
-  // Fries
-  'french-fries': 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=600&h=450&fit=crop&q=75&auto=format',
-
-  // Mojitos
-  'mint-mojito': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&h=450&fit=crop&q=75&auto=format',
-  'green-apple-mojito': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&h=450&fit=crop&q=75&auto=format',
-  'blue-ocean-mojito': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=450&fit=crop&q=75&auto=format',
-  'strawberry-mojito': 'https://images.unsplash.com/photo-1546171753-97d7676e4602?w=600&h=450&fit=crop&q=75&auto=format',
-  'watermelon-mojito': 'https://images.unsplash.com/photo-1546171753-97d7676e4602?w=600&h=450&fit=crop&q=75&auto=format',
+  // Paneer / Veg Authentic Lebanese Mappings
+  'paneer-shawarma': paneerShawarma,
+  'paneer-platter': paneerPlatter,
+  'veg-shawarma': vegShawarma,
+  'veg-platter': vegPlatter,
 };
 
-// If an item is missing from imageMap, it gets ONE deterministic fallback based on its category
+// Extremely accurate category fallbacks to prevent empty placeholders without cross-contaminating foods
 export const categoryFallbackMap: Record<string, string> = {
-  'Shawarma': shawarmaFallback,
-  'Burgers': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=450&fit=crop&q=75&auto=format',
-  'Pizza': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=450&fit=crop&q=75&auto=format',
-  'Momos': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=450&fit=crop&q=75&auto=format',
+  'Shawarma': classicRoll, // Fallback to classic roll for any unknown shawarma
+  'Burgers': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=450&fit=crop&q=75&auto=format', // A beautiful, classic burger
+  'Pizza': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=450&fit=crop&q=75&auto=format', // Classic pizza
+  'Momos': 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=600&h=450&fit=crop&q=75&auto=format', // Exact dumpling/momo photo
   'Toasts': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=600&h=450&fit=crop&q=75&auto=format',
   'Starters': 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=600&h=450&fit=crop&q=75&auto=format',
   'Loaded Fries': 'https://images.unsplash.com/photo-1576107232684-1279f390859f?w=600&h=450&fit=crop&q=75&auto=format',

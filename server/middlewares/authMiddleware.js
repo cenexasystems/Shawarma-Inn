@@ -80,7 +80,7 @@ export function optionalAuth(req, _res, next) {
 
 export async function adminRequired(req, res, next) {
   if (process.env.ADMIN_AUTH_BYPASS === 'true') {
-    req.user = { id: 1, role: 'admin', email: process.env.ADMIN_EMAIL || 'admin@shawarmainn.local' };
+    req.user = { id: 1, role: 'admin', email: process.env.ADMIN_EMAIL || 'sharath.creator2210@gmail.com' };
     return next();
   }
 

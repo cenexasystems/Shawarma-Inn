@@ -24,8 +24,9 @@ const Profile = lazy(() => import('./pages/Profile'));
 const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const OperationsCenterPage = lazy(() => import('./pages/admin/OperationsCenterPage'));
 const DashboardPage = lazy(() => import('./pages/admin/DashboardPage'));
-const OrdersPage = lazy(() => import('./pages/admin/OrdersPage'));
+
 const MenuPage = lazy(() => import('./pages/admin/MenuPage'));
 const CategoriesPage = lazy(() => import('./pages/admin/CategoriesPage'));
 const CustomersPage = lazy(() => import('./pages/admin/CustomersPage'));
@@ -40,6 +41,7 @@ const PosBilling = lazy(() => import('./pages/PosBilling'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const ReportsPage = lazy(() => import('./pages/admin/ReportsPage'));
 const NotificationsPage = lazy(() => import('./pages/admin/NotificationsPage'));
+const KDSSettingsPage = lazy(() => import('./pages/admin/KDSSettingsPage'));
 
 function ProtectedAdminRoute({ children }: { children: ReactNode }) {
   const { isAdmin, loading } = useAuth();
@@ -194,18 +196,19 @@ export default function App() {
           }
         >
           <Route index element={<Suspense fallback={<Loader />}><DashboardPage /></Suspense>} />
-          <Route path="orders" element={<Suspense fallback={<Loader />}><OrdersPage /></Suspense>} />
+          <Route path="whatsapp" element={<Suspense fallback={<Loader />}><OperationsCenterPage /></Suspense>} />
           <Route path="menu" element={<Suspense fallback={<Loader />}><MenuPage /></Suspense>} />
           <Route path="categories" element={<Suspense fallback={<Loader />}><CategoriesPage /></Suspense>} />
           <Route path="customers" element={<Suspense fallback={<Loader />}><CustomersPage /></Suspense>} />
-          <Route path="users" element={<Suspense fallback={<Loader />}><UsersPage /></Suspense>} />
+          <Route path="team" element={<Suspense fallback={<Loader />}><UsersPage /></Suspense>} />
           <Route path="coupons" element={<Suspense fallback={<Loader />}><CouponsPage /></Suspense>} />
           <Route path="reviews" element={<Suspense fallback={<Loader />}><ReviewsPage /></Suspense>} />
           <Route path="franchise" element={<Suspense fallback={<Loader />}><FranchisePage /></Suspense>} />
-          <Route path="videos" element={<Suspense fallback={<Loader />}><VideosPage /></Suspense>} />
-          <Route path="reports" element={<Suspense fallback={<Loader />}><ReportsPage /></Suspense>} />
+          <Route path="media" element={<Suspense fallback={<Loader />}><VideosPage /></Suspense>} />
+          <Route path="analytics" element={<Suspense fallback={<Loader />}><ReportsPage /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<Loader />}><NotificationsPage /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<Loader />}><SettingsPage /></Suspense>} />
+          <Route path="kds-settings" element={<Suspense fallback={<Loader />}><KDSSettingsPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<Loader />}><ActivityLogPage /></Suspense>} />
         </Route>
         <Route

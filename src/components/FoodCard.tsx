@@ -22,11 +22,12 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty, disabled =
         <img
           src={item.image || recoveryImage}
           alt={item.name}
-          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={({ currentTarget }) => {
-            currentTarget.onerror = null;
-            currentTarget.src = recoveryImage;
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== recoveryImage) {
+              target.src = recoveryImage;
+            }
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />

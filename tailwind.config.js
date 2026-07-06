@@ -53,8 +53,34 @@ export default {
         'surface-bright': '#3a3939',
         'secondary-fixed': '#e3e2df',
         'on-secondary': '#30312e',
+        erp: {
+          bg: '#F7F8FA',
+          card: '#FFFFFF',
+          primary: '#173A2A',
+          accent: '#E63946',
+          text: '#111827',
+          muted: '#6B7280',
+          border: '#EAECEF',
+          success: '#16A34A',
+          warning: '#F59E0B',
+          danger: '#EF4444',
+          blue: '#2563EB',
+        }
+      },
+      spacing: {
+        'erp-4': '4px',
+        'erp-8': '8px',
+        'erp-12': '12px',
+        'erp-16': '16px',
+        'erp-20': '20px',
+        'erp-24': '24px',
+        'erp-32': '32px',
+        'erp-40': '40px',
+        'erp-48': '48px',
       },
       fontFamily: {
+        manrope: ['"Manrope"', 'sans-serif'],
+        inter: ['"Inter"', 'sans-serif'],
         headline: ['Epilogue', 'sans-serif'],
         body: ['Sora', 'sans-serif'],
         label: ['Sora', 'sans-serif'],
@@ -65,6 +91,10 @@ export default {
         lg: '2rem',
         xl: '3rem',
         full: '9999px',
+        'erp': '22px',
+      },
+      boxShadow: {
+        'erp': '0 8px 30px rgba(0,0,0,0.05)',
       },
       keyframes: {
         shine: {

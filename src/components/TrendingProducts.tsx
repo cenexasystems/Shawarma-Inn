@@ -1,30 +1,41 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import menuData from '../data/menu.json';
-import type { MenuItem } from '../types';
-import { resolveMenuImage, getRecoveryImage } from '../utils/menuImages';
-
-// Map local JSON items so resolveMenuImage picks up the semantic engine
-// (local `item.image` paths are /images/menu/… which don't exist in public/)
-const TARGET_ITEMS = ['Shawarma', 'Chicken Popcorn', 'Loaded French Fries', 'Waffle'];
+import { useMenuItems } from '../hooks/useMenuItems';
+import { getRecoveryImage } from '../utils/menuImages';
 
 const MAX_TRENDING = 8;
-
-const bestsellers = (menuData as MenuItem[]).filter((item) => item.bestseller);
-
-// Prioritize the target items (in order), then fill remaining slots with any other bestseller
-const priority = TARGET_ITEMS
-  .map((t) => bestsellers.find((item) => item.name.toLowerCase().includes(t.toLowerCase())))
-  .filter((item): item is MenuItem => Boolean(item));
-
-const rest = bestsellers.filter((item) => !priority.some((p) => p.id === item.id));
-
-const trending = [...priority, ...rest]
-  .slice(0, MAX_TRENDING)
-  .map((item) => ({ ...item, image: resolveMenuImage({ name: item.name, category: item.category, image_url: null }) }));
+const TARGET_ITEMS = ['Shawarma', 'Chicken Popcorn', 'Loaded French Fries', 'Waffle'];
 
 export default function TrendingProducts() {
   const navigate = useNavigate();
+  const { items, loading } = useMenuItems();
+
+  const trending = useMemo(() => {
+    if (loading || !items || items.length === 0) return [];
+    
+    // First, look for items explicitly marked as trending
+    let pool = items.filter(item => item.trending);
+    
+    // Fallback to bestsellers if not enough trending items
+    if (pool.length < MAX_TRENDING) {
+      const bestsellers = items.filter(item => item.bestseller && !pool.some(p => p.id === item.id));
+      pool = [...pool, ...bestsellers];
+    }
+    
+    // Priority sorting matching old logic, if we need it
+    const priority = TARGET_ITEMS
+      .map(t => pool.find(item => item.name.toLowerCase().includes(t.toLowerCase())))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+      
+    const rest = pool.filter(item => !priority.some(p => p.id === item.id));
+    
+    return [...priority, ...rest].slice(0, MAX_TRENDING);
+  }, [items, loading]);
+
+  if (loading || trending.length === 0) {
+    return null;
+  }
 
   return (
     <section id="trending" className="py-20 bg-[#0a0a0a]">
@@ -68,7 +79,7 @@ export default function TrendingProducts() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <span className="absolute top-2 left-2 bg-[#d62b2b] text-white text-[9px] font-bold uppercase tracking-[1.5px] px-2 py-1 rounded-full">
-                  Bestseller
+                  {item.trending ? 'Trending' : 'Bestseller'}
                 </span>
               </div>
               <div className="p-4">

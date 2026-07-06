@@ -97,7 +97,7 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@shawarmainn.local"
+                  placeholder="sharath.creator2210@gmail.com"
                   autoComplete="username"
                   className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-4 text-sm outline-none focus:border-[#ef8f2f] transition-colors"
                 />

@@ -1,27 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard,
-  MessageCircle,
-  Package,
-  Users,
-  Tag,
-  Star,
-  Briefcase,
-  Settings,
-  Bell,
-  Activity,
-  UserCircle,
-  LogOut,
-  FolderTree,
-  Video,
-  BarChart3,
-  PanelLeftClose,
-  PanelLeftOpen
+  ShoppingBag, MessageCircle, Package, Users, Tag, Star, 
+  Briefcase, Settings, BellRing, Bell, Activity, UserCircle, 
+  LogOut, FolderTree, Video, BarChart3, PanelLeftClose, PanelLeftOpen,
+  Store
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdminContext } from '../../context/AdminContext';
-import GlobalCalendarFilter from '../../components/admin/GlobalCalendarFilter';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -38,54 +25,63 @@ export default function AdminLayout() {
   }, [location]);
 
   const NAV_ITEMS = [
-    { key: 'overview', path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-    { key: 'orders', path: '/admin/orders', icon: MessageCircle, label: 'Live Orders' },
-    { key: 'menu', path: '/admin/menu', icon: Package, label: 'Menu Inventory' },
+    { key: 'overview', path: '/admin', icon: Store, label: 'Operations Center' },
+    { key: 'whatsapp', path: '/admin/whatsapp', icon: MessageCircle, label: 'WhatsApp Center' },
+    { key: 'menu', path: '/admin/menu', icon: Package, label: 'Menu Management' },
     { key: 'categories', path: '/admin/categories', icon: FolderTree, label: 'Categories' },
-    { key: 'customers', path: '/admin/customers', icon: Users, label: 'Customers' },
     { key: 'coupons', path: '/admin/coupons', icon: Tag, label: 'Coupons' },
     { key: 'reviews', path: '/admin/reviews', icon: Star, label: 'Reviews' },
-    { key: 'franchise', path: '/admin/franchise', icon: Briefcase, label: 'Franchise Leads' },
-    { key: 'videos', path: '/admin/videos', icon: Video, label: 'Videos' },
-    { key: 'activity', path: '/admin/activity', icon: Activity, label: 'Activity Log' },
-    { key: 'notifications', path: '/admin/notifications', icon: Bell, label: 'Notifications' },
-    { key: 'reports', path: '/admin/reports', icon: BarChart3, label: 'Reports & Analytics' },
-    { key: 'users', path: '/admin/users', icon: Users, label: 'Admin Access' },
+    { key: 'media', path: '/admin/media', icon: Video, label: 'Media Library' },
+    { key: 'analytics', path: '/admin/analytics', icon: BarChart3, label: 'Business Analytics' },
+    { key: 'team', path: '/admin/team', icon: Users, label: 'Team Management' },
     { key: 'settings', path: '/admin/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <div className="flex h-screen bg-black text-white overflow-hidden font-body selection:bg-[#ef8f2f] selection:text-black">
+    <div className="flex h-screen bg-erp-bg text-erp-text overflow-hidden font-inter">
+      
       {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-[60] lg:hidden backdrop-blur-sm" 
-          onClick={() => setSidebarOpen(false)} 
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#111111]/40 z-[60] lg:hidden backdrop-blur-sm" 
+            onClick={() => setSidebarOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 w-64 ${collapsed ? 'lg:w-20' : 'lg:w-64'} bg-[#0a0a0a]/90 backdrop-blur-2xl border-r border-white/[0.05] flex flex-col shrink-0 z-[70] transition-all duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="border-b border-white/5">
-          <div className={`flex items-center pt-4 px-4 ${collapsed ? 'justify-center' : 'justify-between'}`}>
-            <button
-              onClick={() => setCollapsed((v) => !v)}
-              className="hidden lg:flex p-2 rounded-lg hover:bg-[#d62b2b]/10 text-white/50 hover:text-[#ff3a3a] transition-colors shrink-0"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-            </button>
-            {!collapsed && (
-              <div className="px-5 pt-3 pb-5 text-center w-full">
-                <h1 className="font-bebas text-4xl tracking-[2px] leading-none hero-brand">Shawarma Inn</h1>
-                <p className="text-[10px] text-white/40 uppercase tracking-[2px] mt-2">Admin Portal</p>
-              </div>
-            )}
+      <motion.aside 
+        animate={{ width: collapsed ? 80 : 280 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+        className={`fixed inset-y-0 left-0 bg-white border-r border-erp-border flex flex-col shrink-0 z-[70] lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform lg:transition-none`}
+      >
+        {/* Floating Sidebar Toggle Button */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-[14px] top-[32px] w-[28px] h-[28px] bg-white border border-erp-border rounded-full shadow-sm flex items-center justify-center text-erp-muted hover:text-erp-text hover:bg-gray-50 hover:scale-110 transition-all hidden lg:flex z-50 cursor-pointer"
+        >
+          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
+
+        {/* Logo Section */}
+        <div className="flex flex-col items-center justify-center pt-[32px] pb-[24px] border-b border-erp-border relative min-h-[120px] transition-all">
+          <div className="w-[48px] h-[48px] bg-erp-primary rounded-[12px] flex items-center justify-center text-white font-manrope font-[800] text-[20px] shadow-sm mb-[12px] shrink-0">
+            SI
           </div>
+          {!collapsed && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
+              <h1 className="font-manrope text-[18px] font-[800] text-erp-text tracking-tight leading-none">Shawarma Inn</h1>
+              <p className="font-inter text-[11px] font-[700] text-erp-muted uppercase tracking-widest mt-[4px]">Operating System</p>
+            </motion.div>
+          )}
         </div>
         
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 py-[24px] px-[16px] space-y-[4px] overflow-y-auto">
           {NAV_ITEMS.map(({ key, path, icon: Icon, label }) => {
             const isActive = path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path);
             return (
@@ -93,112 +89,120 @@ export default function AdminLayout() {
                 key={key}
                 onClick={() => navigate(path)}
                 title={collapsed ? label : undefined}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 relative group ${collapsed ? 'justify-center' : ''} ${
-                  isActive
-                    ? 'bg-[#d62b2b]/10 text-white font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
-                    : 'text-white/50 hover:bg-white/[0.04] hover:text-white/90'
-                }`}
+                className="w-full relative group"
               >
-                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 bg-[#d62b2b] rounded-r-full shadow-[0_0_10px_#d62b2b]" />}
-                <Icon size={18} className="shrink-0" /> {!collapsed && label}
+                {isActive && (
+                  <motion.div layoutId="sidebar-active" className="absolute inset-0 bg-erp-primary rounded-[12px] shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+                )}
+                <div className={`relative flex items-center gap-[16px] px-[16px] py-[12px] rounded-[12px] text-[15px] transition-all duration-200 font-inter font-[600] ${collapsed ? 'justify-center' : ''} ${
+                  isActive ? 'text-white' : 'text-erp-muted group-hover:bg-erp-bg group-hover:text-erp-text'
+                }`}>
+                  <motion.div whileHover={{ scale: isActive ? 1 : 1.1 }} className="shrink-0 flex items-center justify-center">
+                    <Icon size={22} />
+                  </motion.div>
+                  {!collapsed && <span className="truncate">{label}</span>}
+                </div>
               </button>
             );
           })}
         </nav>
         
-        <div className="p-4 border-t border-white/5 space-y-3">
-          {user && !collapsed && (
-            <div className="flex items-center gap-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-[#d62b2b]/20 border border-[#d62b2b]/30 flex items-center justify-center flex-shrink-0">
-                <UserCircle size={16} className="text-[#ff3a3a]" />
+        {/* Profile Section */}
+        <div className="p-[16px] border-t border-erp-border bg-erp-bg/50">
+          {!collapsed && user && (
+            <div className="flex items-center gap-[12px] px-[8px] mb-[16px]">
+              <div className="w-[40px] h-[40px] rounded-full bg-white border border-erp-border flex items-center justify-center shrink-0 shadow-sm">
+                <UserCircle size={22} className="text-erp-muted" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-white/80 truncate">{(user as any).name || 'Admin'}</p>
-                <p className="text-[10px] text-white/40 truncate">{(user as any).email || ''}</p>
+                <p className="text-[14px] font-[700] font-inter text-erp-text truncate">{(user as any).name || 'Admin User'}</p>
+                <p className="text-[12px] font-[500] font-inter text-erp-muted truncate">{(user as any).email || ''}</p>
               </div>
             </div>
           )}
           <button
             onClick={() => { logout(); navigate('/admin/login'); }}
             title={collapsed ? 'Logout' : undefined}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all"
+            className={`w-full flex items-center ${collapsed ? 'justify-center' : ''} gap-[12px] px-[16px] py-[12px] rounded-[12px] font-inter text-[14px] font-[700] text-erp-danger hover:bg-erp-danger/10 transition-colors group`}
           >
-            <LogOut size={16} /> {!collapsed && 'Logout'}
+            <motion.div whileHover={{ scale: 1.1 }}><LogOut size={20} className="shrink-0" /></motion.div>
+            {!collapsed && 'Sign Out'}
           </button>
         </div>
-      </aside>
+      </motion.aside>
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
-        {/* Top Header */}
-        <header className="flex items-center justify-between p-4 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/5 shrink-0 z-50">
-          <div className="flex items-center gap-3 lg:hidden">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 -m-2 text-white/70 hover:text-white" aria-label="Open menu">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Top Toolbar */}
+        <header className="h-[64px] flex items-center justify-between px-[32px] bg-white border-b border-erp-border shrink-0 z-50">
+          <div className="flex items-center gap-[12px] lg:hidden">
+            <button onClick={() => setSidebarOpen(true)} className="p-[8px] -ml-[8px] text-erp-muted hover:text-erp-text">
+              <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className="font-bebas text-xl hero-brand tracking-[2px] uppercase">Shawarma Inn</h1>
           </div>
           
-          <div className="hidden lg:flex flex-1" />
+          <div className="hidden lg:flex items-center gap-[16px]">
+            <div className="flex items-center gap-[8px] px-[12px] py-[6px] bg-erp-success/10 text-erp-success rounded-full">
+              <Store size={14} />
+              <span className="text-[12px] font-[700] uppercase tracking-[1px]">Accepting Orders</span>
+            </div>
+          </div>
           
-          <div className="flex items-center gap-4">
-            <GlobalCalendarFilter />
-            
+          <div className="flex items-center gap-[24px]">
             <div className="relative">
               <button
                 onClick={() => setShowNotifications((v) => !v)}
-                className={`relative p-2 rounded-xl transition-colors ${unacknowledgedAlerts.length > 0 ? 'bg-[#ef8f2f]/20 text-[#ef8f2f]' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}
+                className={`relative p-[8px] rounded-full transition-colors ${unacknowledgedAlerts.length > 0 ? 'bg-erp-danger/10 text-erp-danger' : 'text-erp-muted hover:bg-erp-bg hover:text-erp-text'}`}
               >
                 <Bell size={20} className={unacknowledgedAlerts.length > 0 ? 'animate-pulse' : ''} />
                 {unacknowledgedAlerts.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {unacknowledgedAlerts.length}
-                  </span>
+                  <span className="absolute top-[2px] right-[2px] w-[8px] h-[8px] bg-erp-danger rounded-full border-[2px] border-white" />
                 )}
               </button>
               
-              {showNotifications && (
-                <div className="absolute top-full right-0 mt-3 w-80 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.7)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-gradient-to-r from-[#ef8f2f]/10 to-transparent">
-                    <span className="text-xs font-bold uppercase tracking-[2px] text-[#ef8f2f]">Live Order Alerts</span>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
-                    {unacknowledgedAlerts.length === 0 ? (
-                      <div className="p-8 flex flex-col items-center justify-center text-center">
-                        <Bell size={24} className="text-white/10 mb-3" />
-                        <p className="text-white/30 text-sm font-medium">No live alerts.</p>
-                      </div>
-                    ) : unacknowledgedAlerts.map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => acknowledgeAlert(n.id)}
-                        className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors group bg-white/[0.04]`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1 flex-shrink-0 w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)] bg-[#ef8f2f] shadow-[#ef8f2f] animate-pulse`} />
-                          <div className="flex-1">
-                            <p className="text-xs text-white/90 font-medium group-hover:text-white">
-                              New Order from {n.customer_name || 'Guest'}
-                            </p>
-                            <p className="text-[10px] text-white/40 mt-1">Status: {n.status}</p>
-                            <button className="text-[10px] font-bold text-[#ef8f2f] mt-2 uppercase tracking-wide">Acknowledge</button>
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-[calc(100%+12px)] right-0 w-[360px] bg-white border border-erp-border rounded-erp shadow-erp overflow-hidden z-50"
+                  >
+                    <div className="px-[24px] py-[16px] border-b border-erp-border bg-erp-bg flex justify-between items-center">
+                      <span className="text-[12px] font-[700] uppercase tracking-[1px] text-erp-muted">Live Alerts</span>
+                      <span className="text-[11px] font-[700] bg-white px-2 py-0.5 rounded-full border border-erp-border">{unacknowledgedAlerts.length}</span>
+                    </div>
+                    <div className="max-h-[320px] overflow-y-auto">
+                      {unacknowledgedAlerts.length === 0 ? (
+                        <div className="p-[32px] flex flex-col items-center justify-center text-center">
+                          <Bell size={32} className="text-gray-200 mb-[16px]" />
+                          <p className="text-erp-muted text-[14px] font-[500]">System operational.</p>
+                        </div>
+                      ) : unacknowledgedAlerts.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => acknowledgeAlert(n.id)}
+                          className="p-[16px] border-b border-erp-border cursor-pointer hover:bg-erp-bg transition-colors"
+                        >
+                          <div className="flex items-start gap-[12px]">
+                            <div className="mt-[6px] shrink-0 w-[8px] h-[8px] rounded-full bg-erp-danger animate-pulse" />
+                            <div className="flex-1">
+                              <p className="text-[14px] text-erp-text font-[600]">New Order: {n.customer_name || 'Guest'}</p>
+                              <p className="text-[12px] text-erp-muted mt-[4px] capitalize">{n.status}</p>
+                              <button className="text-[12px] font-[700] text-erp-primary mt-[8px] uppercase tracking-[1px]">Acknowledge</button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a0a0a] to-[#121212] p-4 md:p-8 relative">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#ef8f2f]/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="relative z-10">
-            <Outlet />
-          </div>
+        <main className="flex-1 overflow-y-auto relative bg-erp-bg">
+          <Outlet />
         </main>
       </div>
     </div>

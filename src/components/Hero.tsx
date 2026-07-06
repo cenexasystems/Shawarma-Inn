@@ -213,7 +213,7 @@ export default function Hero({ cartCount = 0 }: HeroProps) {
             {/* WhatsApp Order tag — top right of card */}
             <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
               <a
-                href={`https://wa.me/${typeof window !== 'undefined' ? (import.meta.env.VITE_OWNER_WHATSAPP || '918778024010') : '918778024010'}`}
+                href={`https://wa.me/${typeof window !== 'undefined' ? (import.meta.env.VITE_OWNER_WHATSAPP || '916382877479') : '916382877479'}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 bg-[#25D366] text-white text-[10px] font-bold font-body tracking-[1.5px] px-3 py-2 rounded-full shadow-[0_4px_20px_rgba(37,211,102,0.5)] hover:scale-105 transition-transform"
@@ -256,20 +256,20 @@ export default function Hero({ cartCount = 0 }: HeroProps) {
         </div>
       </div>
 
-      {/* ─── ANNOUNCEMENT RIBBON — desktop only; offset up when the sticky checkout bar is showing ─── */}
+      {/* ─── ANNOUNCEMENT RIBBON — global sticky footer ticker ─── */}
       <div
-        className="hidden lg:block absolute left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent transition-[bottom] duration-300"
+        className="fixed left-0 right-0 z-[45] transition-[bottom] duration-300 pointer-events-none"
         style={{ bottom: hasCartItems ? CART_BAR_RESERVE : 0 }}
       >
-        <div className="marquee-wrap border-t border-white/8 bg-black/60 backdrop-blur-md py-5">
+        <div className="marquee-wrap border-t border-white/10 bg-black/75 backdrop-blur-xl py-3.5 lg:py-4 pointer-events-auto shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="marquee-track flex whitespace-nowrap">
             {[...Array(2)].map((_, loopIdx) => (
               <div key={loopIdx} className="flex shrink-0 items-center" aria-hidden={loopIdx === 1}>
                 {RIBBON_ITEMS.map((item, i) => (
-                  <span key={i} className="inline-flex items-center gap-2.5 mx-7">
-                    <span className="text-base">{item.icon}</span>
-                    <span className="font-bebas text-sm tracking-[4px] text-white/65 uppercase">{item.text}</span>
-                    <span className="w-1 h-1 rounded-full bg-[var(--red)]/60 ml-2.5" />
+                  <span key={i} className="inline-flex items-center gap-2 lg:gap-3 mx-4 lg:mx-6">
+                    <span className="text-[13px] lg:text-base">{item.icon}</span>
+                    <span className="font-bebas text-[12px] lg:text-sm tracking-[3px] lg:tracking-[4px] text-white/70 uppercase">{item.text}</span>
+                    <span className="w-1 h-1 rounded-full bg-[var(--red)]/60 ml-2 lg:ml-3" />
                   </span>
                 ))}
               </div>
@@ -395,22 +395,7 @@ export default function Hero({ cartCount = 0 }: HeroProps) {
           </button>
         </div>
 
-        {/* Mobile announcement ribbon — in normal flow, edge-to-edge bleed, never overlaps fixed UI */}
-        <div className="marquee-wrap -mx-5 mt-6 border-y border-white/8 bg-black/50 backdrop-blur-md py-3.5">
-          <div className="marquee-track marquee-track--compact flex whitespace-nowrap">
-            {[...Array(2)].map((_, loopIdx) => (
-              <div key={loopIdx} className="flex shrink-0 items-center" aria-hidden={loopIdx === 1}>
-                {RIBBON_ITEMS.map((item, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 mx-4">
-                    <span className="text-xs">{item.icon}</span>
-                    <span className="font-bebas text-[11px] tracking-[3px] text-white/60 uppercase">{item.text}</span>
-                    <span className="w-1 h-1 rounded-full bg-[var(--red)]/60 ml-1.5" />
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Mobile announcement ribbon is now merged with the global sticky footer above */}
       </div>
 
     </header>
