@@ -34,6 +34,7 @@ export default function AdminLayout() {
     { key: 'media', path: '/admin/media', icon: Video, label: 'Media Library' },
     { key: 'analytics', path: '/admin/analytics', icon: BarChart3, label: 'Business Analytics' },
     { key: 'team', path: '/admin/team', icon: Users, label: 'Team Management' },
+    { key: 'kds-settings', path: '/admin/kds-settings', icon: Bell, label: 'KDS Settings' },
     { key: 'settings', path: '/admin/settings', icon: Settings, label: 'Settings' },
   ];
 
