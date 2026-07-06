@@ -14,6 +14,10 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Button } from '../../components/ui/Button';
+import { KPICard } from '../../components/ui/KPICard';
+import { Card } from '../../components/ui/Card';
 
 const COLORS = ['#ef8f2f', '#dc2626', '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899'];
 
@@ -107,53 +111,39 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Reports & Analytics</h2>
-          <p className="text-gray-500 text-sm mt-1">Deep dive into your sales and performance metrics.</p>
-        </div>
-        <button 
-          onClick={handleExport}
-          className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-[1px] flex items-center gap-2 transition-colors shadow-sm"
-        >
-          <Download className="w-4 h-4" /> Export CSV
-        </button>
-      </header>
+    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+      <PageHeader 
+        title="Reports & Analytics"
+        subtitle="Deep dive into your sales and performance metrics."
+        action={
+          <Button 
+            onClick={handleExport}
+            variant="outline"
+            icon={Download}
+          >
+            Export CSV
+          </Button>
+        }
+      />
 
-      {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
+      {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[14px] text-sm border border-erp-danger/20 mb-8 font-inter font-medium">{error}</div>}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Revenue', value: `₹${metrics.revenue.toLocaleString()}`, icon: IndianRupee, color: 'text-green-600' },
-          { label: 'Completed Orders', value: metrics.totalOrders.toLocaleString(), icon: ShoppingBag, color: 'text-[#183025]' },
-          { label: 'Avg Order Value', value: `₹${Math.round(metrics.avgOrder).toLocaleString()}`, icon: TrendingUp, color: 'text-blue-600' },
-          { label: 'Cancelled Orders', value: metrics.cancelledCount.toLocaleString(), icon: Tag, color: 'text-red-500' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white border border-gray-200 rounded-2xl p-6 relative overflow-hidden group shadow-sm">
-            <div className={`absolute -right-4 -top-4 w-24 h-24 bg-gray-50 rounded-full blur-2xl group-hover:bg-gray-100 transition-colors pointer-events-none`} />
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-[2px] text-gray-500 font-bold mb-2">{label}</p>
-                <h3 className="font-bebas text-4xl leading-none text-gray-900">{value}</h3>
-              </div>
-              <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
-                <Icon size={24} className={color} />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <KPICard title="Total Revenue" value={`₹${metrics.revenue.toLocaleString()}`} icon={IndianRupee} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" />
+        <KPICard title="Completed Orders" value={metrics.totalOrders.toLocaleString()} icon={ShoppingBag} iconBgColor="bg-erp-primary/10" iconColor="text-erp-primary" />
+        <KPICard title="Avg Order Value" value={`₹${Math.round(metrics.avgOrder).toLocaleString()}`} icon={TrendingUp} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" />
+        <KPICard title="Cancelled Orders" value={metrics.cancelledCount.toLocaleString()} icon={Tag} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" />
       </div>
 
       {loading ? (
-        <div className="h-96 bg-white border border-gray-200 rounded-2xl animate-pulse flex items-center justify-center shadow-sm">
-          <div className="w-8 h-8 border-2 border-[#183025] border-t-transparent rounded-full animate-spin" />
-        </div>
+        <Card className="h-96 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-erp-primary border-t-transparent rounded-full animate-spin" />
+        </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Revenue Trend</h3>
-            <div className="h-[300px] w-full">
+          <Card className="lg:col-span-2 p-6 flex flex-col">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Revenue Trend</h3>
+            <div className="flex-1 min-h-[300px] w-full">
               {metrics.revenueData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
               ) : (
@@ -177,11 +167,11 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               )}
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-[11px] uppercase tracking-[2px] text-gray-500 font-bold mb-6">Top Selling Items</h3>
-            <div className="h-[300px] w-full">
+          <Card className="p-6 flex flex-col">
+            <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Top Selling Items</h3>
+            <div className="h-[260px] w-full">
               {metrics.topItems.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
               ) : (
@@ -208,18 +198,18 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               )}
             </div>
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               {metrics.topItems.map((item, idx) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                    <span className="text-gray-600 line-clamp-1">{item.name}</span>
+                <div key={item.name} className="flex items-center justify-between text-[14px]">
+                  <div className="flex items-center gap-3">
+                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                    <span className="text-erp-text font-medium line-clamp-1">{item.name}</span>
                   </div>
-                  <span className="font-bold text-gray-900">{item.value}x</span>
+                  <span className="font-bold text-erp-text">{item.value}x</span>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

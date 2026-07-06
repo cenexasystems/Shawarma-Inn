@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Play, Plus, Trash2, Edit, UploadCloud, Loader2 } from 'lucide-react';
+import { Play, Plus, Trash2, Edit, UploadCloud, Loader2, Video, Image as ImageIcon } from 'lucide-react';
+import { PageHeader } from './../ui/PageHeader';
+import { Button } from './../ui/Button';
+import { Input } from './../ui/Input';
+import { Card } from './../ui/Card';
 
 const STORAGE_BUCKET = 'testimonial-videos';
 
@@ -126,123 +130,152 @@ export default function VideoManager() {
     }
   };
 
-  if (loading) return <div className="text-white/50 animate-pulse p-8">Loading videos...</div>;
+  if (loading) return <div className="text-erp-muted animate-pulse p-8 font-inter">Loading videos...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bebas tracking-wide uppercase text-white">Testimonial Videos</h2>
-        <button
-          onClick={() => {
-            setFormData({ title: '', url: '', thumbnail_url: '', is_active: true });
-            setEditId(null);
-            setError('');
-            setIsEditing(true);
-          }}
-          className="flex items-center gap-2 bg-[#d62b2b] text-white px-4 py-2 rounded-xl text-sm font-bold uppercase tracking-[1px] hover:bg-[#bf2323] transition-colors"
-        >
-          <Plus size={16} /> Add Video
-        </button>
-      </div>
+    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+      <PageHeader 
+        title="Media Library"
+        subtitle="Manage testimonial videos and media assets."
+        action={
+          <Button 
+            onClick={() => {
+              setFormData({ title: '', url: '', thumbnail_url: '', is_active: true });
+              setEditId(null);
+              setError('');
+              setIsEditing(true);
+            }}
+            icon={Plus}
+          >
+            Add Video
+          </Button>
+        }
+      />
 
-      {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
+      {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[14px] text-sm border border-erp-danger/20 mb-8 font-inter font-medium">{error}</div>}
 
       {isEditing && (
-        <form onSubmit={handleSubmit} className="bg-[#181818] border border-white/10 p-6 rounded-2xl space-y-4">
-          <input
-            type="text"
-            placeholder="Video Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
-            required
-          />
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="url"
-                placeholder="Video URL, or upload a file"
-                value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                className="flex-1 bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
-                required
-              />
-              <label className="shrink-0 flex items-center gap-2 bg-white/5 border border-white/10 hover:border-[#d62b2b] px-3 py-3 rounded-xl text-xs uppercase tracking-wide text-white/70 hover:text-white cursor-pointer transition-colors">
-                {uploadingVideo ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                {uploadingVideo ? 'Uploading...' : 'Upload Video'}
-                <input type="file" accept="video/*" className="hidden" onChange={handleVideoFileUpload} disabled={uploadingVideo} />
-              </label>
-            </div>
-            {formData.url && (
-              <video src={formData.url} className="w-32 h-20 rounded-lg object-cover border border-white/10" muted />
-            )}
-          </div>
+        <Card className="mb-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <h3 className="font-bebas text-2xl text-erp-text uppercase tracking-wide border-b border-erp-border pb-4 mb-6">
+              {editId ? 'Edit Media' : 'Upload Media'}
+            </h3>
+            
+            <div className="space-y-4 max-w-3xl">
+              <div>
+                <label className="block text-[11px] font-bold text-erp-muted uppercase tracking-[1px] mb-2">Video Title</label>
+                <Input
+                  type="text"
+                  placeholder="Enter a descriptive title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+              </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="url"
-                placeholder="Thumbnail URL, or upload an image"
-                value={formData.thumbnail_url}
-                onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                className="flex-1 bg-black/50 border border-white/10 p-3 rounded-xl text-white outline-none focus:border-[#d62b2b]"
-              />
-              <label className="shrink-0 flex items-center gap-2 bg-white/5 border border-white/10 hover:border-[#d62b2b] px-3 py-3 rounded-xl text-xs uppercase tracking-wide text-white/70 hover:text-white cursor-pointer transition-colors">
-                {uploadingThumb ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                {uploadingThumb ? 'Uploading...' : 'Upload Cover'}
-                <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailFileUpload} disabled={uploadingThumb} />
-              </label>
+              <div>
+                <label className="block text-[11px] font-bold text-erp-muted uppercase tracking-[1px] mb-2">Video File</label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="url"
+                      icon={Video}
+                      placeholder="Video URL, or upload a file"
+                      value={formData.url}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <label className="shrink-0 flex items-center justify-center gap-2 bg-erp-bg border border-erp-border hover:border-erp-primary h-[42px] px-6 rounded-[14px] text-[13px] font-semibold text-erp-text cursor-pointer transition-colors whitespace-nowrap">
+                    {uploadingVideo ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                    {uploadingVideo ? 'Uploading...' : 'Upload Video'}
+                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoFileUpload} disabled={uploadingVideo} />
+                  </label>
+                </div>
+                {formData.url && (
+                  <div className="mt-4 p-2 bg-erp-bg rounded-[14px] inline-block border border-erp-border">
+                    <video src={formData.url} className="h-[120px] rounded-[8px] object-cover" muted />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-erp-muted uppercase tracking-[1px] mb-2">Thumbnail Cover</label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="url"
+                      icon={ImageIcon}
+                      placeholder="Thumbnail URL, or upload an image"
+                      value={formData.thumbnail_url}
+                      onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                    />
+                  </div>
+                  <label className="shrink-0 flex items-center justify-center gap-2 bg-erp-bg border border-erp-border hover:border-erp-primary h-[42px] px-6 rounded-[14px] text-[13px] font-semibold text-erp-text cursor-pointer transition-colors whitespace-nowrap">
+                    {uploadingThumb ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                    {uploadingThumb ? 'Uploading...' : 'Upload Cover'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailFileUpload} disabled={uploadingThumb} />
+                  </label>
+                </div>
+                {formData.thumbnail_url && (
+                  <div className="mt-4 p-2 bg-erp-bg rounded-[14px] inline-block border border-erp-border">
+                    <img src={formData.thumbnail_url} alt="Thumbnail preview" className="h-[120px] rounded-[8px] object-cover" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  className="w-4 h-4 rounded text-erp-primary border-gray-300 focus:ring-erp-primary"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                />
+                <label htmlFor="isActive" className="text-sm font-semibold text-erp-text cursor-pointer">
+                  Publish to website immediately
+                </label>
+              </div>
             </div>
-            {formData.thumbnail_url && (
-              <img src={formData.thumbnail_url} alt="Thumbnail preview" className="w-32 h-20 rounded-lg object-cover border border-white/10" />
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-sm text-white/70">
-            <input
-              type="checkbox"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-            />
-            Active
-          </div>
-          <div className="flex gap-2 justify-end mt-4">
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 text-white/50 hover:text-white"
-            >
-              Cancel
-            </button>
-            <button type="submit" className="px-4 py-2 bg-white text-black rounded-xl font-bold uppercase tracking-wide">
-              Save Video
-            </button>
-          </div>
-        </form>
+
+            <div className="flex gap-3 justify-end pt-6 border-t border-erp-border mt-8">
+              <Button variant="outline" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                Save Media
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {videos.map((vid) => (
-          <div key={vid.id} className="bg-[#181818] border border-white/10 rounded-2xl p-4 flex flex-col gap-3 group">
+          <Card key={vid.id} className="p-4 flex flex-col gap-4 group hover:border-erp-primary transition-colors">
             {vid.thumbnail_url ? (
               <div
-                className="w-full h-40 rounded-xl bg-cover bg-center"
+                className="w-full h-[180px] rounded-[10px] bg-cover bg-center border border-erp-border"
                 style={{ backgroundImage: `url(${vid.thumbnail_url})` }}
               />
             ) : (
-              <div className="w-full h-40 bg-black/50 rounded-xl flex items-center justify-center border border-white/5">
-                <Play size={32} className="text-white/20" />
+              <div className="w-full h-[180px] bg-gray-100 rounded-[10px] flex items-center justify-center border border-erp-border">
+                <Play size={48} className="text-gray-300" />
               </div>
             )}
-            <div>
-              <h3 className="font-bold text-white text-lg truncate">{vid.title}</h3>
-              <a href={vid.url} target="_blank" rel="noreferrer" className="text-xs text-[#d62b2b] hover:underline truncate block">
+            
+            <div className="flex-1">
+              <h3 className="font-bold text-erp-text text-[15px] truncate">{vid.title}</h3>
+              <a href={vid.url} target="_blank" rel="noreferrer" className="text-[12px] text-erp-muted hover:text-erp-primary hover:underline truncate block mt-1">
                 {vid.url}
               </a>
             </div>
-            <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-              <span className={`text-[10px] uppercase tracking-[1px] px-2 py-1 rounded-full ${vid.is_active ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
-                {vid.is_active ? 'Active' : 'Inactive'}
+
+            <div className="flex items-center justify-between pt-4 border-t border-erp-border">
+              <span className={`text-[10px] font-bold uppercase tracking-[1px] px-2.5 py-1 rounded-full ${vid.is_active ? 'bg-erp-success/10 text-erp-success' : 'bg-gray-100 text-erp-muted'}`}>
+                {vid.is_active ? 'Published' : 'Hidden'}
               </span>
+              
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => {
@@ -251,23 +284,23 @@ export default function VideoManager() {
                     setError('');
                     setIsEditing(true);
                   }}
-                  className="p-1.5 bg-white/10 text-white rounded hover:bg-white/20"
+                  className="w-[32px] h-[32px] flex items-center justify-center bg-gray-100 text-erp-muted hover:text-erp-text hover:bg-gray-200 rounded-[8px] transition-colors"
                 >
                   <Edit size={14} />
                 </button>
                 <button
                   onClick={() => handleDelete(vid.id)}
-                  className="p-1.5 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20"
+                  className="w-[32px] h-[32px] flex items-center justify-center bg-erp-danger/5 text-erp-danger hover:bg-erp-danger/10 rounded-[8px] transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
         {videos.length === 0 && !isEditing && (
-          <div className="col-span-full py-10 text-center text-white/40 border border-dashed border-white/10 rounded-2xl">
-            No testimonial videos found. Add one to show on the website.
+          <div className="col-span-full py-16 text-center text-erp-muted font-medium bg-white border border-dashed border-erp-border rounded-erp">
+            No media assets found. Click 'Add Video' to upload a testimonial.
           </div>
         )}
       </div>

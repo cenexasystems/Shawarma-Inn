@@ -5,10 +5,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { ProductDrawer } from '../../components/admin/ProductDrawer';
 import { resolveMenuImage } from '../../utils/menuImages';
 
-import { PageLayout } from '../../design-system/PageLayout';
-import { TableSystem, type Column } from '../../design-system/TableSystem';
-import { Button } from '../../design-system/ButtonSystem';
-import { StatCard } from '../../design-system/CardSystem';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
+import { Button } from '../../components/ui/Button';
+import { KPICard } from '../../components/ui/KPICard';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 
 export default function MenuPage() {
   const { isAdmin } = useAuth();
@@ -172,87 +174,178 @@ export default function MenuPage() {
 
   return (
     <>
-      <PageLayout
-        title="Menu Management"
-        subtitle="Manage your entire product catalog from one place."
-        toolbar={
-          <div className="flex flex-1 items-center justify-between gap-[24px]">
-            <div className="flex items-center gap-[12px] flex-1">
-              <div className="relative w-full max-w-[320px]">
-                <Search className="absolute left-[12px] top-[14px] text-erp-muted" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search products..." 
+      <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+        
+        <PageHeader 
+          title="Menu Management"
+          subtitle="Manage your entire product catalog from one place."
+        />
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <KPICard title="Total Products" value={items.length} icon={Package} iconBgColor="bg-gray-100" iconColor="text-gray-700" />
+          <KPICard title="Active" value={items.filter(i => i.is_active).length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" />
+          <KPICard title="Bestsellers" value={items.filter(i => i.is_bestseller).length} icon={Star} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" />
+          <KPICard title="Categories" value={categories.length} icon={Square} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" />
+        </div>
+
+        {/* Table Section */}
+        <div className="bg-erp-card rounded-erp shadow-erp border border-erp-border overflow-hidden flex flex-col">
+          
+          {/* Toolbar */}
+          <div className="px-6 py-5 border-b border-erp-border flex flex-wrap items-center justify-between gap-4 bg-erp-card">
+            <div className="flex items-center gap-3">
+              <Package size={20} className="text-erp-primary" />
+              <h2 className="text-[18px] font-semibold text-erp-text font-inter">Product Catalog</h2>
+              <span className="px-2 py-0.5 bg-gray-100 text-erp-muted text-xs font-semibold rounded-full">
+                {filteredItems.length} Products
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-[240px]">
+                <Input 
+                  icon={Search} 
+                  placeholder="Search products..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white border border-erp-border rounded-[12px] pl-[40px] pr-[16px] h-[46px] text-[15px] font-inter text-erp-text focus:outline-none focus:border-erp-primary shadow-sm"
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
-              <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="bg-white border border-erp-border rounded-[12px] px-[16px] h-[46px] text-[14px] font-[600] text-erp-text focus:outline-none focus:border-erp-primary shadow-sm appearance-none">
-                <option value="">All Categories</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-              <select value={availabilityFilter} onChange={e => setAvailabilityFilter(e.target.value)} className="bg-white border border-erp-border rounded-[12px] px-[16px] h-[46px] text-[14px] font-[600] text-erp-text focus:outline-none focus:border-erp-primary shadow-sm appearance-none">
-                <option value="">Any Availability</option>
-                <option value="available">Available</option>
-                <option value="unavailable">Hidden</option>
-              </select>
-            </div>
-            
-            <Button onClick={() => openDrawer()}>
-              <Plus size={18} className="mr-[8px]" /> Add Product
-            </Button>
-          </div>
-        }
-        statistics={
-          <>
-            <StatCard title="Total Products" value={items.length} />
-            <StatCard title="Active" value={items.filter(i => i.is_active).length} valueColor="text-erp-success" />
-            <StatCard title="Bestsellers" value={items.filter(i => i.is_bestseller).length} valueColor="text-erp-warning" />
-            <StatCard title="Categories" value={categories.length} valueColor="text-erp-blue" />
-          </>
-        }
-      >
-        <div className="flex justify-between items-center text-[12px] font-[700] text-erp-muted uppercase tracking-[1px] px-[8px]">
-          <span>Showing {filteredItems.length} Products</span>
-          {selectedIds.size > 0 && <span className="text-erp-primary">{selectedIds.size} Selected</span>}
-        </div>
-        
-        {/* Bulk Action Strip */}
-        {selectedIds.size > 0 && (
-          <div className="bg-erp-bg border border-erp-border rounded-[16px] px-[24px] py-[16px] flex items-center justify-between mb-[24px]">
-            <div className="flex items-center gap-[12px]">
-              <span className="bg-erp-primary text-white w-[28px] h-[28px] flex items-center justify-center rounded-[8px] text-[14px] font-[700]">{selectedIds.size}</span>
-              <span className="text-erp-text text-[14px] font-[700] uppercase tracking-[1px]">Selected</span>
-            </div>
-            <div className="flex items-center gap-[12px]">
-              <Button variant="ghost" onClick={toggleSelectAll}>Clear</Button>
-              <Button variant="secondary" onClick={() => handleBulkAvailability(true)}>Make Available</Button>
-              <Button variant="danger" onClick={() => handleBulkAvailability(false)}>Hide Items</Button>
+              <div className="w-[180px]">
+                <Select 
+                  value={categoryFilter} 
+                  onChange={e => setCategoryFilter(e.target.value)}
+                  options={[
+                    { label: 'All Categories', value: '' },
+                    ...categories.map(c => ({ label: c.name, value: c.name }))
+                  ]}
+                />
+              </div>
+              <div className="w-[180px]">
+                <Select 
+                  value={availabilityFilter} 
+                  onChange={e => setAvailabilityFilter(e.target.value)}
+                  options={[
+                    { label: 'Any Availability', value: '' },
+                    { label: 'Available', value: 'available' },
+                    { label: 'Hidden', value: 'unavailable' }
+                  ]}
+                />
+              </div>
+              <Button onClick={() => openDrawer()} icon={Plus} className="h-[38px]">
+                Add Product
+              </Button>
             </div>
           </div>
-        )}
 
-        <div className="bg-white rounded-erp shadow-erp overflow-hidden border border-erp-border">
-          {loading ? (
-            <div className="animate-pulse space-y-[4px]">
-              {[...Array(5)].map((_, i) => <div key={i} className="h-[72px] bg-white border-b border-erp-border" />)}
+          {/* Bulk Action Strip */}
+          {selectedIds.size > 0 && (
+            <div className="bg-gray-50 border-b border-erp-border px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="bg-erp-primary text-white w-7 h-7 flex items-center justify-center rounded-lg text-sm font-bold">{selectedIds.size}</span>
+                <span className="text-erp-text text-sm font-bold uppercase tracking-widest">Selected</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={toggleSelectAll}>Clear</Button>
+                <Button variant="secondary" size="sm" onClick={() => handleBulkAvailability(true)}>Make Available</Button>
+                <Button variant="danger" size="sm" onClick={() => handleBulkAvailability(false)}>Hide Items</Button>
+              </div>
             </div>
-          ) : (
-            <TableSystem 
-              data={filteredItems}
-              columns={columns}
-              keyExtractor={(row) => row.id}
-              emptyMessage="No products match your filters."
-              onRowClick={(row) => {
-                // To avoid breaking selection when clicking row, openDrawer triggers only if we don't click the checkbox column
-                // In our TableSystem, the row click happens on the tr. We'll handle it here.
-                openDrawer(row);
-              }}
-            />
           )}
+
+          {/* Table List */}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[60px] text-center">
+                  <button onClick={toggleSelectAll} className="mt-1">
+                    {selectedIds.size === filteredItems.length && filteredItems.length > 0 ? (
+                      <CheckSquare className="w-5 h-5 text-erp-primary" />
+                    ) : (
+                      <Square className="w-5 h-5 text-erp-muted" />
+                    )}
+                  </button>
+                </TableHead>
+                <TableHead>Product Details</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Highlight</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={7} className="h-[54px] animate-pulse bg-gray-50/50" />
+                  </TableRow>
+                ))
+              ) : filteredItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-erp-muted">
+                    No products match your filters.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredItems.map((row) => (
+                  <TableRow key={row.id} className="h-[54px]" onClick={() => openDrawer(row)}>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(row.id); }} className="mt-1">
+                        {selectedIds.has(row.id) ? (
+                          <CheckSquare className="w-5 h-5 text-erp-primary" />
+                        ) : (
+                          <Square className="w-5 h-5 text-erp-muted hover:text-erp-text" />
+                        )}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-4">
+                        <div className="relative shrink-0">
+                          <img 
+                            src={resolveMenuImage({ image_url: row.image_url, name: row.name, category: row.category })} 
+                            alt={row.name} 
+                            className="w-[44px] h-[44px] rounded-[10px] object-cover bg-gray-100 border border-erp-border" 
+                          />
+                          {row.is_veg && <span className="absolute -top-[4px] -right-[4px] w-[12px] h-[12px] rounded-full bg-erp-success border-[2px] border-white" title="Vegetarian"></span>}
+                        </div>
+                        <div className="flex flex-col gap-[6px]">
+                          <div className="font-bold text-erp-text text-[14px] leading-none">{row.name}</div>
+                          <div className="text-[12px] text-erp-muted max-w-[250px] truncate leading-none">{row.description || 'No description'}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-block px-3 py-1 bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-bold text-gray-600 uppercase tracking-widest">
+                        {row.category}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-bold text-[14px] text-erp-text">₹{row.price}</div>
+                        {row.large_price && <div className="text-[11px] text-erp-muted uppercase tracking-[1px] font-bold mt-1">L: ₹{row.large_price}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className={`inline-flex items-center justify-center w-[32px] h-[32px] rounded-full ${row.is_active ? 'bg-erp-success/10 text-erp-success' : 'bg-gray-100 text-erp-muted'}`}>
+                        <PowerOff className="w-[16px] h-[16px]" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {row.is_bestseller ? <Star className="w-[18px] h-[18px] text-erp-warning mx-auto fill-erp-warning" /> : <span className="text-erp-border">—</span>}
+                    </TableCell>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={(e) => { e.stopPropagation(); openDrawer(row); }} className="w-[36px] h-[36px] flex items-center justify-center text-erp-muted hover:text-erp-text bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mx-auto">
+                        <Edit3 className="w-[16px] h-[16px]" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-      </PageLayout>
+      </div>
 
       <ProductDrawer 
         isOpen={drawerOpen} 

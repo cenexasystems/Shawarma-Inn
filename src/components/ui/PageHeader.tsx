@@ -8,13 +8,13 @@ export interface PageHeaderProps {
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action }) => {
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-erp-32">
-      <div>
-        <h1 className="font-bebas text-[44px] leading-none tracking-[2px] uppercase text-erp-text">
+    <div className="flex flex-col gap-8 mb-8">
+      <div className="flex flex-col gap-4">
+        <h1 className="font-bebas text-[60px] leading-none tracking-[2px] uppercase text-erp-text">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-erp-muted text-[14px] mt-2 font-inter">
+          <p className="text-[#64748B] text-[16px] font-medium font-inter">
             {subtitle}
           </p>
         )}
