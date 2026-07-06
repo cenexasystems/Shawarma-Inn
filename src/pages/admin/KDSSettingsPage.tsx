@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BellRing, Volume2, VolumeX, Save, Play, Square, ExternalLink } from 'lucide-react';
+import { BellRing, Volume2, VolumeX, Save, Play, Square, ExternalLink, Upload, Music } from 'lucide-react';
 import { useAdminContext } from '../../context/AdminContext';
 
 export default function KDSSettingsPage() {
@@ -20,6 +20,27 @@ export default function KDSSettingsPage() {
                 type === 'number' || type === 'range' ? Number(value) : 
                 value;
     setFormData(prev => ({ ...prev, [name]: val }));
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File is too large. Please upload an audio file under 2MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setFormData(prev => ({ ...prev, sound_url: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const setPreset = (url: string) => {
+    setFormData(prev => ({ ...prev, sound_url: url }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -72,20 +93,41 @@ export default function KDSSettingsPage() {
       <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-8 shadow-sm">
         
         {/* Sound URL */}
-        <div className="space-y-2">
+        <div className="space-y-4">
           <label className="text-xs uppercase tracking-[2px] text-gray-500 font-bold flex items-center gap-2">
-            <BellRing size={14} /> Alert Sound URL
+            <BellRing size={14} /> Alert Sound
           </label>
-          <input
-            type="text"
-            name="sound_url"
-            value={formData.sound_url}
-            onChange={handleChange}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:border-[#183025] transition-colors"
-            placeholder="https://..."
-            required
-          />
-          <p className="text-[10px] text-gray-500">Provide a direct URL to an mp3 or ogg file. Default is a restaurant bell.</p>
+          
+          <div className="flex gap-2">
+            <input
+              type="text"
+              name="sound_url"
+              value={formData.sound_url}
+              onChange={handleChange}
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:border-[#183025] transition-colors truncate"
+              placeholder="https://..."
+              required
+            />
+            <label className="bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-3 rounded-xl border border-gray-200 cursor-pointer flex items-center gap-2 font-bold transition-colors whitespace-nowrap">
+              <Upload size={16} /> Upload Audio
+              <input 
+                type="file" 
+                accept="audio/*" 
+                className="hidden" 
+                onChange={handleFileUpload}
+              />
+            </label>
+          </div>
+          
+          <div>
+            <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-[1px] font-bold">Loud Presets</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setPreset('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg')} className="text-xs bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-red-100"><Music size={12} /> Digital Alarm</button>
+              <button type="button" onClick={() => setPreset('https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg')} className="text-xs bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-orange-100"><Music size={12} /> Loud Bugle</button>
+              <button type="button" onClick={() => setPreset('https://actions.google.com/sounds/v1/alarms/beep_short.ogg')} className="text-xs bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-blue-100"><Music size={12} /> Sharp Beep</button>
+              <button type="button" onClick={() => setPreset('https://actions.google.com/sounds/v1/alarms/dinner_bell.ogg')} className="text-xs bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-gray-100"><Music size={12} /> Classic Bell</button>
+            </div>
+          </div>
         </div>
 
         {/* Volume */}

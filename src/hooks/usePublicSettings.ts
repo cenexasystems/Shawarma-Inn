@@ -102,7 +102,6 @@ export function usePublicSettings() {
   }, []);
 
   const gstEnabled = settings.gst_enabled === 'true';
-  const pricesIncludeGst = settings.prices_include_gst === 'true';
   const gstPercentage = Number(settings.gst_percentage) || 5;
   const deliveryCharge = 0;
   const packingCharge = 0;

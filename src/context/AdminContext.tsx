@@ -102,10 +102,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         
       if (data) {
         let soundUrl = data.sound_url || DEFAULT_SETTINGS.sound_url;
-        if (soundUrl.includes('actions.google.com')) {
-          soundUrl = DEFAULT_SETTINGS.sound_url;
-        }
-        
         const loadedSettings = {
           sound_url: soundUrl,
           volume: data.volume ?? DEFAULT_SETTINGS.volume,

@@ -5,8 +5,6 @@ import { apiRequest } from '../lib/api';
 import Invoice from '../components/Invoice';
 import RecentOrders from '../components/RecentOrders';
 import type { CartItem } from '../types';
-import { computeGst, GST_ACTIVE, GST_PERCENTAGE } from '../config/pricing';
-
 interface PosMenuItem {
   id: number;
   name: string;
@@ -96,14 +94,11 @@ export default function PosBilling() {
   );
 
   const taxableAmount = subtotal - discountAmount;
-  const tax = useMemo(
-    () => computeGst(taxableAmount),
-    [taxableAmount],
-  );
+  const tax = 0; // Tax is completely removed
 
   const total = useMemo(
-    () => Math.round((taxableAmount + tax) * 100) / 100,
-    [taxableAmount, tax],
+    () => Math.round(taxableAmount * 100) / 100,
+    [taxableAmount],
   );
 
   const itemCount = useMemo(
