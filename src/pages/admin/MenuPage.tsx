@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Search, Plus, CheckSquare, Square, PowerOff, Edit3, Star } from 'lucide-react';
+import { Search, Plus, CheckSquare, Square, PowerOff, Edit3, Star, Package } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { ProductDrawer } from '../../components/admin/ProductDrawer';
