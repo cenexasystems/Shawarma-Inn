@@ -114,7 +114,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Customers</h2>
+          <h2 className="font-manrope font-[800] text-[46px] leading-[1.05] tracking-[-0.03em] text-gray-900">Customers</h2>
           <p className="text-gray-500 text-sm mt-1">Manage your customer database and track lifetime value.</p>
         </div>
       </div>

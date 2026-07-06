@@ -32,7 +32,7 @@ export default function FranchisePage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Franchise Leads</h2>
+        <h2 className="font-manrope font-[800] text-[46px] leading-[1.05] tracking-[-0.03em] text-gray-900">Franchise Leads</h2>
         <button
           onClick={async () => {
             try {

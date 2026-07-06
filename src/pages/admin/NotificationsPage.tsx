@@ -85,7 +85,7 @@ export default function NotificationsPage() {
     <div className="space-y-6 animate-in fade-in duration-500 relative z-10">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="font-bebas text-5xl tracking-[3px] uppercase">Notifications</h2>
+          <h2 className="font-manrope font-[800] text-[46px] leading-[1.05] tracking-[-0.03em]">Notifications</h2>
           <p className="text-white/50 text-sm mt-1">System alerts, new orders, and administrative messages.</p>
         </div>
         {notifications.some(n => !n.is_read) && (

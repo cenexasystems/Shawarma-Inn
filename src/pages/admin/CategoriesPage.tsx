@@ -249,7 +249,7 @@ export default function CategoriesPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
           <div className="relative bg-white border border-erp-border rounded-[24px] p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="font-bebas text-3xl tracking-[2px] uppercase text-erp-text mb-6">
+            <h3 className="font-manrope font-[700] text-[22px] tracking-[-0.02em] text-erp-text mb-6">
               {editingCategory ? 'Edit Category' : 'New Category'}
             </h3>
             

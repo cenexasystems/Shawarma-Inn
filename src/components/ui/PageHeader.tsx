@@ -10,7 +10,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action 
   return (
     <div className="flex flex-col gap-8 mb-8">
       <div className="flex flex-col gap-4">
-        <h1 className="font-bebas text-[60px] leading-none tracking-[2px] uppercase text-erp-text">
+        <h1 className="font-manrope text-[46px] leading-[1.05] tracking-[-0.03em] font-[800] text-erp-text">
           {title}
         </h1>
         {subtitle && (

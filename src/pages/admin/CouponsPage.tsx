@@ -122,7 +122,7 @@ export default function CouponsPage() {
     <div className="min-h-screen bg-[#fafafa] font-inter p-8 max-w-[1680px] mx-auto">
       {/* Header Area */}
       <div className="mb-6">
-        <h1 className="font-bebas text-[60px] leading-none tracking-[2px] text-[#1e293b] mb-6">
+        <h1 className="font-manrope font-[800] text-[46px] leading-[1.05] tracking-[-0.03em] text-[#111827] mb-6">
           Coupon Management
         </h1>
         <div className="bg-[#eff6ff] text-[#1d4ed8] px-5 py-4 rounded-[12px] text-[13px] font-medium border border-[#bfdbfe]">
@@ -240,7 +240,7 @@ export default function CouponsPage() {
                       </div>
                       
                       <div className="flex items-center gap-3 mt-1">
-                        <h4 className="font-bebas text-[28px] tracking-[1px] uppercase text-gray-900 leading-none">{row.code}</h4>
+                        <h4 className="font-manrope font-[800] text-[22px] tracking-[-0.02em] text-gray-900 leading-none">{row.code}</h4>
                         {row.is_active && (
                            <span className="px-2.5 py-1 rounded-[6px] text-[9px] font-[800] tracking-[1.5px] uppercase bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]">
                              Active

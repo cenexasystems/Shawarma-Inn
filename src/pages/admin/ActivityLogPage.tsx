@@ -41,7 +41,7 @@ export default function ActivityLogPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 relative z-10">
       <header>
-        <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">Activity Log</h2>
+        <h2 className="font-manrope font-[800] text-[46px] leading-[1.05] tracking-[-0.03em] text-gray-900">Activity Log</h2>
         <p className="text-gray-500 text-sm mt-1">Audit trail of admin actions and system events (latest 100).</p>
       </header>
 

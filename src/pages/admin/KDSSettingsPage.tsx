@@ -86,7 +86,7 @@ export default function KDSSettingsPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl">
       <header>
-        <h2 className="font-bebas text-5xl tracking-[2px] uppercase text-gray-900">KDS Settings</h2>
+        <h2 className="font-manrope font-[800] text-[46px] leading-[1.05] tracking-[-0.03em] text-gray-900">KDS Settings</h2>
         <p className="text-gray-500 text-sm mt-1">Configure kitchen display audio and visual alerts.</p>
       </header>
 
