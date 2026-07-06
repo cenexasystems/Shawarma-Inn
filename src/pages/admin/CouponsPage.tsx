@@ -137,11 +137,6 @@ export default function CouponsPage() {
         <PageHeader 
           title="Coupon Management"
           subtitle="Create and track discount codes for marketing campaigns."
-          action={
-            <Button onClick={() => openDrawer()} icon={Plus}>
-              Create Coupon
-            </Button>
-          }
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -154,6 +149,12 @@ export default function CouponsPage() {
         {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[12px] text-sm border border-erp-danger/20 mb-6">{error}</div>}
 
         <Card noPadding className="overflow-hidden">
+          <div className="p-4 border-b border-erp-border flex justify-between items-center bg-gray-50/50">
+            <h3 className="text-[14px] font-bold text-erp-text ml-2">All Coupons</h3>
+            <Button onClick={() => openDrawer()} icon={Plus} size="sm">
+              Create Coupon
+            </Button>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
