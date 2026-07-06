@@ -256,11 +256,8 @@ export default function Hero({ cartCount = 0 }: HeroProps) {
         </div>
       </div>
 
-      {/* ─── ANNOUNCEMENT RIBBON — global sticky footer ticker ─── */}
-      <div
-        className="fixed left-0 right-0 z-[45] transition-[bottom] duration-300 pointer-events-none"
-        style={{ bottom: hasCartItems ? CART_BAR_RESERVE : 0 }}
-      >
+      {/* ─── ANNOUNCEMENT RIBBON — bottom of hero section ─── */}
+      <div className="absolute bottom-0 left-0 right-0 z-[45] pointer-events-none">
         <div className="marquee-wrap border-t border-white/10 bg-black/75 backdrop-blur-xl py-3.5 lg:py-4 pointer-events-auto shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="marquee-track flex whitespace-nowrap">
             {[...Array(2)].map((_, loopIdx) => (
