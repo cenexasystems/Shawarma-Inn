@@ -25,9 +25,9 @@ const DEFAULT_SETTINGS: PublicSettings = {
   whatsapp_number: import.meta.env.VITE_OWNER_WHATSAPP || '6382877479',
   opening_hours: '11:00 AM – 11:00 PM',
   days_open: 'Monday – Sunday',
-  gst_enabled: import.meta.env.VITE_GST_ENABLED ?? 'true',
-  gst_percentage: import.meta.env.VITE_GST_PERCENTAGE ?? '5',
-  prices_include_gst: import.meta.env.VITE_PRICES_INCLUDE_GST ?? 'false',
+  gst_enabled: 'false',
+  gst_percentage: '0',
+  prices_include_gst: 'false',
   delivery_charge: import.meta.env.VITE_DELIVERY_CHARGE ?? '40',
   packing_charge: import.meta.env.VITE_PACKING_CHARGE ?? '10',
   instagram_url: '',
@@ -104,10 +104,10 @@ export function usePublicSettings() {
   const gstEnabled = settings.gst_enabled === 'true';
   const pricesIncludeGst = settings.prices_include_gst === 'true';
   const gstPercentage = Number(settings.gst_percentage) || 5;
-  const deliveryCharge = Number(settings.delivery_charge) ?? 40;
-  const packingCharge = Number(settings.packing_charge) ?? 10;
-  const minOrderValue = Number(settings.min_order_value) || 0;
-  const gstActive = gstEnabled && !pricesIncludeGst;
+  const deliveryCharge = 0;
+  const packingCharge = 0;
+  const minOrderValue = 0;
+  const gstActive = false;
 
   return {
     settings,
