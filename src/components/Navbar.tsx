@@ -135,38 +135,48 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
                 />
               </button>
               {dropdownOpen && (
-                <div className="absolute right-0 mt-3 w-48 bg-[var(--charcoal)] border border-[var(--border)] rounded-xl py-2 shadow-2xl">
-                  <div className="px-4 py-2 border-b border-[var(--border)]">
-                    <p className="text-sm font-semibold text-white truncate">{user.name || 'Account'}</p>
-                    <p className="text-xs text-[var(--white)] opacity-60 truncate">{user.email}</p>
+                <div className="absolute right-0 mt-3 w-64 bg-[#141414]/95 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-[16px] py-2 shadow-2xl z-50 transform origin-top-right transition-all">
+                  <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)]">
+                    <p className="text-[14px] font-semibold text-white tracking-wide truncate">{user.name || 'Account'}</p>
+                    <p className="text-[12px] text-white/50 truncate mt-0.5">{user.email}</p>
                   </div>
-                  {user.role === 'user' && (
-                    <Link
-                      to="/profile"
-                      onClick={() => setDropdownOpen(false)}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--white)] hover:bg-[var(--smoke)] transition-colors"
+                  <div className="py-2">
+                    {user.role === 'user' && (
+                      <Link
+                        to="/profile"
+                        onClick={() => setDropdownOpen(false)}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-medium text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                      >
+                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        My Profile & Orders
+                      </Link>
+                    )}
+                    {user.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-medium text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                      >
+                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Admin Dashboard
+                      </Link>
+                    )}
+                  </div>
+                  <div className="border-t border-[rgba(255,255,255,0.08)] py-1 mt-1">
+                    <button
+                      onClick={() => { logout(); setDropdownOpen(false); }}
+                      className="w-full text-left flex items-center gap-3 px-5 py-2.5 text-[13px] font-semibold text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      My Profile &amp; Orders
-                    </Link>
-                  )}
-                  {user.role === 'admin' && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setDropdownOpen(false)}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--white)] hover:bg-[var(--smoke)] transition-colors"
-                    >
-                      Admin Dashboard
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => { logout(); setDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-3 text-sm text-[var(--red)] hover:bg-[var(--smoke)] transition-colors"
-                  >
-                    Sign Out
-                  </button>
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
