@@ -12,7 +12,9 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  BarChart,
+  Bar
 } from 'recharts';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
@@ -148,22 +150,17 @@ export default function ReportsPage() {
                 <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={metrics.revenueData}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#183025" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#183025" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
+                  <BarChart data={metrics.revenueData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
                     <XAxis dataKey="date" stroke="rgba(0,0,0,0.4)" fontSize={10} tickMargin={10} axisLine={false} tickLine={false} />
                     <YAxis stroke="rgba(0,0,0,0.4)" fontSize={10} tickFormatter={(v) => `₹${v}`} axisLine={false} tickLine={false} />
                     <RechartsTooltip 
                       contentStyle={{ backgroundColor: '#fff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px' }}
-                      itemStyle={{ color: '#183025', fontWeight: 'bold' }}
+                      itemStyle={{ color: '#163A2E', fontWeight: 'bold' }}
+                      cursor={{ fill: 'rgba(22, 58, 46, 0.05)' }}
                     />
-                    <Area type="monotone" dataKey="total" stroke="#183025" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                  </AreaChart>
+                    <Bar dataKey="total" fill="#163A2E" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </div>
