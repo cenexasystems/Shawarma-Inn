@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShoppingBag, MessageCircle, Package, Users, Tag, Star, 
-  Briefcase, Settings, BellRing, Bell, Activity, UserCircle, 
+  MessageCircle, Package, Tag, Star, Users,
+  Settings, Bell, UserCircle, 
   LogOut, FolderTree, Video, BarChart3, PanelLeftClose, PanelLeftOpen,
   Store
 } from 'lucide-react';

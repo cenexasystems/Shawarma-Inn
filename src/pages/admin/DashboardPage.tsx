@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Store, MessageCircle, Package, TrendingUp, Clock, Activity, Settings } from 'lucide-react';
+import { Store, MessageCircle, Package, TrendingUp, Activity, Settings } from 'lucide-react';
 import { useOperationsFilter, OperationsFilterProvider } from '../../context/OperationsFilterContext';
 import { useAdminContext } from '../../context/AdminContext';
 import { useEffect } from 'react';
