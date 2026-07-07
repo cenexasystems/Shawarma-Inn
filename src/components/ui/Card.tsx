@@ -10,7 +10,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`bg-erp-card rounded-erp border border-erp-border shadow-erp transition-all duration-120 ${
+        className={`bg-erp-card rounded-[22px] border border-erp-border shadow-erp transition-all duration-150 ${
           noPadding ? '' : 'p-erp-24'
         } ${className}`}
         {...props}

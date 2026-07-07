@@ -102,7 +102,7 @@ export default function MenuPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+      <div className="min-h-screen bg-erp-bg p-[32px] max-w-[1440px] mx-auto">
         
         <PageHeader 
           title="Menu Management"
@@ -110,18 +110,18 @@ export default function MenuPage() {
         />
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KPICard title="Total Products" value={items.length} icon={Package} iconBgColor="bg-gray-100" iconColor="text-gray-700" />
-          <KPICard title="Active" value={items.filter(i => i.is_active).length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" />
-          <KPICard title="Bestsellers" value={items.filter(i => i.is_bestseller).length} icon={Star} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" />
-          <KPICard title="Categories" value={categories.length} icon={Square} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-erp-24 mb-erp-32">
+          <KPICard title="Total Products" value={items.length} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" subtitle="Catalog size" />
+          <KPICard title="Active" value={items.filter(i => i.is_active).length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" className="border-erp-success/10 bg-erp-success/[0.03]" subtitle="Visible now" />
+          <KPICard title="Bestsellers" value={items.filter(i => i.is_bestseller).length} icon={Star} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" className="border-erp-warning/10 bg-erp-warning/[0.03]" subtitle="Highlighted items" />
+          <KPICard title="Categories" value={categories.length} icon={Square} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" className="border-erp-blue/10 bg-erp-blue/[0.03]" subtitle="Menu groups" />
         </div>
 
         {/* Table Section */}
-        <div className="bg-erp-card rounded-erp shadow-erp border border-erp-border overflow-hidden flex flex-col">
+        <div className="bg-erp-card rounded-[24px] shadow-erp border border-erp-border overflow-hidden flex flex-col">
           
           {/* Toolbar */}
-          <div className="px-6 py-5 border-b border-erp-border flex flex-wrap items-center justify-between gap-4 bg-erp-card">
+          <div className="px-[24px] py-[16px] border-b border-erp-border flex flex-wrap items-center justify-between gap-[16px] bg-erp-card">
             <div className="flex items-center gap-3">
               <Package size={20} className="text-erp-primary" />
               <h2 className="text-[18px] font-semibold text-erp-text font-inter">Product Catalog</h2>
@@ -263,7 +263,7 @@ export default function MenuPage() {
                       {row.is_bestseller ? <Star className="w-[18px] h-[18px] text-erp-warning mx-auto fill-erp-warning" /> : <span className="text-erp-border">—</span>}
                     </TableCell>
                     <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={(e) => { e.stopPropagation(); openDrawer(row); }} className="w-[36px] h-[36px] flex items-center justify-center text-erp-muted hover:text-erp-text bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mx-auto">
+                      <button onClick={(e) => { e.stopPropagation(); openDrawer(row); }} className="w-[36px] h-[36px] flex items-center justify-center text-erp-blue hover:text-erp-blue bg-white border border-erp-blue/20 hover:bg-erp-blue/5 rounded-full transition-colors mx-auto">
                         <Edit3 className="w-[16px] h-[16px]" />
                       </button>
                     </TableCell>

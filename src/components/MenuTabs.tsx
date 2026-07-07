@@ -28,7 +28,7 @@ export default function MenuTabs({ categories, active, onChange, counts }: MenuT
       <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8">
         <div
           ref={scrollRef}
-          className="flex gap-2 overflow-x-auto hide-scrollbar"
+          className="flex flex-wrap gap-2"
           style={{ paddingBlock: '10px' }}
         >
           {categories.map(cat => {

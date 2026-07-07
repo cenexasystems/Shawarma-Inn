@@ -113,7 +113,13 @@ export default function App() {
   if (loading || authLoading) return <Loader />;
 
   return (
-    <div className="min-h-screen bg-[var(--black)] text-[var(--white)] font-body selection:bg-[var(--red)] selection:text-white">
+    <div
+      className={
+        isAdminArea
+          ? 'min-h-screen bg-erp-bg text-erp-text selection:bg-erp-primary selection:text-white'
+          : 'min-h-screen bg-[var(--black)] text-[var(--white)] font-body selection:bg-[var(--red)] selection:text-white'
+      }
+    >
 
       {!isAdminArea && (
         <Navbar

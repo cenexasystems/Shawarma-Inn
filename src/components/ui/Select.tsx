@@ -19,7 +19,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
         <select
           ref={ref}
-          className={`appearance-none w-full bg-white border border-erp-border rounded-erp-input text-erp-text transition-colors focus:outline-none focus:border-erp-primary focus:ring-1 focus:ring-erp-primary text-[14px] h-[42px] cursor-pointer ${
+          className={`appearance-none w-full bg-white border border-erp-border rounded-[16px] text-erp-text transition-colors focus:outline-none focus:border-erp-primary focus:ring-1 focus:ring-erp-primary text-[14px] h-[42px] cursor-pointer font-[600] ${
             Icon ? 'pl-10 pr-10' : 'pl-3.5 pr-10'
           } ${error ? 'border-erp-danger focus:border-erp-danger focus:ring-erp-danger' : ''} ${className}`}
           {...props}

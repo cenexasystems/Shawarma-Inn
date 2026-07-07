@@ -24,13 +24,13 @@ export function TableSystem<T>({
 }: TableSystemProps<T>) {
   return (
     <div className="w-full overflow-x-auto">
-      <table className="w-full text-left border-collapse min-w-[800px]">
+      <table className="w-full text-left border-collapse min-w-[860px]">
         <thead>
-          <tr className="bg-erp-bg border-b border-erp-border">
+          <tr className="bg-[#F4FAF4] border-b border-erp-border">
             {columns.map((col, i) => (
               <th 
                 key={i} 
-                className={`px-[24px] h-[48px] font-inter text-[13px] font-[700] uppercase tracking-[1px] text-erp-muted sticky top-0 bg-erp-bg z-10 ${
+                className={`px-[16px] h-[48px] text-[13px] font-[600] uppercase tracking-[0.08em] text-erp-muted sticky top-0 bg-[#F4FAF4] z-10 ${
                   col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                 }`}
                 style={{ width: col.width }}
@@ -52,12 +52,12 @@ export function TableSystem<T>({
               <tr 
                 key={keyExtractor(row)} 
                 onClick={() => onRowClick?.(row)}
-                className={`h-[72px] transition-colors hover:bg-erp-bg ${onRowClick ? 'cursor-pointer' : ''}`}
+                className={`h-[68px] transition-colors hover:bg-[#FAFBFC] ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col, i) => (
                   <td 
                     key={i} 
-                    className={`px-[24px] font-inter text-[15px] font-[500] text-erp-text ${
+                    className={`px-[16px] text-[15px] font-[500] text-erp-text ${
                       col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                     }`}
                   >

@@ -2,10 +2,10 @@ import React from 'react';
 
 export const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="w-full overflow-auto font-inter">
+    <div className="w-full overflow-auto">
       <table
         ref={ref}
-        className={`w-full caption-bottom text-sm ${className}`}
+        className={`w-full caption-bottom text-[15px] min-w-[860px] ${className}`}
         {...props}
       />
     </div>
@@ -15,7 +15,7 @@ Table.displayName = "Table";
 
 export const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={`[&_tr]:border-b border-erp-border bg-gray-50/50 ${className}`} {...props} />
+    <thead ref={ref} className={`[&_tr]:border-b border-erp-border bg-[#F4FAF4] ${className}`} {...props} />
   )
 );
 TableHeader.displayName = "TableHeader";
@@ -35,7 +35,7 @@ export const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttribut
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={`border-b border-erp-border transition-colors hover:bg-gray-50/50 data-[state=selected]:bg-gray-100 h-[58px] ${className}`}
+      className={`border-b border-erp-border transition-colors hover:bg-[#FAFBFC] data-[state=selected]:bg-gray-100 h-[68px] ${className}`}
       {...props}
     />
   )
@@ -46,7 +46,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttr
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={`h-[46px] px-erp-16 text-left align-middle font-semibold text-[12px] uppercase tracking-[1px] text-erp-muted [&:has([role=checkbox])]:pr-0 ${className}`}
+      className={`h-[48px] px-[16px] text-left align-middle font-[600] text-[13px] uppercase tracking-[0.08em] text-erp-muted [&:has([role=checkbox])]:pr-0 ${className}`}
       {...props}
     />
   )
@@ -57,7 +57,7 @@ export const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttr
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={`p-erp-16 align-middle text-[13px] text-erp-text [&:has([role=checkbox])]:pr-0 ${className}`}
+      className={`px-[16px] py-[12px] align-middle text-[15px] font-[500] text-erp-text [&:has([role=checkbox])]:pr-0 ${className}`}
       {...props}
     />
   )

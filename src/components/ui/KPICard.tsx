@@ -21,22 +21,22 @@ export const KPICard: React.FC<KPICardProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`bg-white border border-erp-border flex items-center justify-between gap-6 p-[24px] rounded-[16px] shadow-sm ${className}`}>
+    <div className={`min-h-[112px] bg-white border border-erp-border flex items-center justify-between gap-[16px] p-[20px] rounded-[22px] shadow-erp ${className}`}>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className="text-[11px] font-inter font-bold text-erp-muted uppercase tracking-[1px] truncate mb-1">
+        <p className="text-[12px] font-[600] text-erp-muted uppercase tracking-[0.12em] truncate mb-[8px]">
           {title}
         </p>
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-[42px] font-manrope font-[800] text-erp-text leading-none tracking-tight">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h3 className="max-w-full truncate text-[clamp(30px,2.6vw,44px)] font-[700] text-erp-text leading-none tracking-[-0.03em]">
             {value}
           </h3>
         </div>
         {subtitle && (
-          <p className="text-[11px] text-erp-muted mt-2 font-medium tracking-[0.5px]">{subtitle}</p>
+          <p className="text-[12px] text-erp-muted mt-[8px] font-[500]">{subtitle}</p>
         )}
       </div>
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBgColor}`}>
-        <Icon size={24} className={iconColor} strokeWidth={1.5} />
+      <div className={`w-[42px] h-[42px] rounded-full flex items-center justify-center shrink-0 ${iconBgColor}`}>
+        <Icon size={20} className={iconColor} strokeWidth={1.8} />
       </div>
     </div>
   );

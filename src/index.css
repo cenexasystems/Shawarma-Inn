@@ -47,6 +47,25 @@ h1, h2, h3, h4 {
   font-family: var(--font-display) !important;
 }
 
+.admin-app,
+.admin-app h1,
+.admin-app h2,
+.admin-app h3,
+.admin-app h4,
+.admin-app h5,
+.admin-app h6,
+.admin-app button,
+.admin-app input,
+.admin-app select,
+.admin-app textarea {
+  font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.admin-app {
+  background: #FAFBFC;
+  color: #111827;
+}
+
 ::selection {
   background-color: var(--red);
   color: #fff;

@@ -21,21 +21,21 @@ export function RightDrawer({ isOpen, onClose, title, subtitle, children, footer
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[80] bg-[#111111]/40 backdrop-blur-[2px]" 
+            transition={{ duration: 0.14 }}
+            className="fixed inset-0 z-[80] bg-[#111111]/28" 
             onClick={onClose} 
           />
           <motion.aside 
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'tween', duration: 0.25, ease: 'easeInOut' }}
-            className="fixed right-0 top-0 h-full bg-white border-l border-erp-border z-[90] flex flex-col shadow-2xl rounded-l-erp overflow-hidden"
+            transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
+            className="fixed right-0 top-0 h-full bg-white border-l border-erp-border z-[90] flex flex-col shadow-[0_10px_30px_rgba(15,23,42,0.10)] rounded-l-[22px] overflow-hidden"
             style={{ width, maxWidth: '100vw' }}
           >
             <div className="flex items-center justify-between px-[32px] py-[24px] border-b border-erp-border bg-white shrink-0">
               <div>
-                <h3 className="font-manrope font-[800] text-[28px] text-erp-text leading-none">{title}</h3>
+                <h3 className="font-[700] text-[28px] text-erp-text leading-none tracking-[-0.03em]">{title}</h3>
                 {subtitle && <p className="font-inter text-[14px] text-erp-muted font-[500] mt-[8px]">{subtitle}</p>}
               </div>
               <button 

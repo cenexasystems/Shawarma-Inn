@@ -267,7 +267,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
     const finalAddress = deliveryMethod === 'we_arrange' ? getFormattedAddress() : (deliveryMethod === 'self_delivery' ? 'Self Delivery (Rapido/Porter)' : 'Store Pickup');
     const discountText = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-₹${totals.discount})` : '';
     
-    const message = `*NEW ORDER FROM SHAWARMA INN* 🌯🔥\n\n` +
+      const message = `*NEW ORDER FROM SHAWARMA INN* 🌯🔥\n\n` +
       `*Customer Details*\n` +
       `Name: ${name}\n` +
       `Phone: ${phone}\n\n` +
@@ -280,6 +280,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
       `Delivery Charge: ₹${totals.deliveryCharge}\n` +
       (totals.gstEnabled ? `GST (${totals.gstPercentage}%): ₹${totals.gst}\n` : '') +
       `*Grand Total: ₹${totals.grandTotal}*\n\n` +
+      `*Note: Delivery charges will be applied (Not for Store Pickup)*\n\n` +
       `Please confirm my order!`;
 
     const encodedMessage = encodeURIComponent(message);

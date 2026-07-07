@@ -15,7 +15,7 @@ export function Card({ children, padding = 'normal', noBg = false, className = '
 
   return (
     <div 
-      className={`${noBg ? '' : 'bg-erp-card border border-erp-border shadow-erp rounded-erp'} ${paddingClasses[padding]} ${className}`}
+      className={`${noBg ? '' : 'bg-erp-card border border-erp-border shadow-erp rounded-[22px]'} ${paddingClasses[padding]} ${className}`}
       {...props}
     >
       {children}
@@ -25,18 +25,18 @@ export function Card({ children, padding = 'normal', noBg = false, className = '
 
 export function StatCard({ title, value, subtitle, icon, valueColor = 'text-erp-text' }: { title: string; value: string | number; subtitle?: string; icon?: ReactNode; valueColor?: string }) {
   return (
-    <Card className="flex flex-col relative overflow-hidden group">
+    <Card className="h-[118px] flex flex-col justify-center relative overflow-hidden group">
       <div className="flex items-center justify-between mb-[16px]">
-        <h3 className="font-inter text-[13px] font-[700] uppercase tracking-[1px] text-erp-muted">
+        <h3 className="text-[12px] font-[600] uppercase tracking-[0.12em] text-erp-muted">
           {title}
         </h3>
         {icon && <div className="text-erp-muted transition-transform group-hover:scale-110">{icon}</div>}
       </div>
-      <p className={`font-manrope text-[48px] font-[800] leading-none tracking-tight ${valueColor}`}>
+      <p className={`text-[52px] font-[700] leading-none tracking-[-0.03em] ${valueColor}`}>
         {value}
       </p>
       {subtitle && (
-        <p className="font-inter text-[13px] font-[500] text-erp-muted mt-[12px]">
+        <p className="text-[12px] font-[500] text-erp-muted mt-[8px]">
           {subtitle}
         </p>
       )}
@@ -47,7 +47,7 @@ export function StatCard({ title, value, subtitle, icon, valueColor = 'text-erp-
 export function ChartCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Card className="flex flex-col h-full">
-      <h2 className="font-manrope text-[18px] font-[700] text-erp-text mb-[24px]">
+      <h2 className="text-[18px] font-[700] text-erp-text mb-[24px]">
         {title}
       </h2>
       <div className="flex-1 min-h-[240px]">

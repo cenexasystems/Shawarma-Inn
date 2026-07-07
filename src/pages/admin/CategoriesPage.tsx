@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, FolderTree, Edit3, Trash2, RefreshCw } from 'lucide-react';
+import { Search, Plus, FolderTree, Edit3, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 
 interface Category {
   id: string;
   name: string;
   display_order: number;
   is_active: boolean;
-  created_at: string;
 }
 
 export default function CategoriesPage() {
@@ -115,65 +115,13 @@ export default function CategoriesPage() {
     }
   };
 
-  const syncDefaultCategories = async () => {
-    if (!window.confirm("This will wipe existing categories and insert the 13 exact default categories. Proceed?")) return;
-    
-    try {
-      // Delete existing
-      for (const cat of categories) {
-        const { error: delErr } = await supabase.from('categories').delete().eq('id', cat.id);
-        if (delErr) console.error("Error deleting", cat.id, delErr);
-      }
-      
-      const defaults = [
-        'Shawarma', 'Burgers', 'Toasts', 'Starters', 'Mojitos',
-        'Waffles', 'Milkshakes', 'Pizza', 'Momos', 'Combo Deals',
-        'Loaded Fries', 'Bring Your Own Chips', 'Desserts'
-      ];
-      
-      let errorCount = 0;
-      let lastErr = '';
-
-      for (let i = 0; i < defaults.length; i++) {
-        const { error: insErr } = await supabase.from('categories').insert({
-          name: defaults[i],
-          display_order: i + 1,
-          is_active: true
-        });
-        if (insErr) {
-          console.error("Insert error for", defaults[i], insErr);
-          errorCount++;
-          lastErr = insErr.message;
-        }
-      }
-      
-      if (errorCount > 0) {
-        alert(`Failed to insert ${errorCount} categories. Last error: ${lastErr}`);
-      } else {
-        alert("Categories synced successfully!");
-      }
-      
-      loadCategories();
-    } catch (e: any) {
-      console.error(e);
-      alert("An unexpected error occurred: " + e.message);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
+    <div className="min-h-screen bg-erp-bg p-[32px] max-w-[1440px] mx-auto">
       <PageHeader 
         title="Menu Categories"
-        subtitle="Manage database-driven categories for your menu."
+        subtitle="Manage only the category details needed for menu organization."
         action={
           <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              icon={RefreshCw}
-              onClick={syncDefaultCategories}
-            >
-              Sync Defaults
-            </Button>
             <Button 
               icon={Plus}
               onClick={() => openModal()}
@@ -197,51 +145,64 @@ export default function CategoriesPage() {
         </div>
       </Card>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {loading ? (
-           [...Array(4)].map((_, i) => (
-             <Card key={i} className="p-6 h-[140px] animate-pulse flex flex-col justify-between">
-               <div className="w-10 h-10 bg-gray-200 rounded-[10px]" />
-               <div className="w-24 h-4 bg-gray-200 rounded" />
-             </Card>
-           ))
-        ) : filteredCategories.length === 0 ? (
-          <div className="col-span-full p-16 flex flex-col items-center justify-center text-center bg-white border border-dashed border-erp-border rounded-erp">
-            <FolderTree size={48} className="text-gray-300 mb-4" />
-            <p className="text-erp-muted text-lg font-bebas tracking-[2px]">No categories found.</p>
-          </div>
-        ) : (
-          filteredCategories.map((cat) => (
-            <Card key={cat.id} className="group hover:border-erp-primary p-6 transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px]">
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-erp-primary/5 rounded-full blur-2xl group-hover:bg-erp-primary/10 transition-colors pointer-events-none" />
-              
-              <div className="flex justify-between items-start z-10">
-                <div className="w-12 h-12 rounded-[12px] bg-gray-50 border border-erp-border flex items-center justify-center text-erp-primary shadow-sm">
-                  <FolderTree size={20} />
-                </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openModal(cat)} className="w-[32px] h-[32px] flex items-center justify-center bg-gray-100 text-erp-muted hover:text-erp-text hover:bg-gray-200 rounded-[8px] transition-colors">
-                    <Edit3 size={14} />
-                  </button>
-                  <button onClick={() => handleDelete(cat.id, cat.name)} className="w-[32px] h-[32px] flex items-center justify-center bg-erp-danger/5 text-erp-danger hover:bg-erp-danger/10 rounded-[8px] transition-colors">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="z-10 mt-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[15px] font-bold text-erp-text tracking-wide">{cat.name}</h3>
-                  <span className={`text-[9px] uppercase font-bold tracking-[1px] px-2 py-0.5 rounded-full border ${cat.is_active ? 'bg-erp-success/10 text-erp-success border-erp-success/20' : 'bg-gray-100 text-erp-muted border-gray-200'}`}>
-                    {cat.is_active ? 'Active' : 'Hidden'}
-                  </span>
-                </div>
-                <p className="text-[11px] text-erp-muted mt-1 uppercase tracking-[1px] font-bold">Order: {cat.display_order}</p>
-              </div>
-            </Card>
-          ))
-        )}
+      <div className="bg-erp-card rounded-[24px] shadow-erp border border-erp-border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Category</TableHead>
+              <TableHead>Display Order</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell colSpan={4} className="h-[68px] animate-pulse bg-gray-50/50" />
+                </TableRow>
+              ))
+            ) : filteredCategories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="py-[56px] text-center">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <FolderTree size={32} className="text-gray-300 mb-3" />
+                    <p className="text-[15px] font-[500] text-erp-muted">No categories found.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredCategories.map((cat) => (
+                <TableRow key={cat.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-[12px]">
+                      <div className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-erp-border bg-[#F8FAFC] text-erp-primary">
+                        <FolderTree size={16} />
+                      </div>
+                      <span className="text-[15px] font-[700] text-erp-text">{cat.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-[700] text-erp-text">{cat.display_order}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex h-[32px] items-center rounded-full border px-[12px] text-[12px] font-[700] uppercase tracking-[0.08em] ${cat.is_active ? 'border-erp-success/20 bg-erp-success/8 text-erp-success' : 'border-gray-200 bg-gray-100 text-erp-muted'}`}>
+                      {cat.is_active ? 'Active' : 'Hidden'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-[8px]">
+                      <button onClick={() => openModal(cat)} className="flex h-[36px] w-[36px] items-center justify-center rounded-full border border-erp-blue/20 bg-white text-erp-blue transition-colors hover:bg-erp-blue/5">
+                        <Edit3 size={15} />
+                      </button>
+                      <button onClick={() => handleDelete(cat.id, cat.name)} className="flex h-[36px] w-[36px] items-center justify-center rounded-full border border-erp-danger/20 bg-white text-erp-danger transition-colors hover:bg-erp-danger/5">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Modal */}
@@ -249,7 +210,7 @@ export default function CategoriesPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
           <div className="relative bg-white border border-erp-border rounded-[24px] p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="font-manrope font-[700] text-[22px] tracking-[-0.02em] text-erp-text mb-6">
+            <h3 className="font-[700] text-[22px] tracking-[-0.02em] text-erp-text mb-6">
               {editingCategory ? 'Edit Category' : 'New Category'}
             </h3>
             

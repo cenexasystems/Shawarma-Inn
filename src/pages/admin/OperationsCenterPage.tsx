@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, MapPin, Copy, Package, MessageCircle, Phone, Search, Clock, CheckCircle } from 'lucide-react';
+import { RefreshCw, Copy, Package, MessageCircle, Phone, Search, Clock, CheckCircle, ReceiptText } from 'lucide-react';
 import { OperationsFilterProvider, useOperationsFilter, formatOrderId } from '../../context/OperationsFilterContext';
 import { RightDrawer } from '../../design-system/DrawerSystem';
 import { Button } from '../../components/ui/Button';
@@ -8,9 +8,9 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
+import { WhatsAppLogo } from '../../components/icons/WhatsAppLogo';
 import { supabase } from '../../lib/supabaseClient';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 function formatTime(iso: string): string {
   if (!iso) return '';
   return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -22,12 +22,76 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' ' + formatTime(iso);
 }
 
-function getWhatsAppMsg(order: any): string {
-  const items = (order.items || []).map((i: any) => `  • ${i.name} x${i.quantity} — ₹${(i.price * i.quantity).toLocaleString()}`).join('\n');
-  return encodeURIComponent(`Hello ${order.customer_name || 'there'}! 👋\n\nYour Shawarma Inn order *${formatOrderId(order)}* is confirmed.\n\n*Items:*\n${items}\n\n*Total: ₹${Number(order.total).toLocaleString()}*\n\nThank you!`);
+function getStatusTone(status: string) {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return 'text-erp-success border-erp-success/20 bg-erp-success/8';
+    case 'pending':
+      return 'text-erp-danger border-erp-danger/20 bg-erp-danger/8';
+    case 'processing':
+      return 'text-erp-warning border-erp-warning/20 bg-erp-warning/8';
+    case 'cancelled':
+      return 'text-erp-danger border-erp-danger/20 bg-erp-danger/8';
+    default:
+      return 'text-erp-muted border-erp-border bg-white';
+  }
 }
 
-// ─── Drawer Component ────────────────────────────────────────────────────────
+function money(value: unknown): string {
+  return `₹${Number(value || 0).toLocaleString('en-IN')}`;
+}
+
+function getOrderSubtotal(order: any): number {
+  const itemSubtotal = (order.items || []).reduce(
+    (sum: number, item: any) => sum + Number(item.price || 0) * Number(item.quantity || 0),
+    0,
+  );
+  return Number(order.subtotal ?? itemSubtotal ?? 0);
+}
+
+function getOrderBill(order: any) {
+  const subtotal = getOrderSubtotal(order);
+  const discount = Number(order.discount_amount || 0);
+  const packing = Number(order.packing_charge || 0);
+  const gst = Number(order.gst || 0);
+  const total = Number(order.total || 0);
+  const isStorePickup = order.delivery_type === 'store_pickup' || order.delivery_address === 'STORE PICKUP';
+  const deliveryCharge = Math.max(0, total - (subtotal - discount + packing + gst));
+
+  return {
+    subtotal,
+    discount,
+    packing,
+    gst,
+    total,
+    couponCode: order.coupon_code,
+    isStorePickup,
+    deliveryCharge,
+  };
+}
+
+function getDetailedWhatsAppMsg(order: any): string {
+  const bill = getOrderBill(order);
+  const items = (order.items || [])
+    .map((i: any) => `• ${i.name} x${i.quantity} = ${money(Number(i.price || 0) * Number(i.quantity || 0))}`)
+    .join('\n');
+  const discountLine = bill.discount > 0 ? `\nCoupon (${bill.couponCode || 'Applied'}): -${money(bill.discount)}` : '';
+  const deliveryLine = bill.isStorePickup
+    ? '\nDelivery Charge: Not applicable for store pickup'
+    : bill.deliveryCharge > 0
+      ? `\nDelivery Charge: ${money(bill.deliveryCharge)}`
+      : '\nDelivery Charge: To be confirmed';
+
+  return encodeURIComponent(
+    `Hello ${order.customer_name || 'there'}!\n\n` +
+    `Your Shawarma Inn order *${formatOrderId(order)}* is confirmed.\n\n` +
+    `*Customer*\nName: ${order.customer_name || 'Guest'}\nPhone: ${order.customer_phone || '-'}\nAddress: ${order.delivery_address || '-'}\n\n` +
+    `*Items*\n${items}\n\n` +
+    `*Bill Summary*\nNormal Bill Amount: ${money(bill.subtotal)}${discountLine}\nPacking Charge: ${money(bill.packing)}${bill.gst > 0 ? `\nGST: ${money(bill.gst)}` : ''}${deliveryLine}\n*Final Payable: ${money(bill.total)}*\n\n` +
+    `Thank you!`,
+  );
+}
+
 function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
   const { updateOrderStatus } = useOperationsFilter();
   const [copied, setCopied] = useState(false);
@@ -49,6 +113,9 @@ function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
 
   if (!order) return null;
 
+  const bill = getOrderBill(order);
+  const phone = (order.customer_phone || '').replace(/\D/g, '');
+
   const handleUpdate = async (status: string) => {
     await updateOrderStatus(order.id, status);
     const { data } = await supabase
@@ -68,14 +135,10 @@ function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
   };
 
   const copyWaMessage = () => {
-    if (order) {
-      navigator.clipboard.writeText(decodeURIComponent(getWhatsAppMsg(order)));
-      setWaCopied(true);
-      setTimeout(() => setWaCopied(false), 2000);
-    }
+    navigator.clipboard.writeText(decodeURIComponent(getDetailedWhatsAppMsg(order)));
+    setWaCopied(true);
+    setTimeout(() => setWaCopied(false), 2000);
   };
-
-  const phone = (order.customer_phone || '').replace(/\D/g, '');
 
   return (
     <RightDrawer
@@ -83,6 +146,7 @@ function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
       onClose={onClose}
       title={formatOrderId(order)}
       subtitle={order.status.toUpperCase()}
+      width="1120px"
       footer={
         <div className="flex flex-col gap-[16px]">
           <div className="flex gap-[12px]">
@@ -91,7 +155,7 @@ function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
                 <Button variant="secondary" className="w-full" onClick={() => window.open(`tel:${phone}`)} icon={Phone}>
                   Call
                 </Button>
-                <Button className="w-full bg-[#128C7E] hover:bg-[#128C7E]/90 text-white border-none" onClick={() => window.open(`https://wa.me/${phone}?text=${getWhatsAppMsg(order)}`, '_blank')} icon={MessageCircle}>
+                <Button className="w-full bg-[#128C7E] hover:bg-[#128C7E]/90 text-white border-none" onClick={() => window.open(`https://wa.me/${phone}?text=${getDetailedWhatsAppMsg(order)}`, '_blank')} icon={MessageCircle}>
                   WhatsApp
                 </Button>
               </>
@@ -111,140 +175,176 @@ function OrderDrawer({ order, onClose }: { order: any; onClose: () => void }) {
         </div>
       }
     >
-      <div className="space-y-[32px]">
-        <section>
-          <h4 className="text-[12px] font-[700] text-erp-muted uppercase tracking-[1px] mb-[16px]">Customer</h4>
-          <div className="bg-erp-bg border border-erp-border rounded-[16px] p-[24px]">
-            <p className="font-[700] text-[16px] text-erp-text">{order.customer_name || 'Guest'}</p>
-            <p className="text-[14px] text-erp-muted mt-[4px]">{order.customer_phone}</p>
+      <div className="space-y-[24px]">
+        <section className="bg-white border border-erp-border rounded-[24px] p-[24px] shadow-erp">
+          <div className="grid gap-[16px] md:grid-cols-3">
+            <div>
+              <p className="text-[12px] font-[600] text-erp-muted uppercase tracking-[0.12em]">Name</p>
+              <p className="mt-[8px] text-[15px] font-[700] text-erp-text">{order.customer_name || 'Guest'}</p>
+            </div>
+            <div>
+              <p className="text-[12px] font-[600] text-erp-muted uppercase tracking-[0.12em]">Phone</p>
+              <p className="mt-[8px] text-[15px] font-[700] text-erp-text">{order.customer_phone || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[12px] font-[600] text-erp-muted uppercase tracking-[0.12em]">Address</p>
+              <div className="mt-[8px] flex items-start gap-[8px]">
+                <p className="text-[15px] font-[700] leading-relaxed text-erp-text">{order.delivery_address || '-'}</p>
+                {order.delivery_address && (
+                  <button onClick={copyAddress} className="mt-[2px] text-erp-muted hover:text-erp-text" title="Copy address">
+                    <Copy size={15} />
+                  </button>
+                )}
+              </div>
+              {copied && <p className="mt-[4px] text-[12px] font-[600] text-erp-success">Address copied</p>}
+            </div>
           </div>
         </section>
 
-        {order.delivery_address && (
-          <section>
-            <h4 className="text-[12px] font-[700] text-erp-muted uppercase tracking-[1px] mb-[16px]">Delivery</h4>
-            <div className="bg-erp-bg border border-erp-border rounded-[16px] p-[24px] flex items-start gap-[16px]">
-              <MapPin size={20} className="text-erp-muted mt-[2px] shrink-0" />
-              <div>
-                <p className="text-[15px] text-erp-text leading-relaxed">{order.delivery_address}</p>
-                <button onClick={copyAddress} className="mt-[12px] text-[13px] text-erp-muted hover:text-erp-text font-[700] flex items-center gap-[8px] transition-colors">
-                  <Copy size={14} /> {copied ? 'Copied!' : 'Copy Address'}
-                </button>
+        <section className="bg-white border border-erp-border rounded-[24px] p-[24px] shadow-erp">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left">
+              <thead>
+                <tr className="bg-[#F4FAF4]">
+                  <th className="px-[16px] h-[48px] text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-text rounded-l-[16px]">Product</th>
+                  <th className="px-[16px] h-[48px] text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-text">Qty</th>
+                  <th className="px-[16px] h-[48px] text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-text">Unit Price</th>
+                  <th className="px-[16px] h-[48px] text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-text text-right rounded-r-[16px]">Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(order.items || []).map((item: any) => (
+                  <tr key={item.id} className="border-b border-erp-border last:border-b-0">
+                    <td className="px-[16px] py-[18px]">
+                      <div className="flex items-center gap-[12px]">
+                        <div className="h-[40px] w-[40px] rounded-[12px] bg-erp-bg border border-erp-border flex items-center justify-center text-erp-muted">
+                          <Package size={18} />
+                        </div>
+                        <span className="text-[15px] font-[700] text-erp-text">{item.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-[16px] py-[18px] text-[15px] font-[700] text-erp-text">{item.quantity}</td>
+                    <td className="px-[16px] py-[18px] text-[15px] font-[600] text-erp-text">{money(item.price)}</td>
+                    <td className="px-[16px] py-[18px] text-right text-[15px] font-[800] text-erp-text">{money(Number(item.price || 0) * Number(item.quantity || 0))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-[24px] rounded-[18px] border border-erp-border bg-[#FAFBFC] p-[20px]">
+            <div className="space-y-[12px] text-[15px]">
+              <div className="flex items-center justify-between font-[600] text-erp-muted">
+                <span>Normal bill amount</span>
+                <span className="text-erp-text">{money(bill.subtotal)}</span>
+              </div>
+              {bill.discount > 0 && (
+                <div className="flex items-center justify-between font-[600] text-erp-success">
+                  <span>Coupon {bill.couponCode ? `(${bill.couponCode})` : 'discount'}</span>
+                  <span>-{money(bill.discount)}</span>
+                </div>
+              )}
+              {bill.packing > 0 && (
+                <div className="flex items-center justify-between font-[600] text-erp-muted">
+                  <span>Packing charge</span>
+                  <span className="text-erp-text">{money(bill.packing)}</span>
+                </div>
+              )}
+              {bill.gst > 0 && (
+                <div className="flex items-center justify-between font-[600] text-erp-muted">
+                  <span>GST</span>
+                  <span className="text-erp-text">{money(bill.gst)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between font-[600] text-erp-muted">
+                <span>{bill.isStorePickup ? 'Delivery charge' : 'Delivery charge note'}</span>
+                <span className={bill.isStorePickup ? 'text-erp-muted' : 'text-erp-warning'}>
+                  {bill.isStorePickup ? 'Not applicable for store pickup' : bill.deliveryCharge > 0 ? money(bill.deliveryCharge) : 'Will be applied if arranged'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-t border-erp-border pt-[16px]">
+                <span className="text-[13px] font-[700] text-erp-muted uppercase tracking-[0.12em]">Coupon discounted bill amount</span>
+                <span className="text-[30px] font-[800] leading-none text-erp-text">{money(bill.total)}</span>
               </div>
             </div>
-          </section>
-        )}
-
-        <section>
-          <h4 className="text-[12px] font-[700] text-erp-muted uppercase tracking-[1px] mb-[16px]">Order Timeline</h4>
-          <div className="bg-white border border-erp-border rounded-[16px] p-[24px]">
-            {history.length > 0 ? (
-              <div className="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-[7px] before:w-0.5 before:bg-erp-border">
-                {history.map((event, idx) => (
-                  <div key={idx} className="relative">
-                    <div className="absolute -left-[20px] top-1 w-3 h-3 rounded-full border-2 border-white bg-erp-primary shadow-sm" />
-                    <p className="text-sm font-[700] text-erp-text uppercase tracking-wide">
-                      {event.status}
-                    </p>
-                    <p className="text-xs text-erp-muted mt-1">
-                      {new Date(event.created_at).toLocaleString()}
-                    </p>
-                    {event.note && (
-                      <p className="text-sm text-erp-muted mt-2 bg-erp-bg p-2 rounded-lg italic">
-                        {event.note}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-erp-muted italic">Order placed.</p>
-            )}
           </div>
         </section>
 
-        <section>
-          <h4 className="text-[12px] font-[700] text-erp-muted uppercase tracking-[1px] mb-[16px]">Order Items</h4>
-          <div className="bg-white border border-erp-border rounded-[16px] overflow-hidden">
-            <div className="divide-y divide-erp-border">
-              {(order.items || []).map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between px-[24px] py-[16px]">
-                  <div className="flex items-center gap-[16px]">
-                    <div className="w-[40px] h-[40px] bg-erp-bg rounded-[8px] flex items-center justify-center shrink-0">
-                      <Package size={18} className="text-erp-muted" />
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-[600] text-erp-text">{item.name}</p>
-                      <p className="text-[13px] text-erp-muted mt-[4px]">₹{(item.price || 0).toLocaleString()} × {item.quantity}</p>
-                    </div>
-                  </div>
-                  <span className="font-[700] text-[16px] text-erp-text">₹{((item.price || 0) * item.quantity).toLocaleString()}</span>
+        <section className="bg-white border border-erp-border rounded-[24px] p-[24px] shadow-erp">
+          <div className="flex items-center justify-between mb-[16px]">
+            <div className="flex items-center gap-[10px]">
+              <ReceiptText size={20} className="text-erp-primary" />
+              <h4 className="text-[12px] font-[700] text-erp-text uppercase tracking-[0.12em]">WhatsApp Message</h4>
+            </div>
+            <button
+              onClick={copyWaMessage}
+              className="bg-[#12B981] hover:bg-[#10A371] text-white px-[16px] h-[36px] rounded-[16px] text-[13px] font-[700] flex items-center gap-2 transition-colors shadow-sm"
+            >
+              <Copy size={14} />
+              {waCopied ? 'Copied' : 'Copy Message'}
+            </button>
+          </div>
+          <div className="bg-[#FBFAF7] border border-erp-border rounded-[18px] p-[24px]">
+            <pre className="text-[14px] text-erp-text whitespace-pre-wrap leading-[1.8]">
+              {decodeURIComponent(getDetailedWhatsAppMsg(order))}
+            </pre>
+          </div>
+        </section>
+
+        <section className="bg-white border border-erp-border rounded-[24px] p-[24px] shadow-erp">
+          <h4 className="text-[12px] font-[700] text-erp-muted uppercase tracking-[0.12em] mb-[16px]">Order Timeline</h4>
+          {history.length > 0 ? (
+            <div className="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-[7px] before:w-0.5 before:bg-erp-border">
+              {history.map((event, idx) => (
+                <div key={idx} className="relative">
+                  <div className="absolute -left-[20px] top-1 w-3 h-3 rounded-full border-2 border-white bg-erp-primary shadow-sm" />
+                  <p className="text-sm font-[700] text-erp-text uppercase tracking-wide">{event.status}</p>
+                  <p className="text-xs text-erp-muted mt-1">{new Date(event.created_at).toLocaleString()}</p>
+                  {event.note && <p className="text-sm text-erp-muted mt-2 bg-erp-bg p-2 rounded-lg italic">{event.note}</p>}
                 </div>
               ))}
             </div>
-            
-            <div className="px-[24px] py-[24px] border-t border-erp-border bg-erp-bg space-y-[12px]">
-              <div className="flex justify-between text-[14px] text-erp-muted font-[500]">
-                <span>Subtotal</span>
-                <span>₹{(order.subtotal || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center pt-[16px] border-t border-erp-border">
-                <span className="text-[13px] font-[700] text-erp-muted uppercase tracking-[1px]">Grand Total</span>
-                <span className="font-[800] text-[24px] text-erp-text leading-none">₹{(order.total || 0).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between mb-[16px]">
-            <h4 className="text-[12px] font-[700] text-erp-muted uppercase tracking-[1px]">WhatsApp Message</h4>
-            <button 
-              onClick={copyWaMessage}
-              className="bg-[#128C7E] hover:bg-[#128C7E]/90 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm"
-            >
-              <Copy size={14} /> 
-              {waCopied ? 'Copied!' : 'Copy Message'}
-            </button>
-          </div>
-          <div className="bg-white border border-erp-border rounded-[16px] p-[24px] shadow-sm">
-            <pre className="text-[13px] text-erp-text whitespace-pre-wrap font-inter leading-relaxed">
-              {decodeURIComponent(getWhatsAppMsg(order))}
-            </pre>
-          </div>
+          ) : (
+            <p className="text-sm text-erp-muted italic">Order placed.</p>
+          )}
         </section>
       </div>
     </RightDrawer>
   );
 }
 
-// ─── Main Page Content ───────────────────────────────────────────────────────
 function OperationsCenterContent() {
-  const { 
-    search, setSearch, orders, kpi, refreshing, fetchOrders, 
+  const {
+    search, setSearch, orders, kpi, refreshing, fetchOrders,
     datePreset, setDatePreset, updateOrderStatus,
     customDateRange, setCustomDateRange
   } = useOperationsFilter();
-  
+
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   return (
-    <div className="min-h-screen bg-erp-bg font-inter p-8 max-w-[1680px] mx-auto">
-      
-      <PageHeader 
-        title="WhatsApp Center"
+    <div className="min-h-screen bg-erp-bg p-[32px] max-w-[1440px] mx-auto">
+      <PageHeader
+        title={
+          <div className="flex items-center gap-[14px]">
+            <div className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#25D366]/12 text-[#25D366]">
+              <WhatsAppLogo className="h-[22px] w-[22px]" />
+            </div>
+            <span>WhatsApp Center</span>
+          </div>
+        }
         subtitle="Manage and respond to customer requests in real time"
         action={
           <>
-            <div className="flex items-center bg-white border border-erp-border rounded-full p-1 shadow-sm">
+            <div className="flex items-center gap-[8px] bg-transparent">
               {(['all', 'today', 'week', 'month', 'year', 'custom'] as const).map(preset => (
                 <button
                   key={preset}
                   onClick={() => setDatePreset(preset)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-[600] tracking-wide transition-all ${
-                    datePreset === preset 
-                      ? 'bg-erp-primary text-white shadow-sm' 
-                      : 'text-erp-muted hover:text-erp-text'
+                  className={`h-[42px] px-[16px] rounded-full text-[12px] font-[600] uppercase transition-all border ${
+                    datePreset === preset
+                      ? 'bg-erp-primary text-white border-erp-primary shadow-sm'
+                      : 'bg-white text-erp-muted border-erp-border hover:text-erp-text'
                   }`}
                 >
                   {preset}
@@ -254,15 +354,15 @@ function OperationsCenterContent() {
 
             {datePreset === 'custom' && (
               <div className="flex items-center gap-2">
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="bg-white border border-erp-border rounded-full px-3 py-1.5 text-xs text-erp-text focus:outline-none focus:border-erp-primary"
                   value={customDateRange.from ? customDateRange.from.split('T')[0] : ''}
                   onChange={(e) => setCustomDateRange({ ...customDateRange, from: e.target.value ? new Date(e.target.value).toISOString() : null })}
                 />
                 <span className="text-erp-muted text-xs">to</span>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="bg-white border border-erp-border rounded-full px-3 py-1.5 text-xs text-erp-text focus:outline-none focus:border-erp-primary"
                   value={customDateRange.to ? customDateRange.to.split('T')[0] : ''}
                   onChange={(e) => setCustomDateRange({ ...customDateRange, to: e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : null })}
@@ -277,30 +377,28 @@ function OperationsCenterContent() {
         }
       />
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-erp-24 mb-erp-32">
-        <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="All time" />
-        <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="Needs action" />
-        <KPICard title="Contacted" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="In conversation" />
-        <KPICard title="Completed" value={kpi.completed} icon={CheckCircle} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Successfully done" />
+        <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" subtitle="All time" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" />
+        <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Needs action" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
+        <KPICard title="Contacted" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-[#25D366]/12" iconColor="text-[#25D366]" subtitle="In conversation" className="border-[#25D366]/10 bg-[#25D366]/[0.03]" />
+        <KPICard title="Completed" value={kpi.completed} icon={CheckCircle} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Successfully done" className="border-erp-success/10 bg-erp-success/[0.03]" />
       </div>
 
-      {/* Table Section */}
-      <div className="bg-erp-card rounded-erp shadow-erp border border-erp-border overflow-hidden flex flex-col">
-        
-        {/* Table Header Area */}
+      <div className="bg-erp-card rounded-[24px] shadow-erp border border-erp-border overflow-hidden flex flex-col">
         <div className="px-erp-24 py-erp-16 border-b border-erp-border flex items-center justify-between bg-erp-card">
           <div className="flex items-center gap-3">
-            <MessageCircle size={20} className="text-erp-primary" />
-            <h2 className="text-[18px] font-semibold text-erp-text font-inter">Customer Requests</h2>
-            <span className="px-2 py-0.5 bg-gray-100 text-erp-muted text-xs font-semibold rounded-full">
+            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#25D366]/12 text-[#25D366]">
+              <WhatsAppLogo className="h-[18px] w-[18px]" />
+            </div>
+            <h2 className="text-[18px] font-semibold text-erp-text">Customer Requests</h2>
+            <span className="px-2 py-0.5 bg-[#25D366]/10 text-[#1B8F49] text-xs font-semibold rounded-full">
               {kpi.total} requests
             </span>
           </div>
 
-          <div className="w-[280px]">
-            <Input 
-              icon={Search} 
+          <div className="w-full max-w-[280px]">
+            <Input
+              icon={Search}
               placeholder="Search requests..."
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -308,7 +406,6 @@ function OperationsCenterContent() {
           </div>
         </div>
 
-        {/* Table List */}
         <Table>
           <TableHeader>
             <TableRow>
@@ -333,7 +430,7 @@ function OperationsCenterContent() {
             ) : (
               orders.map((order) => {
                 const productCount = order.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
-                
+
                 return (
                   <TableRow key={order.id}>
                     <TableCell className="font-bold whitespace-nowrap">{formatOrderId(order)}</TableCell>
@@ -349,10 +446,10 @@ function OperationsCenterContent() {
                         {productCount}
                       </span>
                     </TableCell>
-                    <TableCell className="font-bold">₹{(order.total || 0).toLocaleString()}</TableCell>
+                    <TableCell className="font-bold">{money(order.total)}</TableCell>
                     <TableCell className="text-erp-muted whitespace-nowrap">{formatDate(order.created_at)}</TableCell>
                     <TableCell>
-                      <div className="w-[140px]">
+                      <div className="w-[128px]">
                         <Select
                           value={order.status.toLowerCase()}
                           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateOrderStatus(order.id, e.target.value)}
@@ -362,17 +459,12 @@ function OperationsCenterContent() {
                             { label: 'COMPLETED', value: 'completed' },
                             { label: 'CANCELLED', value: 'cancelled' },
                           ]}
-                          className={
-                            order.status === 'pending' ? 'text-erp-warning border-erp-warning/20 bg-erp-warning/5' :
-                            order.status === 'processing' ? 'text-erp-blue border-erp-blue/20 bg-erp-blue/5' :
-                            order.status === 'completed' ? 'text-erp-success border-erp-success/20 bg-erp-success/5' :
-                            'text-erp-danger border-erp-danger/20 bg-erp-danger/5'
-                          }
+                          className={`h-[36px] rounded-full text-[13px] px-[14px] ${getStatusTone(order.status)}`}
                         />
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
+                      <Button variant="outline" size="sm" className="w-[66px] px-0" onClick={() => setSelectedOrder(order)}>
                         View
                       </Button>
                     </TableCell>

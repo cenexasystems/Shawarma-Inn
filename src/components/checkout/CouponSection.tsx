@@ -32,25 +32,26 @@ export default function CouponSection({
           </button>
         </div>
       ) : (
-        <div>
+        <div className="bg-[#1a1a1a] p-4 rounded-2xl border border-white/10">
+          <label className="block text-xs font-bold text-white/50 uppercase tracking-[2px] mb-3">Have a Coupon?</label>
           <div className="flex gap-2">
             <input 
               type="text" 
               value={couponInput} 
               onChange={(e) => setCouponInput(e.target.value.toUpperCase())} 
-              placeholder="Discount Code" 
-              className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 text-sm uppercase tracking-wider text-white outline-none focus:border-[var(--red)] transition-all font-body" 
+              placeholder="ENTER CODE" 
+              className="flex-1 bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-lg font-bold uppercase tracking-widest text-white outline-none focus:border-[var(--red)] focus:bg-black transition-all placeholder:text-white/20" 
             />
             <button 
               onClick={() => { void handleApplyCoupon(); }} 
               disabled={couponLoading || !couponInput} 
-              className="bg-white/10 hover:bg-white/20 text-white font-bebas text-base px-5 rounded-xl uppercase tracking-[2px] transition-all disabled:opacity-50"
+              className="bg-[var(--red)] hover:bg-red-600 text-white font-bebas text-xl px-6 rounded-xl uppercase tracking-[2px] transition-all disabled:opacity-50 disabled:hover:bg-[var(--red)]"
             >
               {couponLoading ? '...' : 'Apply'}
             </button>
           </div>
           {couponMessage.text && (
-            <p className={`text-[10px] uppercase tracking-[1px] mt-2 ${couponMessage.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+            <p className={`text-xs font-bold uppercase tracking-[1px] mt-3 ${couponMessage.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
               {couponMessage.text}
             </p>
           )}

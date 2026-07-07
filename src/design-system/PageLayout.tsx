@@ -12,16 +12,16 @@ interface PageLayoutProps {
 
 export function PageLayout({ title, subtitle, toolbar, statistics, children, footer }: PageLayoutProps) {
   return (
-    <div className="min-h-screen bg-erp-bg text-erp-text flex flex-col font-inter">
+    <div className="min-h-screen bg-erp-bg text-erp-text flex flex-col">
       
       {/* Header Area */}
-      <div className="pt-[48px] px-[40px] pb-[24px]">
+      <div className="pt-[32px] px-[32px] pb-[24px] max-w-[1440px] w-full mx-auto">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          <h1 className="font-manrope text-[48px] font-[800] tracking-[-1px] leading-none text-erp-text">
+          <h1 className="text-[42px] font-[700] tracking-[-0.03em] leading-[1.05] text-erp-text">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-[12px] text-[15px] font-[500] text-erp-muted">
+            <p className="mt-[12px] text-[17px] font-[400] text-erp-muted">
               {subtitle}
             </p>
           )}
@@ -29,14 +29,14 @@ export function PageLayout({ title, subtitle, toolbar, statistics, children, foo
 
         {/* Toolbar */}
         {toolbar && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: 0.05 }} className="mt-[32px] flex items-center justify-between gap-[24px]">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: 0.05 }} className="mt-[30px] flex items-center justify-between gap-[24px]">
             {toolbar}
           </motion.div>
         )}
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-[40px] pb-[48px] flex flex-col gap-[32px]">
+      <div className="flex-1 px-[32px] pb-[48px] flex flex-col gap-[32px] max-w-[1440px] w-full mx-auto">
         {/* Statistics row */}
         {statistics && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: 0.1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">

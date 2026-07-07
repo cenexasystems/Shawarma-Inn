@@ -14,7 +14,7 @@ export function Card({ children, padding = 'normal', className = '', ...props }:
 
   return (
     <div 
-      className={`bg-white border border-gray-100 rounded-erp-card shadow-erp-card ${paddingClasses[padding]} ${className}`}
+      className={`bg-white border border-erp-border rounded-[22px] shadow-erp ${paddingClasses[padding]} ${className}`}
       {...props}
     >
       {children}
@@ -24,18 +24,18 @@ export function Card({ children, padding = 'normal', className = '', ...props }:
 
 export function KpiCard({ title, value, icon, description, valueColor = 'text-[#1B1B1B]' }: { title: string; value: string | number; icon?: ReactNode; description?: string; valueColor?: string }) {
   return (
-    <Card className="flex flex-col relative overflow-hidden">
+    <Card className="h-[118px] flex flex-col justify-center relative overflow-hidden">
       <div className="flex items-center justify-between mb-[16px]">
-        <p className="font-inter text-[14px] font-[700] uppercase tracking-[1px] text-[#7B7B7B]">
+        <p className="text-[12px] font-[600] uppercase tracking-[0.12em] text-erp-muted">
           {title}
         </p>
         {icon && <div className="text-[#7B7B7B] opacity-50">{icon}</div>}
       </div>
-      <p className={`font-manrope text-[48px] font-[800] leading-none tracking-tight ${valueColor}`}>
+      <p className={`text-[52px] font-[700] leading-none tracking-[-0.03em] ${valueColor}`}>
         {value}
       </p>
       {description && (
-        <p className="font-inter text-[13px] font-[500] text-[#7B7B7B] mt-[12px]">
+        <p className="text-[12px] font-[500] text-erp-muted mt-[8px]">
           {description}
         </p>
       )}

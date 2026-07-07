@@ -14,7 +14,7 @@ export function Button({
   ...props 
 }: ButtonProps) {
   
-  const baseClasses = 'inline-flex items-center justify-center h-[46px] px-[24px] text-[15px] font-manrope font-[700] rounded-[12px] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95';
+  const baseClasses = 'inline-flex items-center justify-center h-[42px] px-[16px] text-[14px] font-[600] rounded-[16px] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
   
   const variantClasses = {
     primary: 'bg-erp-primary text-white hover:bg-erp-primary/90 shadow-sm',

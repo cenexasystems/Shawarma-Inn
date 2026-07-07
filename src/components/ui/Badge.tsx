@@ -8,10 +8,10 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export const Badge: React.FC<BadgeProps> = ({ status = 'default', className = '', children, ...props }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-bold font-inter tracking-[0.5px] uppercase rounded-md whitespace-nowrap';
+  const baseStyles = 'inline-flex items-center justify-center font-[600] tracking-[0.02em] uppercase rounded-full whitespace-nowrap border';
   
   // Height 26px, text 11px
-  const sizingStyles = 'h-[26px] px-2.5 text-[11px]';
+  const sizingStyles = 'h-[36px] px-[14px] text-[13px]';
 
   const statusStyles = {
     pending: 'bg-erp-warning/10 text-erp-warning border border-erp-warning/20',

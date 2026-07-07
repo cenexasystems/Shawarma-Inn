@@ -54,14 +54,14 @@ export default {
         'secondary-fixed': '#e3e2df',
         'on-secondary': '#30312e',
         erp: {
-          bg: '#F7F8FA', // Base Background
+          bg: '#FAFBFC', // Base Background
           card: '#FFFFFF', // Surface
-          primary: '#163A2E', // Primary (Dark Green)
-          accent: '#D89B2B', // Accent
+          primary: '#173F2E', // Primary (Dark Green)
+          accent: '#F59E0B', // Accent
           text: '#111827',
-          muted: '#6B7280',
-          border: '#E8EBEF', // Border
-          success: '#16A34A',
+          muted: '#64748B',
+          border: '#EEF2F6', // Border
+          success: '#22C55E',
           warning: '#F59E0B',
           danger: '#EF4444',
           blue: '#2563EB',
@@ -92,10 +92,10 @@ export default {
         xl: '3rem',
         full: '9999px',
         'erp': '18px', // Default card radius
-        'erp-input': '14px', // Input radius
+        'erp-input': '16px', // Input radius
       },
       boxShadow: {
-        'erp': '0 6px 24px rgba(0,0,0,0.05)',
+        'erp': '0 10px 30px rgba(15,23,42,0.05)',
       },
       keyframes: {
         shine: {

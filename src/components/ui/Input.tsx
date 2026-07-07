@@ -12,13 +12,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div className="relative w-full font-inter">
         {Icon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-erp-muted pointer-events-none">
-            <Icon size={18} strokeWidth={1.75} />
+            <Icon size={18} strokeWidth={1.8} />
           </div>
         )}
         <input
           ref={ref}
-          className={`w-full bg-white border border-erp-border rounded-erp-input text-erp-text placeholder-erp-muted transition-colors focus:outline-none focus:border-erp-primary focus:ring-1 focus:ring-erp-primary text-[14px] h-[42px] ${
-            Icon ? 'pl-10 pr-3' : 'px-3.5'
+          className={`w-full bg-white border border-erp-border rounded-full text-erp-text placeholder-erp-muted transition-colors focus:outline-none focus:border-erp-primary focus:ring-1 focus:ring-erp-primary text-[14px] h-[44px] ${
+            Icon ? 'pl-[44px] pr-[16px]' : 'px-[16px]'
           } ${error ? 'border-erp-danger focus:border-erp-danger focus:ring-erp-danger' : ''} ${className}`}
           {...props}
         />

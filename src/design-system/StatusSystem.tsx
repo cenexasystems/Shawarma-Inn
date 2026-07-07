@@ -5,33 +5,33 @@ export type StatusType = 'pending' | 'preparing' | 'processing' | 'ready' | 'com
 export function StatusPill({ status, label }: { status: StatusType | string; label?: string }) {
   const normalizedStatus = status.toLowerCase();
   
-  let colorClass = 'bg-gray-100 text-gray-700'; // Default
+  let colorClass = 'bg-gray-100 text-gray-700 border-gray-200'; // Default
 
   switch (normalizedStatus) {
     case 'pending':
-      colorClass = 'bg-erp-warning/10 text-erp-warning';
+      colorClass = 'bg-erp-warning/10 text-erp-warning border-erp-warning/20';
       break;
     case 'preparing':
     case 'processing':
-      colorClass = 'bg-orange-500/10 text-orange-600';
+      colorClass = 'bg-erp-blue/10 text-erp-blue border-erp-blue/20';
       break;
     case 'ready':
       colorClass = 'bg-purple-500/10 text-purple-600';
       break;
     case 'completed':
     case 'active':
-      colorClass = 'bg-erp-success/10 text-erp-success';
+      colorClass = 'bg-erp-success/10 text-erp-success border-erp-success/20';
       break;
     case 'cancelled':
     case 'expired':
-      colorClass = 'bg-erp-danger/10 text-erp-danger';
+      colorClass = 'bg-erp-danger/10 text-erp-danger border-erp-danger/20';
       break;
   }
 
   const displayLabel = label || status.toUpperCase();
 
   return (
-    <span className={`inline-flex items-center justify-center px-[8px] py-[4px] rounded-[6px] text-[11px] font-[700] uppercase tracking-[1px] ${colorClass}`}>
+    <span className={`inline-flex h-[36px] items-center justify-center px-[14px] rounded-full border text-[13px] font-[600] uppercase tracking-[0.02em] ${colorClass}`}>
       {displayLabel}
     </span>
   );

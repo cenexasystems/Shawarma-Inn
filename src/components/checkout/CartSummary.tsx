@@ -69,6 +69,25 @@ export default function CartSummary({
 
       <div className="h-px bg-white/5 mb-6" />
 
+      <div className="mb-6 rounded-[20px] border border-white/5 overflow-hidden bg-black/20">
+        <div className="grid grid-cols-[1.6fr_.55fr_.8fr_.8fr] gap-3 px-4 py-3 text-[10px] uppercase tracking-[2px] text-white/45 border-b border-white/5">
+          <span>Item</span>
+          <span className="text-center">Qty</span>
+          <span className="text-right">Rate</span>
+          <span className="text-right">Total</span>
+        </div>
+        <div className="divide-y divide-white/5">
+          {cart.map((ci: CartItem) => (
+            <div key={`bill-${ci.id}`} className="grid grid-cols-[1.6fr_.55fr_.8fr_.8fr] gap-3 px-4 py-3 text-sm">
+              <span className="truncate text-white/85">{ci.name}</span>
+              <span className="text-center text-white/65">{ci.qty}</span>
+              <span className="text-right text-white/65">₹{ci.price.toFixed(2)}</span>
+              <span className="text-right text-white font-semibold">₹{(ci.price * ci.qty).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Coupon Code */}
       <CouponSection 
         appliedCoupon={appliedCoupon}
@@ -91,12 +110,33 @@ export default function CartSummary({
             <span>Discount</span><span>-₹{totals.discount.toFixed(2)}</span>
           </div>
         )}
+        {totals.packingCharge > 0 && (
+          <div className="flex justify-between text-white/60">
+            <span>Packing Charge</span><span>₹{totals.packingCharge.toFixed(2)}</span>
+          </div>
+        )}
+        {totals.deliveryCharge > 0 && (
+          <div className="flex justify-between text-amber-300">
+            <span>Delivery Charge</span><span>₹{totals.deliveryCharge.toFixed(2)}</span>
+          </div>
+        )}
+        {totals.gst > 0 && (
+          <div className="flex justify-between text-white/60">
+            <span>GST {totals.gstEnabled ? `(${totals.gstPercentage}%)` : ''}</span><span>₹{totals.gst.toFixed(2)}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between items-end pt-5 border-t border-white/5 mb-6">
         <span className="font-bebas text-xl text-white/80 tracking-wide">Total Due</span>
         <span className="font-bebas text-4xl text-[var(--red)] tracking-wider leading-none">₹{totals.grandTotal.toFixed(2)}</span>
       </div>
+
+      {totals.deliveryCharge > 0 && (
+        <div className="mb-4 rounded-2xl border border-amber-400/50 bg-amber-400/20 px-4 py-3 text-[14px] leading-relaxed text-amber-100 font-bold">
+          Delivery charges will be applied (Not for Store Pickup)
+        </div>
+      )}
 
       <button
         onClick={handlePlaceOrder}

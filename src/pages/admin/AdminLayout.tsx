@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MessageCircle, Package, Tag, Star, Users,
-  Settings, Bell, UserCircle, 
-  LogOut, FolderTree, Video, BarChart3, PanelLeftClose, PanelLeftOpen,
+  ChevronLeft, ChevronRight, MessageCircle, Package, Tag, Star, Users,
+  Settings, Bell, UserCircle,
+  LogOut, FolderTree, Video, BarChart3,
   Store
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -39,7 +39,7 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="flex h-screen bg-erp-bg text-erp-text overflow-hidden font-inter w-full max-w-[1680px] mx-auto relative shadow-2xl">
+    <div className="admin-app flex h-screen bg-erp-bg text-erp-text overflow-hidden w-full relative">
       
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -56,33 +56,42 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <motion.aside 
-        animate={{ width: collapsed ? 78 : 220 }}
+        animate={{ width: collapsed ? 76 : 235 }}
         transition={{ type: 'spring', bounce: 0, duration: 0.25 }}
-        className={`fixed inset-y-0 left-0 bg-white border-r border-erp-border flex flex-col shrink-0 z-[70] lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform lg:transition-none`}
+        className={`fixed inset-y-0 left-0 bg-white border-r border-[#EEF2F6] flex flex-col shrink-0 z-[70] lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform lg:transition-none`}
       >
-        {/* Floating Sidebar Toggle Button */}
+        {/* Sidebar Toggle Button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-[14px] top-[32px] w-[28px] h-[28px] bg-white border border-erp-border rounded-full shadow-sm flex items-center justify-center text-erp-muted hover:text-erp-text hover:bg-gray-50 hover:scale-110 transition-all hidden lg:flex z-50 cursor-pointer"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="absolute -right-[17px] top-[28px] hidden h-[34px] w-[34px] items-center justify-center rounded-[12px] border border-[#E6EBF2] bg-white text-[#64748B] shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-all hover:border-[#D6DDE8] hover:bg-[#FAFBFC] hover:text-[#111827] lg:flex z-50"
         >
-          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          <div className="flex h-[20px] w-[20px] items-center justify-center overflow-hidden">
+            <motion.div
+              animate={{ x: collapsed ? 1 : -1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              className="flex items-center justify-center"
+            >
+              {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            </motion.div>
+          </div>
         </button>
 
         {/* Logo Section */}
-        <div className="flex flex-col items-center justify-center pt-[32px] pb-[24px] border-b border-erp-border relative min-h-[120px] transition-all">
-          <div className="w-[48px] h-[48px] bg-erp-primary rounded-[12px] flex items-center justify-center text-white font-manrope font-[800] text-[20px] shadow-sm mb-[12px] shrink-0">
+        <div className="flex flex-col items-center justify-center pt-[28px] pb-[24px] border-b border-[#EEF2F6] relative min-h-[128px] transition-all">
+          <div className="w-[48px] h-[48px] bg-erp-primary rounded-[16px] flex items-center justify-center text-white font-[700] text-[20px] shadow-sm mb-[12px] shrink-0">
             SI
           </div>
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
-              <h1 className="font-manrope text-[18px] font-[800] text-erp-text tracking-tight leading-none">Shawarma Inn</h1>
-              <p className="font-inter text-[11px] font-[700] text-erp-muted uppercase tracking-widest mt-[4px]">Operating System</p>
+              <h1 className="text-[14px] font-[700] text-erp-text tracking-[-0.01em] leading-none uppercase">Shawarma Inn</h1>
+              <p className="text-[10px] font-[600] text-erp-muted uppercase tracking-[0.12em] mt-[8px]">Operating System</p>
             </motion.div>
           )}
         </div>
         
         {/* Navigation */}
-        <nav className="flex-1 py-[24px] px-[12px] space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-[24px] px-[14px] space-y-[4px] overflow-y-auto">
           {NAV_ITEMS.map(({ key, path, icon: Icon, label }) => {
             const isActive = path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path);
             return (
@@ -93,13 +102,13 @@ export default function AdminLayout() {
                 className="w-full relative group"
               >
                 {isActive && (
-                  <motion.div layoutId="sidebar-active" className="absolute inset-0 bg-erp-primary rounded-full shadow-sm" transition={{ type: 'spring', bounce: 0, duration: 0.25 }} />
+                  <motion.div layoutId="sidebar-active" className="absolute inset-0 bg-erp-primary rounded-[16px] shadow-sm" transition={{ type: 'spring', bounce: 0, duration: 0.25 }} />
                 )}
-                <div className={`relative flex items-center gap-[12px] px-[16px] py-[10px] rounded-full text-[14px] transition-colors duration-150 font-inter font-semibold ${collapsed ? 'justify-center' : ''} ${
-                  isActive ? 'text-white' : 'text-erp-muted group-hover:bg-gray-100 group-hover:text-erp-text'
+                <div className={`relative flex items-center gap-[12px] px-[14px] py-[14px] rounded-[16px] text-[15px] transition-colors duration-150 font-[500] ${collapsed ? 'justify-center' : ''} ${
+                  isActive ? 'text-white' : 'text-erp-muted group-hover:bg-[#F8FAFC] group-hover:text-erp-text'
                 }`}>
-                  <motion.div whileHover={{ scale: isActive ? 1 : 1.1 }} className="shrink-0 flex items-center justify-center">
-                    <Icon size={22} />
+                  <motion.div className="shrink-0 flex items-center justify-center">
+                    <Icon size={20} strokeWidth={1.8} />
                   </motion.div>
                   {!collapsed && <span className="truncate">{label}</span>}
                 </div>
@@ -109,10 +118,10 @@ export default function AdminLayout() {
         </nav>
         
         {/* Profile Section */}
-        <div className="p-[16px] border-t border-erp-border bg-erp-bg/50">
+        <div className="p-[16px] border-t border-[#EEF2F6] bg-white">
           {!collapsed && user && (
             <div className="flex items-center gap-[12px] px-[8px] mb-[16px]">
-              <div className="w-[40px] h-[40px] rounded-full bg-white border border-erp-border flex items-center justify-center shrink-0 shadow-sm">
+              <div className="w-[40px] h-[40px] rounded-full bg-[#F8FAFC] border border-[#EEF2F6] flex items-center justify-center shrink-0 shadow-sm">
                 <UserCircle size={22} className="text-erp-muted" />
               </div>
               <div className="min-w-0">
@@ -124,7 +133,7 @@ export default function AdminLayout() {
           <button
             onClick={() => { logout(); navigate('/admin/login'); }}
             title={collapsed ? 'Logout' : undefined}
-            className={`w-full flex items-center ${collapsed ? 'justify-center' : ''} gap-[12px] px-[16px] py-[12px] rounded-[12px] font-inter text-[14px] font-[700] text-erp-danger hover:bg-erp-danger/10 transition-colors group`}
+            className={`w-full flex items-center ${collapsed ? 'justify-center' : ''} gap-[12px] px-[14px] py-[12px] rounded-[16px] text-[14px] font-[600] text-erp-danger hover:bg-erp-danger/10 transition-colors group`}
           >
             <motion.div whileHover={{ scale: 1.1 }}><LogOut size={20} className="shrink-0" /></motion.div>
             {!collapsed && 'Sign Out'}
@@ -134,7 +143,7 @@ export default function AdminLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         {/* Top Toolbar */}
-        <header className="h-[64px] flex items-center justify-between px-[32px] bg-white border-b border-erp-border shrink-0 z-50">
+        <header className="h-[76px] flex items-center justify-between px-[32px] bg-white border-b border-[#EEF2F6] shrink-0 z-50">
           <div className="flex items-center gap-[12px] lg:hidden">
             <button onClick={() => setSidebarOpen(true)} className="p-[8px] -ml-[8px] text-erp-muted hover:text-erp-text">
               <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,9 +153,9 @@ export default function AdminLayout() {
           </div>
           
           <div className="hidden lg:flex items-center gap-[16px]">
-            <div className="flex items-center gap-[8px] px-[12px] py-[6px] bg-erp-success/10 text-erp-success rounded-full">
-              <Store size={14} />
-              <span className="text-[12px] font-[700] uppercase tracking-[1px]">Accepting Orders</span>
+            <div className="flex items-center gap-[8px] px-[14px] h-[32px] bg-erp-success/10 text-erp-success rounded-full">
+              <Store size={14} strokeWidth={1.8} />
+              <span className="text-[12px] font-[700] uppercase tracking-[0.08em]">Accepting Orders</span>
             </div>
           </div>
           
@@ -154,7 +163,7 @@ export default function AdminLayout() {
             <div className="relative">
               <button
                 onClick={() => setShowNotifications((v) => !v)}
-                className={`relative p-[8px] rounded-full transition-colors ${unacknowledgedAlerts.length > 0 ? 'bg-erp-danger/10 text-erp-danger' : 'text-erp-muted hover:bg-erp-bg hover:text-erp-text'}`}
+                className={`relative h-[42px] w-[42px] flex items-center justify-center rounded-full border border-[#EEF2F6] transition-colors ${unacknowledgedAlerts.length > 0 ? 'bg-erp-danger/10 text-erp-danger' : 'text-erp-muted hover:bg-erp-bg hover:text-erp-text'}`}
               >
                 <Bell size={20} className={unacknowledgedAlerts.length > 0 ? 'animate-pulse' : ''} />
                 {unacknowledgedAlerts.length > 0 && (
@@ -166,7 +175,7 @@ export default function AdminLayout() {
                 {showNotifications && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-[calc(100%+12px)] right-0 w-[360px] bg-white border border-erp-border rounded-erp shadow-erp overflow-hidden z-50"
+                    className="absolute top-[calc(100%+12px)] right-0 w-[360px] bg-white border border-[#EEF2F6] rounded-[22px] shadow-erp overflow-hidden z-50"
                   >
                     <div className="px-[24px] py-[16px] border-b border-erp-border bg-erp-bg flex justify-between items-center">
                       <span className="text-[12px] font-[700] uppercase tracking-[1px] text-erp-muted">Live Alerts</span>
