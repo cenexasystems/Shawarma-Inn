@@ -45,10 +45,11 @@ export function resolveMenuImage(
   // 1. Premium Commercial Assets (Local exact match overrides EVERYTHING)
   if (imageMap[slug]) return imageMap[slug];
 
-  // 2. DB image_url (absolute or Supabase Storage)
-  const dbUrl = item.image_url ?? null;
+  // 2. DB image_url (absolute, local public path, or Supabase Storage)
+  const dbUrl = item.image_url || item.image || null;
 
   if (dbUrl) {
+    if (dbUrl.startsWith('/')) return dbUrl; // Local public asset
     if (isStoragePath(dbUrl)) return storagePublicUrl(dbUrl);
     if (dbUrl.startsWith('http://') || dbUrl.startsWith('https://')) return dbUrl;
   }
