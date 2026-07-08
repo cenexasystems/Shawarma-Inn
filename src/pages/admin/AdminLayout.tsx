@@ -138,6 +138,11 @@ export default function AdminLayout() {
  <motion.div whileHover={{ scale: 1.1 }}><LogOut size={20} className="shrink-0" /></motion.div>
  {!collapsed && 'Sign Out'}
  </button>
+ {!collapsed && (
+   <div className="mt-[16px] text-center text-[10px] text-gray-400 font-bold uppercase tracking-[1px]">
+     Powered by Cenexa Systems
+   </div>
+ )}
  </div>
  </motion.aside>
 

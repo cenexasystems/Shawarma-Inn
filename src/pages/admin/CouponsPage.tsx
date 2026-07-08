@@ -132,7 +132,7 @@ export default function CouponsPage() {
 
  {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[12px] text-sm border border-erp-danger/20 mb-6">{error}</div>}
 
- <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 items-start">
+ <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
  {/* Left Column: Form */}
  <div className="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 sticky top-8">
  <div className="flex items-center justify-between mb-8">
@@ -233,12 +233,7 @@ export default function CouponsPage() {
  <div className="text-center py-12 text-gray-500 font-medium">No coupons found. Create one to get started.</div>
  ) : (
  coupons.map(row => (
- <div key={row.id} className="p-6 rounded-[16px] border border-gray-100 flex flex-col gap-3 relative hover:border-gray-200 transition-colors">
- <div className="absolute top-6 right-6 flex gap-4 text-[11px] font-[800] uppercase tracking-widest">
- <button onClick={() => handleEdit(row)} className="text-[#3b82f6] hover:text-[#2563eb] transition-colors">Edit</button>
- <button onClick={() => handleDeleteCoupon(row.id)} className="text-[#ef4444] hover:text-[#dc2626] transition-colors">Del</button>
- </div>
- 
+ <div key={row.id} className="p-6 rounded-[16px] border border-gray-100 flex flex-col gap-3 shadow-sm bg-white">
  <div className="flex items-center gap-3 mt-1">
  <h4 className="font-manrope font-[800] text-[22px] tracking-[-0.02em] text-gray-900 leading-none">{row.code}</h4>
  {row.is_active && (
@@ -265,6 +260,10 @@ export default function CouponsPage() {
  {row.valid_to && (
  <span className="text-gray-400 font-normal">&bull; expires {new Date(row.valid_to).toLocaleDateString('en-GB')}</span>
  )}
+ </div>
+ <div className="flex gap-2 w-full pt-4 mt-2 border-t border-gray-100">
+   <button onClick={() => handleEdit(row)} className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 h-[36px] rounded-lg text-[12px] font-bold transition-colors">Edit</button>
+   <button onClick={() => handleDeleteCoupon(row.id)} className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 h-[36px] rounded-lg text-[12px] font-bold transition-colors">Delete</button>
  </div>
  </div>
  ))

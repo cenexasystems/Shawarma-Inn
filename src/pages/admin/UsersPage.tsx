@@ -185,7 +185,6 @@ export default function UsersPage() {
  {u.id === currentUser?.id && <span className="text-[10px] bg-erp-primary/10 text-erp-primary px-2 py-0.5 rounded-full border border-erp-primary/20 font-bold uppercase tracking-[1px]">You</span>}
  </div>
  <div className="text-xs text-erp-muted mt-0.5 font-medium">{u.phone || 'No phone'}</div>
- <div className="text-[10px] text-gray-400 font-mono mt-1">{u.id}</div>
  </TableCell>
  <TableCell className="text-center">
  {(u.status || 'active') === 'active' ? (

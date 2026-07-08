@@ -10,10 +10,12 @@ import {
  YAxis,
 } from 'recharts';
 import { supabase } from '../../lib/supabaseClient';
+import { PageLayout } from '../../components/ui/PageLayout';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { KPICard } from '../../components/ui/KPICard';
-import { Card } from '../../components/ui/Card';
+import { Card, ChartShell } from '../../components/ui/Card';
+import { ProductIntelligenceModal, ProductAnalysisStats } from '../../components/admin/ProductIntelligenceModal';
 
 type ReportPreset = 'all' | 'today' | 'week' | 'month' | 'year' | 'custom';
 
@@ -96,18 +98,6 @@ function getPresetRange(preset: ReportPreset, customRange: { from: string; to: s
  return { from: startOfDay(new Date(now.getFullYear(), 0, 1)).toISOString(), to: endOfDay(now).toISOString() };
 }
 
-function ChartShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
- return (
- <Card className="p-[24px] flex flex-col min-h-[360px]">
- <div className="mb-[20px]">
- <h3 className="text-[13px] uppercase tracking-[0.12em] text-erp-muted font-[700]">{title}</h3>
- <p className="mt-[8px] text-[14px] text-erp-muted">{subtitle}</p>
- </div>
- <div className="min-h-[270px] flex-1">{children}</div>
- </Card>
- );
-}
-
 export default function ReportsPage() {
  const [period, setPeriod] = useState<ReportPreset>('year');
  const [customRange, setCustomRange] = useState({ from: '', to: '' });
@@ -115,6 +105,7 @@ export default function ReportsPage() {
  const [error, setError] = useState('');
  const [orders, setOrders] = useState<any[]>([]);
  const [productSearch, setProductSearch] = useState('');
+ const [selectedProduct, setSelectedProduct] = useState<ProductAnalysisStats | null>(null);
 
  const selectedRange = useMemo(() => getPresetRange(period, customRange), [period, customRange]);
  const currentYear = selectedRange?.from ? new Date(selectedRange.from).getFullYear() : new Date().getFullYear();
@@ -154,7 +145,7 @@ export default function ReportsPage() {
 
  const monthlyData = MONTHS.map((month) => ({ month, revenue: 0, orders: 0, items: 0 }));
  const weeklyMap = new Map<number, { revenue: number; orders: number; items: number }>();
- const productMap = new Map<string, { quantity: number; revenue: number; orders: number }>();
+ const productMap = new Map<string, { quantity: number; revenue: number; orders: number; hours: Record<number, number>; days: Record<number, number>; co_buys: Record<string, number> }>();
  const completedDates = completed
  .map((order) => new Date(order.created_at))
  .filter((date) => !Number.isNaN(date.getTime()));
@@ -162,6 +153,8 @@ export default function ReportsPage() {
  completed.forEach(order => {
  const created = new Date(order.created_at);
  const monthIndex = created.getMonth();
+ const hour = created.getHours();
+ const day = created.getDay();
  const orderItems = order.order_items || [];
  const itemCount = orderItems.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
 
@@ -178,11 +171,27 @@ export default function ReportsPage() {
  });
 
  orderItems.forEach((item: any) => {
- const existing = productMap.get(item.name) || { quantity: 0, revenue: 0, orders: 0 };
+ const existing = productMap.get(item.name) || { 
+   quantity: 0, revenue: 0, orders: 0, hours: {}, days: {}, co_buys: {} 
+ };
+ 
+ const qty = Number(item.quantity || 0);
+ existing.hours[hour] = (existing.hours[hour] || 0) + 1;
+ existing.days[day] = (existing.days[day] || 0) + 1;
+
+ orderItems.forEach((otherItem: any) => {
+   if (otherItem.name !== item.name) {
+     existing.co_buys[otherItem.name] = (existing.co_buys[otherItem.name] || 0) + 1;
+   }
+ });
+
  productMap.set(item.name, {
- quantity: existing.quantity + Number(item.quantity || 0),
- revenue: existing.revenue + Number(item.price || 0) * Number(item.quantity || 0),
+ quantity: existing.quantity + qty,
+ revenue: existing.revenue + Number(item.price || 0) * qty,
  orders: existing.orders + 1,
+ hours: existing.hours,
+ days: existing.days,
+ co_buys: existing.co_buys
  });
  });
  });
@@ -195,7 +204,7 @@ export default function ReportsPage() {
  }).filter(row => row.revenue > 0 || (row.week >= Math.max(1, currentWeek - 4) && row.week <= currentWeek + 4));
 
  const productSales = Array.from(productMap.entries())
- .map(([name, stats]) => ({ name, ...stats }))
+ .map(([name, stats]) => ({ name, ...stats, revenue_contribution: revenue > 0 ? stats.revenue / revenue : 0 }))
  .sort((a, b) => b.quantity - a.quantity);
 
  const totalItemsSold = productSales.reduce((sum, item) => sum + item.quantity, 0);
@@ -273,8 +282,8 @@ export default function ReportsPage() {
  };
 
  return (
- <div className="min-h-screen bg-erp-bg p-[32px] ">
- <PageHeader
+ <>
+ <PageLayout
  title="Business Analytics"
  subtitle="Completed-order revenue, product sales, and date-wise demand."
  action={
@@ -282,8 +291,7 @@ export default function ReportsPage() {
  Export CSV
  </Button>
  }
- />
-
+ >
  <div className="mb-[24px] rounded-[22px] border border-erp-border bg-white p-[12px] shadow-erp">
  <div className="flex flex-wrap items-center gap-[8px]">
  <span className="px-[8px] text-[12px] font-[700] uppercase tracking-[0.12em] text-erp-muted">Period</span>
@@ -429,8 +437,12 @@ export default function ReportsPage() {
      );
    }
    return (productSearch ? filtered : filtered.slice(0, 15)).map((item) => (
-     <tr key={item.name} className="border-b border-erp-border last:border-b-0">
-     <td className="px-[16px] py-[16px] text-[15px] font-[700] text-erp-text">{item.name}</td>
+     <tr 
+       key={item.name} 
+       onClick={() => setSelectedProduct(item as ProductAnalysisStats)}
+       className="border-b border-erp-border last:border-b-0 hover:bg-[#F9FBF9] transition-colors cursor-pointer group"
+     >
+     <td className="px-[16px] py-[16px] text-[15px] font-[700] text-erp-text group-hover:text-erp-primary transition-colors">{item.name}</td>
      <td className="px-[16px] py-[16px] text-right text-[15px] font-[700] text-erp-text">{item.quantity}</td>
      <td className="px-[16px] py-[16px] text-right text-[15px] font-[700] text-erp-success">{money(item.revenue)}</td>
      <td className="px-[16px] py-[16px] text-right text-[15px] font-[600] text-erp-muted">{item.orders}</td>
@@ -469,6 +481,8 @@ export default function ReportsPage() {
  </div>
  </div>
  )}
- </div>
+ </PageLayout>
+ <ProductIntelligenceModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+ </>
  );
 }
