@@ -69,8 +69,6 @@ export function resolveMenuImage(
 export function getRecoveryImage(item: Pick<MenuItem, 'name' | 'category'> & { slug?: string }): string {
   const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   
-  if (imageMap[slug]) return imageMap[slug];
-
   if (item.category && categoryFallbackMap[item.category]) {
     return categoryFallbackMap[item.category];
   }

@@ -85,8 +85,7 @@ export function formatOrderId(order: any): string {
 
 export function OperationsFilterProvider({ children }: { children: ReactNode }) {
   const { isAdmin } = useAuth();
-  
-  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const [datePreset, setDatePreset] = useState<DatePreset>('today');
   const [customDateRange, setCustomDateRange] = useState<DateRange>({ from: null, to: null });
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');

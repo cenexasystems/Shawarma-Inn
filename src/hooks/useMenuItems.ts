@@ -133,7 +133,22 @@ export const useMenuItems = () => {
     };
   }, [load]);
 
-  const categories = ['All', ...Array.from(new Set(items.map((i) => i.category)))];
+  const CATEGORY_ORDER = [
+    'Shawarma', 'Burgers', 'Pizza', 'Momos', 'Toasts', 'Starters',
+    'Loaded Fries', 'Bring Your Own Chips', 'Desserts', 'Mojitos',
+    'Milkshakes', 'Waffles', 'Combo Deals'
+  ];
+
+  const categories = ['All', ...Array.from(new Set(items.map((i) => i.category)))].sort((a, b) => {
+    if (a === 'All') return -1;
+    if (b === 'All') return 1;
+    const indexA = CATEGORY_ORDER.indexOf(a);
+    const indexB = CATEGORY_ORDER.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
 
   return { items, loading, error, categories, refresh: load };
 };

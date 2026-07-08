@@ -21,12 +21,12 @@ export default function Menu({ cartData }: MenuProps) {
   const [selectedOutlet, setSelectedOutlet] = useState('Mathur');
   const [deliveryType, setDeliveryType] = useState('We Arrange Delivery');
 
-  const { items: menu, loading } = useMenuItems();
+  const { items: menu, loading, categories: hookCategories } = useMenuItems();
   const { favorites } = useFavorites();
 
   const base = showFavoritesOnly ? favorites : menu;
 
-  const dynamicCategories = Array.from(new Set(menu.map(item => item.category))).filter(Boolean);
+  const dynamicCategories = hookCategories.filter(c => c !== 'All' && c !== 'Bestsellers');
   const allCategories = ['All', 'Bestsellers', ...dynamicCategories];
 
   const categoryCounts = base.reduce<Record<string, number>>((acc, item) => {
