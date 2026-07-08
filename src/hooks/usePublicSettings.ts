@@ -103,10 +103,10 @@ export function usePublicSettings() {
 
   const gstEnabled = settings.gst_enabled === 'true';
   const gstPercentage = Number(settings.gst_percentage) || 5;
-  const deliveryCharge = 0;
-  const packingCharge = 0;
-  const minOrderValue = 0;
-  const gstActive = false;
+  const deliveryCharge = Number(settings.delivery_charge) || 0;
+  const packingCharge = Number(settings.packing_charge) || 0;
+  const minOrderValue = Number(settings.min_order_value) || 0;
+  const gstActive = gstEnabled;
 
   return {
     settings,

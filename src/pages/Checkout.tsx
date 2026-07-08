@@ -59,7 +59,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
     const discount = appliedCoupon?.discount ?? 0;
     const cappedDiscount = Math.max(0, Math.min(discount, subtotal));
     const taxableAmount = subtotal - cappedDiscount;
-    const dc = deliveryMethod === 'we_arrange' ? liveDeliveryCharge : 0;
+    const dc = deliveryMethod !== 'pickup' ? liveDeliveryCharge : 0;
     const gst = gstActive ? Math.round(taxableAmount * (gstPercentage / 100) * 100) / 100 : 0;
     const grandTotal = Math.round((taxableAmount + dc + livePackingCharge + gst) * 100) / 100;
     return {
@@ -365,7 +365,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     <span className="font-bebas text-xl tracking-wider">Self Delivery</span>
                   </div>
-                  <p className="text-xs font-body leading-relaxed opacity-80">Book Rapido or Porter. No delivery fee from us.</p>
+                  <p className="text-xs font-body leading-relaxed opacity-80">Book Rapido or Porter. Delivery charges apply.</p>
                   {deliveryMethod === 'self_delivery' && (
                     <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-[var(--red)] flex items-center justify-center">
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
