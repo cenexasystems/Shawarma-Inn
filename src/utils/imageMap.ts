@@ -109,7 +109,7 @@ const B = {
   'oreo-milkshake': '/images/menu/generated/vanilla_milkshake.png',
   'kitkat-milkshake': '/images/menu/generated/vanilla_milkshake.png',
   'brownie-milkshake': '/images/menu/generated/vanilla_milkshake.png',
-  'nutella-waffle': '/images/menu/generated/chocolate_waffle.png',
+  'nutella-waffle': '/images/menu/generated/nutella_waffle.png',
   'milk-chocolate-waffle': '/images/menu/generated/chocolate_waffle.png',
   'dark-chocolate-waffle': '/images/menu/generated/chocolate_waffle.png',
   'white-chocolate-waffle': '/images/menu/generated/chocolate_waffle.png',
