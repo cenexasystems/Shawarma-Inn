@@ -17,7 +17,7 @@ data/*.sqlite
 data/*.sqlite-*
 
 # Local multer upload output (dev only; production storage is Supabase)
-public/images/menu/
+# public/images/menu/
 public/images/videos/
 public/videos/
 
