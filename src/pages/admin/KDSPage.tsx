@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, CheckCircle, ChefHat } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Volume2, VolumeX, Flame, CheckSquare, ListTodo } from 'lucide-react';
 import { OperationsFilterProvider, useOperationsFilter, formatOrderId } from '../../context/OperationsFilterContext';
 import { useAdminContext } from '../../context/AdminContext';
+import { KPICard } from '../../components/ui/KPICard';
 
 function KDSBoard() {
  const { orders, loading, updateOrderStatus, datePreset, setDatePreset } = useOperationsFilter();
- const { kdsSettings } = useAdminContext();
+ const { kdsSettings, updateKDSSettings } = useAdminContext();
  const audioRef = useRef<HTMLAudioElement | null>(null);
 
  // Default to today to only see today's tickets
@@ -74,11 +75,21 @@ function KDSBoard() {
  <p className="text-gray-400 text-sm mt-1">Live order tickets</p>
  </div>
  <div className="flex gap-4">
+ <button onClick={() => updateKDSSettings({ is_muted: !kdsSettings.is_muted })} className="bg-[#141414] border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-white/5 transition-colors">
+ {kdsSettings.is_muted ? <VolumeX size={20} className="text-gray-400" /> : <Volume2 size={20} className="text-[var(--red)] animate-pulse" />}
+ <span className="text-sm font-bold">{kdsSettings.is_muted ? "Muted" : "Sound On"}</span>
+ </button>
  <div className="bg-[#141414] border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2">
  <div className="w-2 h-2 rounded-full bg-[var(--red)] animate-pulse" />
  <span className="text-sm font-bold">{activeOrders.length} Active Tickets</span>
  </div>
  </div>
+ </div>
+
+ <div className="flex flex-wrap gap-erp-24 mb-8">
+ <KPICard title="Pending" value={orders.filter((o: any) => o.status === 'pending').length} icon={ListTodo} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Waiting to start" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
+ <KPICard title="Preparing" value={orders.filter((o: any) => o.status === 'preparing' || o.status === 'processing').length} icon={Flame} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="In kitchen" className="border-erp-warning/10 bg-erp-warning/[0.03]" />
+ <KPICard title="Ready/Completed" value={orders.filter((o: any) => o.status === 'completed' || o.status === 'ready').length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Today" className="border-erp-success/10 bg-erp-success/[0.03]" />
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20">
