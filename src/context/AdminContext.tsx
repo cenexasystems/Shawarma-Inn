@@ -88,55 +88,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchKDSSettings = useCallback(async () => {
-    if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('kds_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching KDS settings:', error);
-      }
-        
-      if (data) {
-        let soundUrl = data.sound_url || DEFAULT_SETTINGS.sound_url;
-        const loadedSettings = {
-          sound_url: soundUrl,
-          volume: data.volume ?? DEFAULT_SETTINGS.volume,
-          repeat_interval_sec: data.repeat_interval_sec ?? DEFAULT_SETTINGS.repeat_interval_sec,
-          is_muted: data.is_muted ?? DEFAULT_SETTINGS.is_muted,
-          enable_browser_notifications: data.enable_browser_notifications ?? DEFAULT_SETTINGS.enable_browser_notifications
-        };
-        setKdsSettings(loadedSettings);
-        kdsSettingsRef.current = loadedSettings;
+      const stored = localStorage.getItem('kds_settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setKdsSettings(parsed);
+        kdsSettingsRef.current = parsed;
       }
     } catch (err) {
-      console.error('Error fetching KDS settings:', err);
+      console.error('Error parsing local KDS settings', err);
     }
-  }, [user]);
+  }, []);
 
   const updateKDSSettings = useCallback(async (newSettings: Partial<KDSSettings>) => {
-    if (!user) return;
     const updated = { ...kdsSettings, ...newSettings };
     setKdsSettings(updated);
     kdsSettingsRef.current = updated;
-    
-    try {
-      const { error } = await supabase
-        .from('kds_settings')
-        .upsert({
-          user_id: user.id,
-          ...updated,
-          updated_at: new Date().toISOString()
-        });
-        
-      if (error) console.error('Error updating settings:', error);
-    } catch (err) {
-      console.error('Failed to update KDS settings', err);
-    }
-  }, [user, kdsSettings]);
+    localStorage.setItem('kds_settings', JSON.stringify(updated));
+  }, [kdsSettings]);
 
   const loadPendingOrders = useCallback(async () => {
     if (!isAdmin) return;

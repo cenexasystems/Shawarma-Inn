@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Search, MapPin, Phone, MessageCircle } from 'lucide-react';
+import { Search, MapPin, Phone, MessageCircle, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveMenuImage, getRecoveryImage } from '../../utils/menuImages';
+import { StatusSelect } from '../../components/ui/StatusSelect';
 
 import { PageLayout } from '../../design-system/PageLayout';
 import { StatCard } from '../../design-system/CardSystem';
@@ -223,15 +224,10 @@ export default function OrdersPage() {
  align: 'center',
  accessor: (row) => (
  <div onClick={(e) => e.stopPropagation()}>
- <select
+ <StatusSelect
  value={row.status}
- onChange={(e) => updateOrderStatus(row.id, e.target.value)}
- className="w-full appearance-none px-[12px] py-[8px] border border-erp-border bg-white rounded-[8px] text-[12px] font-[700] uppercase tracking-[1px] text-center cursor-pointer outline-none transition-colors shadow-sm focus:border-erp-primary"
- >
- {ADMIN_ORDER_STATUSES.map((status) => (
- <option key={status} value={status}>{STATUS_LABELS[status] || status}</option>
- ))}
- </select>
+ onChange={(value) => updateOrderStatus(row.id, value)}
+ />
  </div>
  ),
  }

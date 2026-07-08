@@ -1,4 +1,5 @@
 import { resolveMenuImage, getRecoveryImage } from '../../../utils/menuImages';
+import { StatusSelect, OrderStatus } from '../../../components/ui/StatusSelect';
 import { ADMIN_ORDER_STATUSES, STATUS_LABELS, getStatusColor } from './constants';
 
 export default function OrderDrawer({
@@ -137,15 +138,11 @@ export default function OrderDrawer({
 
             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
               <h4 className="text-[10px] uppercase tracking-[2px] text-white/40 mb-3">Update Status</h4>
-              <select
-                value={order.status}
-                onChange={(e) => onUpdateStatus(order.id, e.target.value)}
-                className={`w-full appearance-none px-4 py-3 border rounded-xl text-sm font-bold uppercase tracking-wider cursor-pointer outline-none transition-colors ${getStatusColor(order.status)}`}
-              >
-                {ADMIN_ORDER_STATUSES.map((s) => (
-                  <option key={s} value={s} className="bg-[#101010] text-white">{STATUS_LABELS[s] || s}</option>
-                ))}
-              </select>
+              <StatusSelect
+                value={order.status as OrderStatus}
+                onChange={(value) => onUpdateStatus(order.id, value)}
+                className="w-full"
+              />
             </div>
 
             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
