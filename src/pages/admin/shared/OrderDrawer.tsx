@@ -155,7 +155,7 @@ export default function OrderDrawer({
                   <div key={item.id} className="flex items-center justify-between text-sm bg-black/20 p-2 rounded-xl">
                     <div className="flex items-center gap-3">
                       <img
-                        src={resolveMenuImage({ name: item.name, category: 'Shawarma' })}
+                        src={resolveMenuImage({ name: item.name, category: 'Shawarma', image: item.image })}
                         onError={(e) => { e.currentTarget.src = getRecoveryImage({ name: item.name, category: 'Shawarma' }); }}
                         alt={item.name}
                         className="w-10 h-10 object-cover rounded-lg bg-[#181818]"

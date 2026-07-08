@@ -23,6 +23,7 @@ function mapMenuRow(row: any): MenuItem {
       name: row.name,
       category: row.category,
       image_url: row.image_url ?? null,
+      image: row.image,
     }),
     isVeg: Boolean(row.is_veg),
     bestseller: Boolean(row.is_bestseller),

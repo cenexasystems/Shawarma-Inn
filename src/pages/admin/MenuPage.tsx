@@ -231,7 +231,7 @@ export default function MenuPage() {
                       <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                           <img 
-                            src={resolveMenuImage({ image_url: row.image_url, name: row.name, category: row.category })} 
+                            src={resolveMenuImage({ image_url: row.image_url, image: row.image, name: row.name, category: row.category })} 
                             alt={row.name} 
                             className="w-[44px] h-[44px] rounded-[10px] object-cover bg-gray-100 border border-erp-border" 
                           />

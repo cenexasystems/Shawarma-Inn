@@ -936,54 +936,6 @@
     "rating": 4.6
   },
   {
-    "id": 79,
-    "slug": "veg-pizza",
-    "name": "Veg Pizza",
-    "category": "Pizza",
-    "price": 80,
-    "desc": "Hand-stretched pizza topped with veg and melted cheese.",
-    "image": "/images/menu/pizza/veg-pizza.webp",
-    "isVeg": true,
-    "bestseller": false,
-    "rating": 4.6
-  },
-  {
-    "id": 80,
-    "slug": "cheese-pizza",
-    "name": "Cheese Pizza",
-    "category": "Pizza",
-    "price": 80,
-    "desc": "Hand-stretched pizza topped with cheese and melted cheese.",
-    "image": "/images/menu/pizza/cheese-pizza.webp",
-    "isVeg": true,
-    "bestseller": false,
-    "rating": 4.6
-  },
-  {
-    "id": 81,
-    "slug": "sweet-corn-pizza",
-    "name": "Sweet Corn Pizza",
-    "category": "Pizza",
-    "price": 90,
-    "desc": "Hand-stretched pizza topped with sweet corn and melted cheese.",
-    "image": "/images/menu/pizza/sweet-corn-pizza.webp",
-    "isVeg": true,
-    "bestseller": false,
-    "rating": 4.6
-  },
-  {
-    "id": 82,
-    "slug": "paneer-pizza",
-    "name": "Paneer Pizza",
-    "category": "Pizza",
-    "price": 100,
-    "desc": "Hand-stretched pizza topped with paneer and melted cheese.",
-    "image": "/images/menu/pizza/paneer-pizza.webp",
-    "isVeg": true,
-    "bestseller": false,
-    "rating": 4.6
-  },
-  {
     "id": 83,
     "slug": "chicken-pizza",
     "name": "Chicken Pizza",
@@ -1003,18 +955,6 @@
     "price": 249,
     "desc": "Smokier appearance. Dark BBQ glaze, grilled chicken chunks, onions.",
     "image": "/images/menu/pizzas/bbq-chicken-pizza.png",
-    "isVeg": false,
-    "bestseller": false,
-    "rating": 4.6
-  },
-  {
-    "id": 85,
-    "slug": "naked-chicken-pizza",
-    "name": "Naked Chicken Pizza",
-    "category": "Pizza",
-    "price": 150,
-    "desc": "Hand-stretched pizza topped with naked chicken and melted cheese.",
-    "image": "/images/menu/pizza/naked-chicken-pizza.webp",
     "isVeg": false,
     "bestseller": false,
     "rating": 4.6
