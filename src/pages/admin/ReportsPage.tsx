@@ -145,7 +145,7 @@ export default function ReportsPage() {
 
  const monthlyData = MONTHS.map((month) => ({ month, revenue: 0, orders: 0, items: 0 }));
  const weeklyMap = new Map<number, { revenue: number; orders: number; items: number }>();
- const productMap = new Map<string, { quantity: number; revenue: number; orders: number; hours: Record<number, number>; days: Record<number, number>; co_buys: Record<string, number> }>();
+ const productMap = new Map<string, { quantity: number; revenue: number; orders: number; hours: Record<number, number>; days: Record<number, number>; co_buys: Record<string, number>; buyers: Set<string>; basketTotal: number; dates: Record<string, number> }>();
  const completedDates = completed
  .map((order) => new Date(order.created_at))
  .filter((date) => !Number.isNaN(date.getTime()));
@@ -155,8 +155,11 @@ export default function ReportsPage() {
  const monthIndex = created.getMonth();
  const hour = created.getHours();
  const day = created.getDay();
+ const dateStr = created.toISOString().split('T')[0];
+ const buyerId = order.user_id || order.customer_phone || 'guest';
  const orderItems = order.order_items || [];
  const itemCount = orderItems.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
+ const orderTotal = Number(order.total || 0);
 
  monthlyData[monthIndex].revenue += Number(order.total || 0);
  monthlyData[monthIndex].orders += 1;
@@ -172,12 +175,15 @@ export default function ReportsPage() {
 
  orderItems.forEach((item: any) => {
  const existing = productMap.get(item.name) || { 
-   quantity: 0, revenue: 0, orders: 0, hours: {}, days: {}, co_buys: {} 
+   quantity: 0, revenue: 0, orders: 0, hours: {}, days: {}, co_buys: {}, buyers: new Set<string>(), basketTotal: 0, dates: {} 
  };
  
  const qty = Number(item.quantity || 0);
  existing.hours[hour] = (existing.hours[hour] || 0) + 1;
  existing.days[day] = (existing.days[day] || 0) + 1;
+ existing.dates[dateStr] = (existing.dates[dateStr] || 0) + qty;
+ existing.buyers.add(buyerId);
+ existing.basketTotal += orderTotal;
 
  orderItems.forEach((otherItem: any) => {
    if (otherItem.name !== item.name) {
@@ -191,7 +197,10 @@ export default function ReportsPage() {
  orders: existing.orders + 1,
  hours: existing.hours,
  days: existing.days,
- co_buys: existing.co_buys
+ co_buys: existing.co_buys,
+ buyers: existing.buyers,
+ basketTotal: existing.basketTotal,
+ dates: existing.dates
  });
  });
  });
@@ -204,7 +213,13 @@ export default function ReportsPage() {
  }).filter(row => row.revenue > 0 || (row.week >= Math.max(1, currentWeek - 4) && row.week <= currentWeek + 4));
 
  const productSales = Array.from(productMap.entries())
- .map(([name, stats]) => ({ name, ...stats, revenue_contribution: revenue > 0 ? stats.revenue / revenue : 0 }))
+ .map(([name, stats]) => ({ 
+   name, 
+   ...stats, 
+   unique_buyers: stats.buyers.size, 
+   avg_basket_with_item: stats.orders > 0 ? stats.basketTotal / stats.orders : 0,
+   revenue_contribution: revenue > 0 ? stats.revenue / revenue : 0 
+ }))
  .sort((a, b) => b.quantity - a.quantity);
 
  const totalItemsSold = productSales.reduce((sum, item) => sum + item.quantity, 0);
