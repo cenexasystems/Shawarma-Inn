@@ -7,6 +7,7 @@ import { KPICard } from '../../components/ui/KPICard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
 import { Select } from '../../components/ui/Select';
+import { StatusSelect, OrderStatus } from '../../components/ui/StatusSelect';
 import { Input } from '../../components/ui/Input';
 import { WhatsAppLogo } from '../../components/icons/WhatsAppLogo';
 import { supabase } from '../../lib/supabaseClient';
@@ -449,17 +450,10 @@ function OperationsCenterContent() {
  <TableCell className="font-bold">{money(order.total)}</TableCell>
  <TableCell className="text-erp-muted whitespace-nowrap">{formatDate(order.created_at)}</TableCell>
  <TableCell>
- <div className="w-[128px]">
- <Select
- value={order.status.toLowerCase()}
- onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateOrderStatus(order.id, e.target.value)}
- options={[
- { label: 'PENDING', value: 'pending' },
- { label: 'PROCESSING', value: 'processing' },
- { label: 'COMPLETED', value: 'completed' },
- { label: 'CANCELLED', value: 'cancelled' },
- ]}
- className={`h-[36px] rounded-full text-[13px] px-[14px] ${getStatusTone(order.status)}`}
+ <div>
+ <StatusSelect
+ value={order.status.toLowerCase() as OrderStatus}
+ onChange={(val) => updateOrderStatus(order.id, val)}
  />
  </div>
  </TableCell>
