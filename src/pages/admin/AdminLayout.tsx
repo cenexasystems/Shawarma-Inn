@@ -64,7 +64,7 @@ export default function AdminLayout() {
         <button
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="absolute -right-[17px] top-[28px] hidden h-[34px] w-[34px] items-center justify-center rounded-[12px] border border-[#E6EBF2] bg-white text-[#64748B] shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-all hover:border-[#D6DDE8] hover:bg-[#FAFBFC] hover:text-[#111827] lg:flex z-50"
+          className="absolute -right-[17px] top-[111px] hidden h-[34px] w-[34px] items-center justify-center rounded-[12px] border border-[#E6EBF2] bg-white text-[#64748B] shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-all hover:border-[#D6DDE8] hover:bg-[#FAFBFC] hover:text-[#111827] lg:flex z-50"
         >
           <div className="flex h-[20px] w-[20px] items-center justify-center overflow-hidden">
             <motion.div
