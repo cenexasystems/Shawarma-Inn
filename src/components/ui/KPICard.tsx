@@ -21,7 +21,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`min-h-[112px] bg-white border border-erp-border flex items-center justify-between gap-[16px] p-[20px] rounded-[22px] shadow-erp ${className}`}>
+    <div className={`flex-1 min-w-[240px] max-w-[340px] min-h-[112px] bg-white border border-erp-border flex items-center justify-between gap-[16px] p-[20px] rounded-[22px] shadow-erp ${className}`}>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <p className="text-[12px] font-[600] text-erp-muted uppercase tracking-[0.12em] truncate mb-[8px]">
           {title}
