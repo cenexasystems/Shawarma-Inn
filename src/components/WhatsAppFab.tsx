@@ -1,6 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
+import { useStoreSettings } from '../context/SettingsContext';
 
 interface WhatsAppFabProps {
   /** When true (cart bar visible), lift the FAB above the cart bar */
@@ -8,6 +7,9 @@ interface WhatsAppFabProps {
 }
 
 export default function WhatsAppFab({ liftedUp = false }: WhatsAppFabProps) {
+  const { settings } = useStoreSettings();
+  const WHATSAPP_PHONE = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
+
   const targetUrl = WHATSAPP_PHONE
     ? `https://wa.me/${WHATSAPP_PHONE}`
     : undefined;

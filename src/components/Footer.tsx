@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Phone, Mail } from 'lucide-react';
+import { Instagram, Phone, Mail, Facebook, Twitter } from 'lucide-react';
 import branchesData from '../data/branches.json';
 import type { Branch } from '../types';
+import { useStoreSettings } from '../context/SettingsContext';
 
 const branches: Branch[] = branchesData as Branch[];
 const flagship = branches.find((branch) => branch.isFlagship) || branches[0];
 const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@shawarmainn.in';
 
 export default function Footer() {
+  const { settings } = useStoreSettings();
+
   return (
     <footer className="w-full py-16 md:py-20 px-4 md:px-8 xl:px-12 bg-[#0a0a0a] border-t border-[var(--border)] relative z-20">
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
@@ -35,6 +38,36 @@ export default function Footer() {
             >
               <Mail size={18} />
             </a>
+            {settings.social_links?.instagram && (
+              <a
+                href={settings.social_links.instagram}
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[var(--red)] transition-all duration-300"
+              >
+                <Instagram size={18} />
+              </a>
+            )}
+            {settings.social_links?.facebook && (
+              <a
+                href={settings.social_links.facebook}
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[var(--red)] transition-all duration-300"
+              >
+                <Facebook size={18} />
+              </a>
+            )}
+            {settings.social_links?.twitter && (
+              <a
+                href={settings.social_links.twitter}
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[var(--red)] transition-all duration-300"
+              >
+                <Twitter size={18} />
+              </a>
+            )}
           </div>
         </div>
 

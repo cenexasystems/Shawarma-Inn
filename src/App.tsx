@@ -18,6 +18,7 @@ import ContactPage from './pages/ContactPage';
 import { useCart } from './hooks/useCart';
 import { useAuth } from './hooks/useAuth';
 import { AdminProvider } from './context/AdminContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { runAutomaticMigration, initializeWithHealthCheck } from './lib/supabaseMigration';
 
 const Profile = lazy(() => import('./pages/Profile'));
@@ -113,6 +114,7 @@ export default function App() {
   if (loading || authLoading) return <Loader />;
 
   return (
+    <SettingsProvider>
     <div
       className={
         isAdminArea
@@ -290,5 +292,6 @@ export default function App() {
         </>
       )}
     </div>
+    </SettingsProvider>
   );
 }

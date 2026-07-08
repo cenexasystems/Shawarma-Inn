@@ -60,35 +60,30 @@ export default function AdminLayout() {
  transition={{ type: 'spring', bounce: 0, duration: 0.25 }}
  className={`fixed inset-y-0 left-0 bg-white border-r border-[#EEF2F6] flex flex-col shrink-0 z-[70] lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform lg:transition-none`}
  >
- {/* Sidebar Toggle Button */}
- <button
- onClick={() => setCollapsed(!collapsed)}
- aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
- className="absolute -right-[17px] top-[28px] hidden h-[34px] w-[34px] items-center justify-center rounded-[12px] border border-[#E6EBF2] bg-white text-[#64748B] shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-all hover:border-[#D6DDE8] hover:bg-[#FAFBFC] hover:text-[#111827] lg:flex z-50"
- >
- <div className="flex h-[20px] w-[20px] items-center justify-center overflow-hidden">
- <motion.div
- animate={{ x: collapsed ? 1 : -1 }}
- transition={{ type: 'spring', stiffness: 420, damping: 28 }}
- className="flex items-center justify-center"
- >
- {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
- </motion.div>
- </div>
- </button>
+        {/* Logo and Toggle Section */}
+        <div className={`flex items-center pt-[20px] pb-[20px] border-b border-[#EEF2F6] relative min-h-[80px] transition-all px-4 ${collapsed ? 'justify-center' : 'justify-start gap-3'}`}>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#F8FAFC] text-[#64748B] transition-colors shrink-0"
+          >
+            <div className="flex items-center justify-center">
+              {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            </div>
+          </button>
 
- {/* Logo Section */}
- <div className="flex flex-col items-center justify-center pt-[28px] pb-[24px] border-b border-[#EEF2F6] relative min-h-[128px] transition-all">
- <div className="w-[48px] h-[48px] bg-erp-primary rounded-[16px] flex items-center justify-center text-white font-[700] text-[20px] shadow-sm mb-[12px] shrink-0">
- SI
- </div>
- {!collapsed && (
- <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
- <h1 className="text-[14px] font-[700] text-erp-text tracking-[-0.01em] leading-none uppercase">Shawarma Inn</h1>
- <p className="text-[10px] font-[600] text-erp-muted uppercase tracking-[0.12em] mt-[8px]">Operating System</p>
- </motion.div>
- )}
- </div>
+          {!collapsed && (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-[32px] h-[32px] bg-erp-primary rounded-[8px] flex items-center justify-center text-white font-[700] text-[14px] shadow-sm shrink-0">
+                SI
+              </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="whitespace-nowrap">
+                <h1 className="text-[13px] font-[700] text-erp-text tracking-[-0.01em] leading-none uppercase">Shawarma Inn</h1>
+                <p className="text-[9px] font-[600] text-erp-muted uppercase tracking-[0.12em] mt-[4px]">Operating System</p>
+              </motion.div>
+            </div>
+          )}
+        </div>
  
  {/* Navigation */}
  <nav className="flex-1 py-[24px] px-[14px] space-y-[4px] overflow-y-auto">
