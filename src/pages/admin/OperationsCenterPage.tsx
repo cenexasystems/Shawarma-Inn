@@ -377,7 +377,7 @@ function OperationsCenterContent() {
  }
  />
 
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-erp-24 mb-erp-32">
+ <div className="flex flex-wrap gap-erp-24 mb-erp-32">
  <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" subtitle="All time" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" />
  <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Needs action" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
  <KPICard title="Contacted" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-[#25D366]/12" iconColor="text-[#25D366]" subtitle="In conversation" className="border-[#25D366]/10 bg-[#25D366]/[0.03]" />

@@ -322,7 +322,7 @@ export default function ReportsPage() {
 
  {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[16px] text-sm border border-erp-danger/20 mb-8 font-medium">{error}</div>}
 
- <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-erp-24 mb-erp-32">
+ <div className="flex flex-wrap gap-erp-24 mb-erp-32">
  <KPICard title="Completed Revenue" value={money(analytics.revenue)} icon={IndianRupee} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Completed orders only" />
  <KPICard title="Completed Orders" value={analytics.completed.length.toLocaleString()} icon={ShoppingBag} iconBgColor="bg-erp-primary/10" iconColor="text-erp-primary" subtitle="Revenue source" />
  <KPICard title="Products Sold" value={analytics.totalItemsSold.toLocaleString()} icon={PackageCheck} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="From completed orders" />
