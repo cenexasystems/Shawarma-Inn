@@ -40,7 +40,7 @@ export default function AdminLayout() {
  ];
 
  return (
- <div className="admin-app flex h-screen bg-erp-bg text-erp-text overflow-hidden w-full relative">
+ <div style={{ zoom: 0.85 }} className="admin-app flex h-screen bg-erp-bg text-erp-text overflow-hidden w-full relative">
  
  {/* Mobile Sidebar Overlay */}
  <AnimatePresence>
