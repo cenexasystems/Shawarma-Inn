@@ -87,9 +87,9 @@ function KDSBoard() {
  </div>
 
  <div className="flex flex-wrap gap-erp-24 mb-8">
- <KPICard title="Pending" value={orders.filter((o: any) => o.status === 'pending').length} icon={ListTodo} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Waiting to start" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
- <KPICard title="Preparing" value={orders.filter((o: any) => o.status === 'preparing' || o.status === 'processing').length} icon={Flame} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="In kitchen" className="border-erp-warning/10 bg-erp-warning/[0.03]" />
- <KPICard title="Ready/Completed" value={orders.filter((o: any) => o.status === 'completed' || o.status === 'ready').length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Today" className="border-erp-success/10 bg-erp-success/[0.03]" />
+ <KPICard dark title="Pending" value={orders.filter((o: any) => o.status === 'pending').length} icon={ListTodo} iconBgColor="bg-erp-danger/10" iconColor="text-[var(--red)]" subtitle="Waiting to start" className="border-erp-danger/10 bg-[#1a1010]" />
+ <KPICard dark title="Preparing" value={orders.filter((o: any) => o.status === 'preparing' || o.status === 'processing').length} icon={Flame} iconBgColor="bg-erp-warning/10" iconColor="text-yellow-500" subtitle="In kitchen" className="border-erp-warning/10 bg-[#1a1710]" />
+ <KPICard dark title="Ready/Completed" value={orders.filter((o: any) => o.status === 'completed' || o.status === 'ready').length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-green-500" subtitle="Today" className="border-erp-success/10 bg-[#101a14]" />
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20">
