@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Download, IndianRupee, PackageCheck, ShoppingBag, TrendingUp } from 'lucide-react';
+import { Download, IndianRupee, PackageCheck, ShoppingBag, TrendingUp, Search } from 'lucide-react';
 import {
  Bar,
  BarChart,
@@ -114,6 +114,7 @@ export default function ReportsPage() {
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState('');
  const [orders, setOrders] = useState<any[]>([]);
+ const [productSearch, setProductSearch] = useState('');
 
  const selectedRange = useMemo(() => getPresetRange(period, customRange), [period, customRange]);
  const currentYear = selectedRange?.from ? new Date(selectedRange.from).getFullYear() : new Date().getFullYear();
@@ -383,17 +384,29 @@ export default function ReportsPage() {
 
  <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_.65fr] gap-[24px]">
  <Card className="p-[24px]">
- <div className="mb-[20px] flex items-center justify-between gap-[16px]">
+ <div className="mb-[20px] flex items-center justify-between gap-[16px] flex-wrap">
  <div>
  <h3 className="text-[13px] uppercase tracking-[0.12em] text-erp-muted font-[700]">Products Sold From Completed Orders</h3>
  <p className="mt-[8px] text-[14px] text-erp-muted">This is the product ledger that updates when orders are marked completed.</p>
  </div>
+ <div className="relative">
+   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+     <Search size={16} className="text-erp-muted" />
+   </div>
+   <input
+     type="text"
+     placeholder="Search products..."
+     value={productSearch}
+     onChange={(e) => setProductSearch(e.target.value)}
+     className="pl-9 pr-4 py-2 border border-erp-border rounded-lg text-sm outline-none focus:border-erp-primary w-full max-w-[250px]"
+   />
+ </div>
  </div>
 
- <div className="overflow-x-auto">
+ <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
  <table className="w-full min-w-[720px] text-left">
  <thead>
- <tr className="bg-[#F4FAF4]">
+ <tr className="bg-[#F4FAF4] sticky top-0 z-10">
  <th className="h-[48px] rounded-l-[16px] px-[16px] text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-muted">Product</th>
  <th className="h-[48px] px-[16px] text-right text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-muted">Qty Sold</th>
  <th className="h-[48px] px-[16px] text-right text-[13px] font-[700] uppercase tracking-[0.08em] text-erp-muted">Revenue</th>
@@ -405,14 +418,26 @@ export default function ReportsPage() {
  <tr>
  <td colSpan={4} className="py-[48px] text-center text-[15px] font-[500] text-erp-muted">No completed product sales for this period.</td>
  </tr>
- ) : analytics.productSales.slice(0, 12).map((item) => (
- <tr key={item.name} className="border-b border-erp-border last:border-b-0">
- <td className="px-[16px] py-[16px] text-[15px] font-[700] text-erp-text">{item.name}</td>
- <td className="px-[16px] py-[16px] text-right text-[15px] font-[700] text-erp-text">{item.quantity}</td>
- <td className="px-[16px] py-[16px] text-right text-[15px] font-[700] text-erp-success">{money(item.revenue)}</td>
- <td className="px-[16px] py-[16px] text-right text-[15px] font-[600] text-erp-muted">{item.orders}</td>
- </tr>
- ))}
+ ) : (
+ (() => {
+   const filtered = analytics.productSales.filter(item => item.name.toLowerCase().includes(productSearch.toLowerCase()));
+   if (filtered.length === 0) {
+     return (
+       <tr>
+         <td colSpan={4} className="py-[48px] text-center text-[15px] font-[500] text-erp-muted">No products match your search.</td>
+       </tr>
+     );
+   }
+   return (productSearch ? filtered : filtered.slice(0, 15)).map((item) => (
+     <tr key={item.name} className="border-b border-erp-border last:border-b-0">
+     <td className="px-[16px] py-[16px] text-[15px] font-[700] text-erp-text">{item.name}</td>
+     <td className="px-[16px] py-[16px] text-right text-[15px] font-[700] text-erp-text">{item.quantity}</td>
+     <td className="px-[16px] py-[16px] text-right text-[15px] font-[700] text-erp-success">{money(item.revenue)}</td>
+     <td className="px-[16px] py-[16px] text-right text-[15px] font-[600] text-erp-muted">{item.orders}</td>
+     </tr>
+   ));
+ })()
+ )}
  </tbody>
  </table>
  </div>
