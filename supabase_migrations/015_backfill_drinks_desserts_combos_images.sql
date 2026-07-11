@@ -3,7 +3,7 @@
 UPDATE public.menu_items
 SET image_url = CASE slug
   WHEN 'veg-loaded-french-fries' THEN '/images/menu/generated/veg-loaded-french-fries.png'
-  WHEN 'paneer-loaded-french-fries' THEN '/images/menu/generated/paneer-loaded-french-fries.png'
+  WHEN 'paneer-loaded-french-fries' THEN '/images/menu/generated/loaded_fries.png'
   WHEN 'chicken-loaded-french-fries' THEN '/images/menu/generated/chicken-loaded-french-fries.png'
   WHEN 'vanilla-milkshake' THEN '/images/menu/generated/vanilla_milkshake.png'
   WHEN 'strawberry-milkshake' THEN '/images/menu/generated/vanilla_milkshake.png'
