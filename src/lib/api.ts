@@ -97,13 +97,14 @@ export const profileApi = {
 };
 
 export const franchiseApi = {
-  submitLead: (input: { name: string; phone: string; email: string; message?: string }) =>
+  submitLead: (input: { name: string; phone: string; email: string; city?: string; message?: string }) =>
     apiRequest<{
       lead: {
         id: number;
         name: string;
         phone: string;
         email: string;
+        city: string | null;
         message: string | null;
         created_at: string;
       };

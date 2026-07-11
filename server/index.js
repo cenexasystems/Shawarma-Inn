@@ -17,6 +17,10 @@ const rootDir = path.resolve(__dirname, '..');
 
 const PORT = Number(process.env.PORT || 5000);
 
+function sanitizeEmail(value) {
+  return String(value || '').trim().toLowerCase().slice(0, 254);
+}
+
 // ── Admin Activity Log ────────────────────────────────────────────────────
 
 function logActivity(adminId, action, entityType, entityId, details) {

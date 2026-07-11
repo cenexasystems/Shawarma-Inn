@@ -31,7 +31,9 @@ interface AdminContextValue {
   setDateRangeType: (type: DateRangeType, customRange?: DateRange) => void;
   pendingOrdersCount: number;
   unacknowledgedAlerts: any[];
+  latestIncomingOrder: any | null;
   acknowledgeAlert: (orderId: string) => Promise<void>;
+  dismissIncomingOrder: () => void;
   refreshSignal: number;
   kdsSettings: KDSSettings;
   updateKDSSettings: (newSettings: Partial<KDSSettings>) => Promise<void>;
@@ -66,6 +68,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [unacknowledgedAlerts, setUnacknowledgedAlerts] = useState<any[]>([]);
+  const [latestIncomingOrder, setLatestIncomingOrder] = useState<any | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [kdsSettings, setKdsSettings] = useState<KDSSettings>(DEFAULT_SETTINGS);
   const kdsSettingsRef = useRef<KDSSettings>(DEFAULT_SETTINGS);
@@ -126,11 +129,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         const unacked = data.filter(o => !o.acknowledged_at && new Date(o.created_at) > yesterday);
         setUnacknowledgedAlerts(unacked);
         
-        if (unacked.length > 0) {
-          startAlertLoop();
-        } else {
-          stopAlertLoop();
-        }
+        // Existing pending orders are shown without replaying an alert when
+        // an admin opens or refreshes a page.
       }
     } catch (err) {
       console.error('Error fetching pending orders:', err);
@@ -185,20 +185,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       clearInterval(loopIntervalRef.current);
     }
     
-    let playCount = 1;
-
-    // Start repeating
-    const settings = kdsSettingsRef.current;
-    if (settings.repeat_interval_sec > 0) {
-      loopIntervalRef.current = window.setInterval(() => {
-        playCount++;
-        if (playCount > 3) {
-          if (loopIntervalRef.current) clearInterval(loopIntervalRef.current);
-          return;
-        }
-        playSingleAlert();
-      }, settings.repeat_interval_sec * 1000);
-    }
+    // One loud sound per new order. Repeating alerts are intentionally removed.
   }, [playSingleAlert]);
 
   const stopAlertLoop = useCallback(() => {
@@ -235,6 +222,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           setUnacknowledgedAlerts((prev) => {
             const newAlerts = [...prev, payload.new];
             // Restart loop if we just got a new order
+            setLatestIncomingOrder(payload.new);
             startAlertLoop();
             triggerBrowserNotification(payload.new);
             return newAlerts;
@@ -286,7 +274,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   }, [stopAlertLoop]);
 
+  const dismissIncomingOrder = useCallback(() => {
+    setLatestIncomingOrder(null);
+  }, []);
+
   const testAlert = useCallback(() => {
+    const enabled = { ...kdsSettingsRef.current, is_muted: false, volume: 100 };
+    kdsSettingsRef.current = enabled;
+    setKdsSettings(enabled);
+    localStorage.setItem('kds_settings', JSON.stringify(enabled));
     startAlertLoop();
   }, [startAlertLoop]);
   
@@ -302,7 +298,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setDateRangeType,
     pendingOrdersCount,
     unacknowledgedAlerts,
+    latestIncomingOrder,
     acknowledgeAlert,
+    dismissIncomingOrder,
     refreshSignal,
     kdsSettings,
     updateKDSSettings,
@@ -310,7 +308,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     stopTestAlert
   }), [
     dateRangeType, dateRange, setDateRangeType, pendingOrdersCount, 
-    unacknowledgedAlerts, acknowledgeAlert, refreshSignal, 
+    unacknowledgedAlerts, latestIncomingOrder, acknowledgeAlert, dismissIncomingOrder, refreshSignal, 
     kdsSettings, updateKDSSettings, testAlert, stopTestAlert
   ]);
 

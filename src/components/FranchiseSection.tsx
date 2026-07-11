@@ -116,7 +116,8 @@ export default function FranchiseSection() {
         name: name.trim(),
         phone: phone.trim(),
         email: 'franchise@shawarmainn.com', // Placeholder since it's removed from form
-        message: `City: ${city.trim()} | Investment: ${investment.trim()}`,
+        city: city.trim(),
+        message: `Investment range: ${investment.trim()}`,
       });
       generatePdf();
       openWhatsApp();

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Star, Eye, EyeOff, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Card } from '../../components/ui/Card';
 
 export default function ReviewsPage() {
- const { isAdmin } = useAuth();
+ const { isAdmin, token } = useAuth();
  
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState('');
@@ -14,33 +14,12 @@ export default function ReviewsPage() {
  const [reviews, setReviews] = useState<any[]>([]);
 
  const loadData = async () => {
- if (!isAdmin) return;
+ if (!isAdmin || !token) return;
  setLoading(true);
  setError('');
  try {
- const { data, error } = await supabase
- .from('reviews')
- .select(`
- id, rating, comment, is_visible, created_at,
- profiles(name, avatar_url),
- menu_items(name)
- `)
- .order('created_at', { ascending: false });
- 
- if (error) throw error;
- 
- const formattedReviews = (data || []).map((r: any) => ({
- id: r.id,
- rating: r.rating,
- review_text: r.comment,
- is_hidden: !r.is_visible,
- created_at: r.created_at,
- name: r.profiles?.name || 'Anonymous User',
- avatar_url: r.profiles?.avatar_url || null,
- item_name: r.menu_items?.name || null
- }));
- 
- setReviews(formattedReviews);
+ const response = await apiRequest<{ reviews: any[] }>('/admin/reviews', { token });
+ setReviews(response.reviews || []);
  } catch (err) {
  setError(err instanceof Error ? err.message : 'Failed to load reviews');
  } finally {
@@ -50,16 +29,11 @@ export default function ReviewsPage() {
 
  useEffect(() => {
  void loadData();
- }, [isAdmin]);
+ }, [isAdmin, token]);
 
- const handleToggleReviewVisibility = async (id: string, currentVisibility: boolean) => {
+ const handleToggleReviewVisibility = async (id: string) => {
  try {
- const { error } = await supabase
- .from('reviews')
- .update({ is_visible: !currentVisibility })
- .eq('id', id);
- 
- if (error) throw error;
+ await apiRequest(`/admin/reviews/${id}/hide`, { method: 'PATCH', token });
  void loadData();
  } catch (err) {
  alert(err instanceof Error ? err.message : 'Failed to toggle review visibility');
@@ -69,8 +43,7 @@ export default function ReviewsPage() {
  const handleDeleteReview = async (id: string) => {
  if (!window.confirm('Delete this review?')) return;
  try {
- const { error } = await supabase.from('reviews').delete().eq('id', id);
- if (error) throw error;
+ await apiRequest(`/admin/reviews/${id}`, { method: 'DELETE', token });
  void loadData();
  } catch (err) {
  alert(err instanceof Error ? err.message : 'Failed to delete review');
@@ -125,7 +98,7 @@ export default function ReviewsPage() {
  </div>
  
  <div className="flex justify-end gap-3 border-t border-erp-border pt-4 relative z-10 mt-auto">
- <button onClick={() => handleToggleReviewVisibility(r.id, !r.is_hidden)} className={`px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[1px] flex items-center gap-2 transition-colors ${r.is_hidden ? 'bg-erp-success/10 text-erp-success hover:bg-erp-success/20' : 'bg-erp-warning/10 text-erp-warning hover:bg-erp-warning/20'}`}>
+ <button onClick={() => handleToggleReviewVisibility(r.id)} className={`px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[1px] flex items-center gap-2 transition-colors ${r.is_hidden ? 'bg-erp-success/10 text-erp-success hover:bg-erp-success/20' : 'bg-erp-warning/10 text-erp-warning hover:bg-erp-warning/20'}`}>
  {r.is_hidden ? <><Eye size={14} /> Approve Review</> : <><EyeOff size={14} /> Hide Review</>}
  </button>
  <button onClick={() => handleDeleteReview(r.id)} className="px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[1px] bg-erp-danger/5 text-erp-danger hover:bg-erp-danger/10 flex items-center gap-2 transition-colors">

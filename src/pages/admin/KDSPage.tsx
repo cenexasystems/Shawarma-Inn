@@ -1,14 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, CheckCircle, ChefHat, Volume2, VolumeX, Flame, CheckSquare, ListTodo } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Flame, CheckSquare, ListTodo } from 'lucide-react';
 import { OperationsFilterProvider, useOperationsFilter, formatOrderId } from '../../context/OperationsFilterContext';
-import { useAdminContext } from '../../context/AdminContext';
 import { KPICard } from '../../components/ui/KPICard';
 
 function KDSBoard() {
  const { orders, loading, updateOrderStatus, datePreset, setDatePreset } = useOperationsFilter();
- const { kdsSettings, updateKDSSettings } = useAdminContext();
- const audioRef = useRef<HTMLAudioElement | null>(null);
 
  // Default to today to only see today's tickets
  useEffect(() => {
@@ -16,47 +13,6 @@ function KDSBoard() {
  setDatePreset('today');
  }
  }, [datePreset, setDatePreset]);
-
- // Alert logic for new pending orders
- useEffect(() => {
- const pendingOrders = orders.filter((o: any) => o.status === 'pending');
- if (pendingOrders.length > 0 && !kdsSettings.is_muted && kdsSettings.sound_url) {
- if (!audioRef.current) {
- audioRef.current = new Audio(kdsSettings.sound_url);
- } else if (audioRef.current.src !== kdsSettings.sound_url) {
- audioRef.current.src = kdsSettings.sound_url;
- }
- 
- audioRef.current.volume = kdsSettings.volume / 100;
- 
- const playPromise = audioRef.current.play();
- if (playPromise !== undefined) {
- playPromise.catch(e => console.error("KDS Audio play failed (might need user interaction):", e));
- }
-
- // Loop if repeat interval is set
- let intervalId: any;
- if (kdsSettings.repeat_interval_sec > 0) {
- intervalId = setInterval(() => {
- if (audioRef.current) {
- const loopPromise = audioRef.current.play();
- if (loopPromise !== undefined) {
- loopPromise.catch(e => console.error("KDS Audio loop failed:", e));
- }
- }
- }, kdsSettings.repeat_interval_sec * 1000);
- }
- return () => {
- if (intervalId) clearInterval(intervalId);
- };
- } else {
- if (audioRef.current) {
- audioRef.current.pause();
- audioRef.current.currentTime = 0;
- }
- }
- }, [orders, kdsSettings]);
-
 
  const activeOrders = orders.filter((o: any) => ['pending', 'processing', 'preparing'].includes(o.status)).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
@@ -75,10 +31,6 @@ function KDSBoard() {
  <p className="text-gray-400 text-sm mt-1">Live order tickets</p>
  </div>
  <div className="flex gap-4">
- <button onClick={() => updateKDSSettings({ is_muted: !kdsSettings.is_muted })} className="bg-[#141414] border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-white/5 transition-colors">
- {kdsSettings.is_muted ? <VolumeX size={20} className="text-gray-400" /> : <Volume2 size={20} className="text-[var(--red)] animate-pulse" />}
- <span className="text-sm font-bold">{kdsSettings.is_muted ? "Muted" : "Sound On"}</span>
- </button>
  <div className="bg-[#141414] border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2">
  <div className="w-2 h-2 rounded-full bg-[var(--red)] animate-pulse" />
  <span className="text-sm font-bold">{activeOrders.length} Active Tickets</span>

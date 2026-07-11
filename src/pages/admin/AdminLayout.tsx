@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,7 +12,7 @@ import { useAdminContext } from '../../context/AdminContext';
 
 export default function AdminLayout() {
  const { user, logout } = useAuth();
- const { unacknowledgedAlerts, acknowledgeAlert } = useAdminContext();
+ const { unacknowledgedAlerts, acknowledgeAlert, latestIncomingOrder, dismissIncomingOrder } = useAdminContext();
  const navigate = useNavigate();
  const location = useLocation();
  
@@ -23,6 +23,12 @@ export default function AdminLayout() {
  useEffect(() => {
  setSidebarOpen(false);
  }, [location]);
+
+ useEffect(() => {
+   if (!latestIncomingOrder) return;
+   const timer = window.setTimeout(dismissIncomingOrder, 15000);
+   return () => window.clearTimeout(timer);
+ }, [latestIncomingOrder, dismissIncomingOrder]);
 
  const NAV_ITEMS = [
  { key: 'overview', path: '/admin', icon: Store, label: 'Operations Center' },
@@ -217,6 +223,32 @@ export default function AdminLayout() {
  </header>
 
  <main className="flex-1 overflow-y-auto relative bg-erp-bg">
+ <AnimatePresence>
+ {latestIncomingOrder && (
+   <motion.div
+     initial={{ opacity: 0, y: -24, scale: 0.96 }}
+     animate={{ opacity: 1, y: 0, scale: 1 }}
+     exit={{ opacity: 0, y: -18, scale: 0.96 }}
+     className="fixed top-[92px] right-[28px] z-[80] w-[min(460px,calc(100vw-32px))] rounded-[24px] border-2 border-erp-danger bg-white p-[24px] shadow-[0_20px_60px_rgba(220,38,38,0.24)]"
+   >
+     <div className="flex items-start gap-[16px]">
+       <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-erp-danger text-white">
+         <Bell size={26} className="animate-pulse" />
+       </div>
+       <div className="min-w-0 flex-1">
+         <p className="text-[11px] font-[800] uppercase tracking-[0.16em] text-erp-danger">New order received</p>
+         <h2 className="mt-[6px] truncate text-[22px] font-[800] text-erp-text">{latestIncomingOrder.customer_name || 'Guest customer'}</h2>
+         <p className="mt-[4px] text-[13px] text-erp-muted">Order #{latestIncomingOrder.order_number || String(latestIncomingOrder.id).slice(0, 8)} is waiting in Orders.</p>
+         <div className="mt-[16px] flex gap-[8px]">
+           <button onClick={() => { dismissIncomingOrder(); navigate('/admin/orders'); }} className="rounded-[12px] bg-erp-primary px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-white">View Order</button>
+           <button onClick={() => { void acknowledgeAlert(latestIncomingOrder.id); dismissIncomingOrder(); }} className="rounded-[12px] border border-erp-border px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-erp-text">Acknowledge</button>
+         </div>
+       </div>
+       <button aria-label="Dismiss new order notification" onClick={dismissIncomingOrder} className="text-erp-muted hover:text-erp-text">×</button>
+     </div>
+   </motion.div>
+ )}
+ </AnimatePresence>
  <Outlet />
  </main>
  </div>

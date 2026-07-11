@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, AlertCircle, Volume2, Play, Square } from 'lucide-react';
+import { Save, AlertCircle, Volume2, Play } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdminContext } from '../../context/AdminContext';
@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS: SettingsData = {
 
 export default function SettingsPage() {
  const { isAdmin } = useAuth();
- const { kdsSettings, updateKDSSettings, testAlert, stopTestAlert } = useAdminContext();
+ const { kdsSettings, updateKDSSettings, testAlert } = useAdminContext();
  
  const [loading, setLoading] = useState(false);
  const [saving, setSaving] = useState(false);
@@ -170,39 +170,26 @@ export default function SettingsPage() {
  </div>
  </Card>
 
-        {/* Kitchen Display Settings */}
+        {/* Order Sound Notifications */}
         <Card className="p-6">
           <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6 flex items-center gap-2">
-            <Volume2 size={14} /> Kitchen Display (KDS) Alerts
+            <Volume2 size={14} /> Order Sound Notifications
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Alert Volume: {kdsSettings.volume}%</label>
+              <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Notification Volume: {kdsSettings.volume}%</label>
               <input
                 type="range"
-                min="0"
+                min="50"
                 max="100"
                 value={kdsSettings.volume}
                 onChange={(e) => updateKDSSettings({ volume: parseInt(e.target.value) })}
                 className="w-full accent-[var(--red)]"
               />
             </div>
-            
-            <div>
-              <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Repeat Interval (Seconds)</label>
-              <Input
-                type="number"
-                min="5"
-                max="60"
-                value={kdsSettings.repeat_interval_sec}
-                onChange={(e) => updateKDSSettings({ repeat_interval_sec: parseInt(e.target.value) })}
-              />
-              <p className="text-xs text-erp-muted mt-1">How often the alert sounds for unacknowledged orders.</p>
-            </div>
-
-            <div className="pt-4 border-t border-white/5 flex gap-2">
-              <Button onClick={testAlert} variant="secondary" icon={Play} className="flex-1">Test Sound</Button>
-              <Button onClick={stopTestAlert} variant="outline" icon={Square} className="flex-1">Stop Sound</Button>
+            <p className="text-xs text-erp-muted">A single loud alert plays when a customer places a new order. Keep the admin panel open to receive it.</p>
+            <div className="pt-4 border-t border-white/5">
+              <Button onClick={testAlert} variant="secondary" icon={Play} className="w-full">Enable & Test Loud Sound</Button>
             </div>
           </div>
         </Card>
