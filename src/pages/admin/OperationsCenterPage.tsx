@@ -6,8 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { KPICard } from '../../components/ui/KPICard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
-import { Select } from '../../components/ui/Select';
-import { StatusSelect, OrderStatus } from '../../components/ui/StatusSelect';
+import { StatusSelect, type OrderStatus } from '../../components/ui/StatusSelect';
 import { Input } from '../../components/ui/Input';
 import { WhatsAppLogo } from '../../components/icons/WhatsAppLogo';
 import { supabase } from '../../lib/supabaseClient';
@@ -21,21 +20,6 @@ function formatDate(iso: string): string {
  if (!iso) return '';
  const d = new Date(iso);
  return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' ' + formatTime(iso);
-}
-
-function getStatusTone(status: string) {
- switch (status?.toLowerCase()) {
- case 'completed':
- return 'text-erp-success border-erp-success/20 bg-erp-success/8';
- case 'pending':
- return 'text-erp-danger border-erp-danger/20 bg-erp-danger/8';
- case 'processing':
- return 'text-erp-warning border-erp-warning/20 bg-erp-warning/8';
- case 'cancelled':
- return 'text-erp-danger border-erp-danger/20 bg-erp-danger/8';
- default:
- return 'text-erp-muted border-erp-border bg-white';
- }
 }
 
 function money(value: unknown): string {

@@ -42,11 +42,7 @@ export function resolveMenuImage(
   const dbSlug = item.slug;
   const nameSlug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-  // 1. Premium Commercial Assets (Local exact match overrides EVERYTHING)
-  if (dbSlug && imageMap[dbSlug]) return imageMap[dbSlug];
-  if (imageMap[nameSlug]) return imageMap[nameSlug];
-
-  // 2. DB image_url (absolute, local public path, or Supabase Storage)
+  // Supabase is the canonical source so production reflects admin changes.
   const dbUrl = item.image_url || item.image || null;
 
   if (dbUrl) {
@@ -54,6 +50,10 @@ export function resolveMenuImage(
     if (isStoragePath(dbUrl)) return storagePublicUrl(dbUrl);
     if (dbUrl.startsWith('http://') || dbUrl.startsWith('https://')) return dbUrl;
   }
+
+  // Keep bundled assets as a migration fallback for older rows without image_url.
+  if (dbSlug && imageMap[dbSlug]) return imageMap[dbSlug];
+  if (imageMap[nameSlug]) return imageMap[nameSlug];
 
   // 3. Strict category fallback (prevent empty images but maintain cuisine accuracy)
   if (item.category && categoryFallbackMap[item.category]) {
@@ -68,8 +68,6 @@ export function resolveMenuImage(
  * Recovery URL when the primary src fails (onError handler).
  */
 export function getRecoveryImage(item: Pick<MenuItem, 'name' | 'category'> & { slug?: string }): string {
-  const nameSlug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  
   if (item.category && categoryFallbackMap[item.category]) {
     return categoryFallbackMap[item.category];
   }

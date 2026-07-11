@@ -1,6 +1,6 @@
 import { resolveMenuImage, getRecoveryImage } from '../../../utils/menuImages';
-import { StatusSelect, OrderStatus } from '../../../components/ui/StatusSelect';
-import { ADMIN_ORDER_STATUSES, STATUS_LABELS, getStatusColor } from './constants';
+import { StatusSelect, type OrderStatus } from '../../../components/ui/StatusSelect';
+import { STATUS_LABELS } from './constants';
 
 export default function OrderDrawer({
   order,

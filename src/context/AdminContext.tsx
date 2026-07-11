@@ -42,7 +42,7 @@ interface AdminContextValue {
 const AdminContext = createContext<AdminContextValue | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
 
   const [dateRangeType, setDateRangeTypeState] = useState<DateRangeType>(() => {
     const stored = localStorage.getItem(STORAGE_KEY_TYPE) as DateRangeType | null;

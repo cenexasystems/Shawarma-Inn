@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Search, MapPin, Phone, MessageCircle, Eye } from 'lucide-react';
+import { Search, MapPin, Phone, MessageCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveMenuImage, getRecoveryImage } from '../../utils/menuImages';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, CalendarDays, ShoppingCart, TrendingUp, Users, Activity, BarChart3 } from 'lucide-react';
+import { X, Clock, CalendarDays, ShoppingCart, TrendingUp, Users, Activity } from 'lucide-react';
 
 export interface ProductAnalysisStats {
   name: string;

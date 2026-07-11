@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Download, IndianRupee, PackageCheck, ShoppingBag, TrendingUp, Search } from 'lucide-react';
 import {
  Bar,
@@ -11,11 +11,10 @@ import {
 } from 'recharts';
 import { supabase } from '../../lib/supabaseClient';
 import { PageLayout } from '../../components/ui/PageLayout';
-import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { KPICard } from '../../components/ui/KPICard';
 import { Card, ChartShell } from '../../components/ui/Card';
-import { ProductIntelligenceModal, ProductAnalysisStats } from '../../components/admin/ProductIntelligenceModal';
+import { ProductIntelligenceModal, type ProductAnalysisStats } from '../../components/admin/ProductIntelligenceModal';
 
 type ReportPreset = 'all' | 'today' | 'week' | 'month' | 'year' | 'custom';
 
@@ -145,7 +144,7 @@ export default function ReportsPage() {
 
  const monthlyData = MONTHS.map((month) => ({ month, revenue: 0, orders: 0, items: 0 }));
  const weeklyMap = new Map<number, { revenue: number; orders: number; items: number }>();
- const productMap = new Map<string, { quantity: number; revenue: number; orders: number; hours: Record<number, number>; days: Record<number, number>; co_buys: Record<string, number>; buyers: Set<string>; basketTotal: number; dates: Record<string, number> }>();
+ const productMap = new Map<string, { quantity: number; revenue: number; orders: Set<string>; hours: Record<number, number>; days: Record<number, number>; co_buys: Record<string, number>; buyers: Set<string>; orderTotals: Record<string, number>; dates: Record<string, number> }>();
  const completedDates = completed
  .map((order) => new Date(order.created_at))
  .filter((date) => !Number.isNaN(date.getTime()));
@@ -160,6 +159,7 @@ export default function ReportsPage() {
  const orderItems = order.order_items || [];
  const itemCount = orderItems.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
  const orderTotal = Number(order.total || 0);
+ const orderKey = String(order.id || order.created_at);
 
  monthlyData[monthIndex].revenue += Number(order.total || 0);
  monthlyData[monthIndex].orders += 1;
@@ -175,7 +175,7 @@ export default function ReportsPage() {
 
  orderItems.forEach((item: any) => {
  const existing = productMap.get(item.name) || { 
-   quantity: 0, revenue: 0, orders: 0, hours: {}, days: {}, co_buys: {}, buyers: new Set<string>(), basketTotal: 0, dates: {} 
+   quantity: 0, revenue: 0, orders: new Set<string>(), hours: {}, days: {}, co_buys: {}, buyers: new Set<string>(), orderTotals: {}, dates: {} 
  };
  
  const qty = Number(item.quantity || 0);
@@ -183,24 +183,26 @@ export default function ReportsPage() {
  existing.days[day] = (existing.days[day] || 0) + 1;
  existing.dates[dateStr] = (existing.dates[dateStr] || 0) + qty;
  existing.buyers.add(buyerId);
- existing.basketTotal += orderTotal;
+ existing.orders.add(orderKey);
+ existing.orderTotals[orderKey] = orderTotal;
 
- orderItems.forEach((otherItem: any) => {
-   if (otherItem.name !== item.name) {
-     existing.co_buys[otherItem.name] = (existing.co_buys[otherItem.name] || 0) + 1;
+ const itemNamesInOrder = new Set<string>(orderItems.map((otherItem: any) => String(otherItem.name || '')));
+ itemNamesInOrder.forEach((otherName) => {
+   if (otherName !== item.name) {
+     existing.co_buys[otherName] = (existing.co_buys[otherName] || 0) + 1;
    }
  });
 
  productMap.set(item.name, {
- quantity: existing.quantity + qty,
- revenue: existing.revenue + Number(item.price || 0) * qty,
- orders: existing.orders + 1,
- hours: existing.hours,
- days: existing.days,
- co_buys: existing.co_buys,
- buyers: existing.buyers,
- basketTotal: existing.basketTotal,
- dates: existing.dates
+   quantity: existing.quantity + qty,
+   revenue: existing.revenue + Number(item.price || 0) * qty,
+   orders: existing.orders,
+   hours: existing.hours,
+   days: existing.days,
+   co_buys: existing.co_buys,
+   buyers: existing.buyers,
+   orderTotals: existing.orderTotals,
+   dates: existing.dates
  });
  });
  });
@@ -216,8 +218,9 @@ export default function ReportsPage() {
  .map(([name, stats]) => ({ 
    name, 
    ...stats, 
-   unique_buyers: stats.buyers.size, 
-   avg_basket_with_item: stats.orders > 0 ? stats.basketTotal / stats.orders : 0,
+   orders: stats.orders.size,
+   unique_buyers: stats.buyers.size,
+   avg_basket_with_item: stats.orders.size > 0 ? Object.values(stats.orderTotals).reduce((sum, total) => sum + total, 0) / stats.orders.size : 0,
    revenue_contribution: revenue > 0 ? stats.revenue / revenue : 0 
  }))
  .sort((a, b) => b.quantity - a.quantity);
@@ -360,7 +363,8 @@ export default function ReportsPage() {
  ) : (
  <div className="space-y-[24px]">
  <div className="grid grid-cols-1 xl:grid-cols-2 gap-[24px]">
- <ChartShell title={`Revenue Trend This Year ${currentYear}`} subtitle="Monthly revenue from completed orders.">
+ <ChartShell className="min-h-[360px]" title={`Revenue Trend This Year ${currentYear}`} subtitle="Monthly revenue from completed orders.">
+ <div className="h-[260px]">
  <ResponsiveContainer width="100%" height="100%">
  <BarChart data={analytics.monthlyData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
  <defs>
@@ -376,12 +380,14 @@ export default function ReportsPage() {
  <Bar dataKey="revenue" fill="url(#monthlyRevenue)" radius={[14, 14, 4, 4]} maxBarSize={44} />
  </BarChart>
  </ResponsiveContainer>
+ </div>
  </ChartShell>
 
- <ChartShell
+ <ChartShell className="min-h-[360px]"
  title={`Revenue This Week (Week ${analytics.activeWeek} of ${analytics.activeWeekYear})`}
  subtitle="Monday to Sunday revenue for the exact ISO week in focus."
  >
+ <div className="h-[260px]">
  <ResponsiveContainer width="100%" height="100%">
  <BarChart data={analytics.dailyWeekData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
  <defs>
@@ -402,6 +408,7 @@ export default function ReportsPage() {
  <Bar dataKey="revenue" fill="url(#weeklyRevenue)" radius={[14, 14, 4, 4]} maxBarSize={40} />
  </BarChart>
  </ResponsiveContainer>
+ </div>
  </ChartShell>
  </div>
 
