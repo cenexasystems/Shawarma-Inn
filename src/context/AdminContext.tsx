@@ -9,7 +9,7 @@ export type { DateRange };
 const STORAGE_KEY_TYPE = 'admin_date_range_type';
 const STORAGE_KEY_CUSTOM = 'admin_date_range_custom';
 
-interface KDSSettings {
+interface AlertSettings {
   sound_url: string;
   volume: number;
   repeat_interval_sec: number;
@@ -17,7 +17,7 @@ interface KDSSettings {
   enable_browser_notifications: boolean;
 }
 
-const DEFAULT_SETTINGS: KDSSettings = {
+const DEFAULT_SETTINGS: AlertSettings = {
   sound_url: '/restaurant-bell.mp3',
   volume: 100,
   repeat_interval_sec: 10,
@@ -35,8 +35,8 @@ interface AdminContextValue {
   acknowledgeAlert: (orderId: string) => Promise<void>;
   dismissIncomingOrder: () => void;
   refreshSignal: number;
-  kdsSettings: KDSSettings;
-  updateKDSSettings: (newSettings: Partial<KDSSettings>) => Promise<void>;
+  alertSettings: AlertSettings;
+  updateAlertSettings: (newSettings: Partial<AlertSettings>) => Promise<void>;
   testAlert: () => void;
   stopTestAlert: () => void;
 }
@@ -70,8 +70,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [unacknowledgedAlerts, setUnacknowledgedAlerts] = useState<any[]>([]);
   const [latestIncomingOrder, setLatestIncomingOrder] = useState<any | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
-  const [kdsSettings, setKdsSettings] = useState<KDSSettings>(DEFAULT_SETTINGS);
-  const kdsSettingsRef = useRef<KDSSettings>(DEFAULT_SETTINGS);
+  const [alertSettings, setAlertSettings] = useState<AlertSettings>(DEFAULT_SETTINGS);
+  const alertSettingsRef = useRef<AlertSettings>(DEFAULT_SETTINGS);
 
   // Audio setup
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -90,25 +90,25 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setDateRange(getRangeForPreset(type));
   }, []);
 
-  const fetchKDSSettings = useCallback(async () => {
+  const fetchAlertSettings = useCallback(async () => {
     try {
-      const stored = localStorage.getItem('kds_settings');
+      const stored = localStorage.getItem('admin_alert_settings');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setKdsSettings(parsed);
-        kdsSettingsRef.current = parsed;
+        setAlertSettings(parsed);
+        alertSettingsRef.current = parsed;
       }
     } catch (err) {
-      console.error('Error parsing local KDS settings', err);
+      console.error('Error parsing local admin alert settings', err);
     }
   }, []);
 
-  const updateKDSSettings = useCallback(async (newSettings: Partial<KDSSettings>) => {
-    const updated = { ...kdsSettings, ...newSettings };
-    setKdsSettings(updated);
-    kdsSettingsRef.current = updated;
-    localStorage.setItem('kds_settings', JSON.stringify(updated));
-  }, [kdsSettings]);
+  const updateAlertSettings = useCallback(async (newSettings: Partial<AlertSettings>) => {
+    const updated = { ...alertSettings, ...newSettings };
+    setAlertSettings(updated);
+    alertSettingsRef.current = updated;
+    localStorage.setItem('admin_alert_settings', JSON.stringify(updated));
+  }, [alertSettings]);
 
   const loadPendingOrders = useCallback(async () => {
     if (!isAdmin) return;
@@ -139,24 +139,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isAdmin) {
-      fetchKDSSettings();
+      fetchAlertSettings();
       loadPendingOrders();
     }
     return () => stopAlertLoop();
-  }, [isAdmin, fetchKDSSettings, loadPendingOrders]);
+  }, [isAdmin, fetchAlertSettings, loadPendingOrders]);
 
   // Handle browser notification permissions
   useEffect(() => {
-    if (isAdmin && kdsSettings.enable_browser_notifications) {
+    if (isAdmin && alertSettings.enable_browser_notifications) {
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
       }
     }
-  }, [isAdmin, kdsSettings.enable_browser_notifications]);
+  }, [isAdmin, alertSettings.enable_browser_notifications]);
 
   // Audio playing logic
   const playSingleAlert = useCallback(() => {
-    const settings = kdsSettingsRef.current;
+    const settings = alertSettingsRef.current;
     if (settings.is_muted) return;
     
     if (!audioRef.current) {
@@ -200,13 +200,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const triggerBrowserNotification = useCallback((order: any) => {
-    if (kdsSettings.enable_browser_notifications && 'Notification' in window && Notification.permission === 'granted') {
+    if (alertSettings.enable_browser_notifications && 'Notification' in window && Notification.permission === 'granted') {
       new Notification('New Order Received!', {
         body: `Order #${order.id.split('-')[0]} from ${order.customer_name || 'Guest'}`,
         icon: '/favicon.svg'
       });
     }
-  }, [kdsSettings.enable_browser_notifications]);
+  }, [alertSettings.enable_browser_notifications]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -279,10 +279,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const testAlert = useCallback(() => {
-    const enabled = { ...kdsSettingsRef.current, is_muted: false, volume: 100 };
-    kdsSettingsRef.current = enabled;
-    setKdsSettings(enabled);
-    localStorage.setItem('kds_settings', JSON.stringify(enabled));
+    const enabled = { ...alertSettingsRef.current, is_muted: false, volume: 100 };
+    alertSettingsRef.current = enabled;
+    setAlertSettings(enabled);
+    localStorage.setItem('admin_alert_settings', JSON.stringify(enabled));
     startAlertLoop();
   }, [startAlertLoop]);
   
@@ -302,14 +302,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     acknowledgeAlert,
     dismissIncomingOrder,
     refreshSignal,
-    kdsSettings,
-    updateKDSSettings,
+    alertSettings,
+    updateAlertSettings,
     testAlert,
     stopTestAlert
   }), [
     dateRangeType, dateRange, setDateRangeType, pendingOrdersCount, 
     unacknowledgedAlerts, latestIncomingOrder, acknowledgeAlert, dismissIncomingOrder, refreshSignal, 
-    kdsSettings, updateKDSSettings, testAlert, stopTestAlert
+    alertSettings, updateAlertSettings, testAlert, stopTestAlert
   ]);
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

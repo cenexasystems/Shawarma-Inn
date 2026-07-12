@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Save, AlertCircle, Volume2, Play } from 'lucide-react';
+import { Save, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
-import { useAdminContext } from '../../context/AdminContext';
+import { useStoreSettings } from '../../context/SettingsContext';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS: SettingsData = {
 
 export default function SettingsPage() {
  const { isAdmin } = useAuth();
- const { kdsSettings, updateKDSSettings, testAlert } = useAdminContext();
+ const { refreshSettings } = useStoreSettings();
  
  const [loading, setLoading] = useState(false);
  const [saving, setSaving] = useState(false);
@@ -65,11 +65,11 @@ export default function SettingsPage() {
  if (data) {
  setSettings({
  whatsapp_number: data.whatsapp_number || '',
- delivery_charges: Number(data.delivery_charges || 0),
- gst_percentage: Number(data.gst_percentage || 0),
- business_hours: data.business_hours || DEFAULT_SETTINGS.business_hours,
- social_links: data.social_links || DEFAULT_SETTINGS.social_links,
- seo: data.seo || DEFAULT_SETTINGS.seo,
+ delivery_charges: Number(data.delivery_charges ?? DEFAULT_SETTINGS.delivery_charges),
+ gst_percentage: Number(data.gst_percentage ?? DEFAULT_SETTINGS.gst_percentage),
+ business_hours: { ...DEFAULT_SETTINGS.business_hours, ...(data.business_hours || {}) },
+ social_links: { ...DEFAULT_SETTINGS.social_links, ...(data.social_links || {}) },
+ seo: { ...DEFAULT_SETTINGS.seo, ...(data.seo || {}) },
  });
  }
  } catch (err) {
@@ -103,6 +103,7 @@ export default function SettingsPage() {
  });
  
  if (error) throw error;
+ await refreshSettings();
  setSuccess(true);
  setTimeout(() => setSuccess(false), 3000);
  } catch (err) {
@@ -169,30 +170,6 @@ export default function SettingsPage() {
  </div>
  </div>
  </Card>
-
-        {/* Order Sound Notifications */}
-        <Card className="p-6">
-          <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6 flex items-center gap-2">
-            <Volume2 size={14} /> Order Sound Notifications
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Notification Volume: {kdsSettings.volume}%</label>
-              <input
-                type="range"
-                min="50"
-                max="100"
-                value={kdsSettings.volume}
-                onChange={(e) => updateKDSSettings({ volume: parseInt(e.target.value) })}
-                className="w-full accent-[var(--red)]"
-              />
-            </div>
-            <p className="text-xs text-erp-muted">A single loud alert plays when a customer places a new order. Keep the admin panel open to receive it.</p>
-            <div className="pt-4 border-t border-white/5">
-              <Button onClick={testAlert} variant="secondary" icon={Play} className="w-full">Enable & Test Loud Sound</Button>
-            </div>
-          </div>
-        </Card>
 
         {/* Business Hours */}
  <Card className="p-6">
@@ -272,6 +249,14 @@ export default function SettingsPage() {
  type="url"
  value={settings.social_links.facebook}
  onChange={(e) => updateSetting('social_links', 'facebook', e.target.value)}
+ />
+ </div>
+ <div>
+ <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Twitter / X URL</label>
+ <Input
+ type="url"
+ value={settings.social_links.twitter}
+ onChange={(e) => updateSetting('social_links', 'twitter', e.target.value)}
  />
  </div>
  </div>

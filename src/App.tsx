@@ -42,7 +42,6 @@ const PosBilling = lazy(() => import('./pages/PosBilling'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const ReportsPage = lazy(() => import('./pages/admin/ReportsPage'));
 const NotificationsPage = lazy(() => import('./pages/admin/NotificationsPage'));
-const KDSPage = lazy(() => import('./pages/admin/KDSPage'));
 
 function ProtectedAdminRoute({ children }: { children: ReactNode }) {
   const { isAdmin, loading } = useAuth();
@@ -216,7 +215,6 @@ export default function App() {
           <Route path="analytics" element={<Suspense fallback={<Loader />}><ReportsPage /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<Loader />}><NotificationsPage /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<Loader />}><SettingsPage /></Suspense>} />
-          <Route path="kds" element={<Suspense fallback={<Loader />}><KDSPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<Loader />}><ActivityLogPage /></Suspense>} />
         </Route>
         <Route

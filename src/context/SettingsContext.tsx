@@ -57,7 +57,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       
       if (data) {
         // Merge with defaults to ensure all keys exist
-        setSettings({ ...DEFAULT_SETTINGS, ...data });
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          ...data,
+          business_hours: { ...DEFAULT_SETTINGS.business_hours, ...(data.business_hours || {}) },
+          social_links: { ...DEFAULT_SETTINGS.social_links, ...(data.social_links || {}) },
+          seo: { ...DEFAULT_SETTINGS.seo, ...(data.seo || {}) },
+        });
       }
     } catch (err) {
       console.error('Error loading settings:', err);
@@ -77,7 +83,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         { event: '*', schema: 'public', table: 'settings', filter: 'id=eq.global' },
         (payload) => {
           if (payload.new) {
-            setSettings({ ...DEFAULT_SETTINGS, ...(payload.new as any) });
+            const next = payload.new as Partial<SettingsData>;
+            setSettings((current) => ({
+              ...DEFAULT_SETTINGS,
+              ...current,
+              ...next,
+              business_hours: { ...DEFAULT_SETTINGS.business_hours, ...current.business_hours, ...(next.business_hours || {}) },
+              social_links: { ...DEFAULT_SETTINGS.social_links, ...current.social_links, ...(next.social_links || {}) },
+              seo: { ...DEFAULT_SETTINGS.seo, ...current.seo, ...(next.seo || {}) },
+            }));
           }
         }
       )
