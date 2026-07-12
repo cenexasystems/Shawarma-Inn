@@ -267,7 +267,9 @@ app.post('/api/orders/checkout', optionalAuth, (req, res) => {
   const rawCouponCode = String(req.body.couponCode || '').trim();
   const notes = String(req.body.notes || '').trim();
   const gstAmount = Number(req.body.gstAmount || 0);
-  const packingCharge = Number(req.body.packingCharge || 0);
+  // Direct orders never add packing or delivery fees, regardless of stale
+  // client settings or a manipulated request payload.
+  const packingCharge = 0;
 
   const itemsTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 

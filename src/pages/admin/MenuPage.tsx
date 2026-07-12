@@ -39,7 +39,10 @@ export default function MenuPage() {
  supabase.from('menu_items').select('*').order('display_order', { ascending: true }),
  supabase.from('categories').select('*').order('display_order', { ascending: true }),
  ]);
- setItems(menuRes.data || []);
+ setItems((menuRes.data || []).filter((item) => {
+   const name = String(item.name || '').trim().toLowerCase();
+   return name !== 'chicken burger' && name !== 'chinna chicken burger';
+ }));
  setCategories(catRes.data || []);
  } catch (err) {
  console.error(err);
@@ -86,17 +89,40 @@ export default function MenuPage() {
  const handleBulkAvailability = async (is_active: boolean) => {
  if (!window.confirm(`Mark ${selectedIds.size} items as ${is_active ? 'Available' : 'Hidden'}?`)) return;
  try {
- setItems(prev => prev.map(item => {
- if (selectedIds.has(item.id)) return { ...item, is_active };
- return item;
- }));
- const updates = Array.from(selectedIds).map(id => supabase.from('menu_items').update({ is_active }).eq('id', id));
- await Promise.all(updates);
+ const updates = await Promise.all(
+ Array.from(selectedIds).map(id => supabase.from('menu_items').update({ is_active }).eq('id', id)),
+ );
+ const failed = updates.find((result) => result.error);
+ if (failed?.error) throw failed.error;
+ await loadData();
  setSelectedIds(new Set());
  } catch (e) {
- alert('Failed to update availability');
+ alert(e instanceof Error ? e.message : 'Failed to update availability');
  loadData();
  }
+ };
+
+ const handleAvailabilityToggle = async (item: any, event: React.MouseEvent<HTMLButtonElement>) => {
+ event.stopPropagation();
+ const nextActive = !Boolean(item.is_active);
+ setItems((prev) => prev.map((current) => (
+   current.id === item.id ? { ...current, is_active: nextActive } : current
+ )));
+
+ const { error } = await supabase
+   .from('menu_items')
+   .update({ is_active: nextActive })
+   .eq('id', item.id);
+
+ if (error) {
+   setItems((prev) => prev.map((current) => (
+     current.id === item.id ? { ...current, is_active: item.is_active } : current
+   )));
+   alert(error.message);
+   return;
+ }
+
+ await loadData();
  };
 
 
@@ -254,10 +280,16 @@ export default function MenuPage() {
  {row.large_price && <div className="text-[11px] text-erp-muted uppercase tracking-[1px] font-bold mt-1">L: ₹{row.large_price}</div>}
  </div>
  </TableCell>
- <TableCell className="text-center">
- <div className={`inline-flex items-center justify-center w-[32px] h-[32px] rounded-full ${row.is_active ? 'bg-erp-success/10 text-erp-success' : 'bg-gray-100 text-erp-muted'}`}>
- <PowerOff className="w-[16px] h-[16px]" />
- </div>
+ <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+ <button
+  type="button"
+  onClick={(e) => { void handleAvailabilityToggle(row, e); }}
+  title={row.is_active ? 'Turn off product' : 'Turn on product'}
+  aria-label={row.is_active ? `Turn off ${row.name}` : `Turn on ${row.name}`}
+  className={`inline-flex items-center justify-center w-[32px] h-[32px] rounded-full transition-colors ${row.is_active ? 'bg-erp-success/10 text-erp-success hover:bg-erp-danger/10 hover:text-erp-danger' : 'bg-gray-100 text-erp-muted hover:bg-erp-success/10 hover:text-erp-success'}`}
+ >
+  <PowerOff className="w-[16px] h-[16px]" />
+ </button>
  </TableCell>
  <TableCell className="text-center">
  {row.is_bestseller ? <Star className="w-[18px] h-[18px] text-erp-warning mx-auto fill-erp-warning" /> : <span className="text-erp-border">—</span>}

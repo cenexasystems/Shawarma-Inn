@@ -25,9 +25,9 @@ export const GST_PERCENTAGE = parseNumber(import.meta.env.VITE_GST_PERCENTAGE, 5
  */
 export const PRICES_INCLUDE_GST = parseBool(import.meta.env.VITE_PRICES_INCLUDE_GST, false);
 
-export const DELIVERY_CHARGE = parseNumber(import.meta.env.VITE_DELIVERY_CHARGE, 40);
+export const DELIVERY_CHARGE = 0;
 
-export const PACKING_CHARGE = parseNumber(import.meta.env.VITE_PACKING_CHARGE, 10);
+export const PACKING_CHARGE = 0;
 
 /** True when GST should actually be charged (master switch on AND prices are tax-exclusive). */
 export const GST_ACTIVE = GST_ENABLED && !PRICES_INCLUDE_GST;

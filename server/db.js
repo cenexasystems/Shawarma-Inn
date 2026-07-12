@@ -550,6 +550,9 @@ function seedAdmin() {
 }
 
 function seedMenuItems() {
+  // Retire the unwanted small/chinna chicken burger from existing local DBs.
+  db.prepare("DELETE FROM menu_items WHERE lower(trim(name)) IN ('chicken burger', 'chinna chicken burger')").run();
+
   const count = db.prepare('SELECT COUNT(*) AS total FROM menu_items').get();
   if (count.total > 0) {
     return;

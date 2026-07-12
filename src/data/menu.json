@@ -804,18 +804,6 @@
     "rating": 4.6
   },
   {
-    "id": 68,
-    "slug": "chicken-burger",
-    "name": "Chicken Burger",
-    "category": "Burgers",
-    "price": 100,
-    "desc": "Juicy chicken patty stacked with fresh toppings in a soft bun.",
-    "image": "/images/menu/burgers/chicken-burger.webp",
-    "isVeg": false,
-    "bestseller": true,
-    "rating": 4.6
-  },
-  {
     "id": 69,
     "slug": "hot-glaze-chicken-burger",
     "name": "Hot Glaze Chicken Burger",

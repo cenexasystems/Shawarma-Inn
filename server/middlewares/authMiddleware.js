@@ -16,6 +16,24 @@ function maybeSlideSession(req, res, decoded, user) {
   }
 }
 
+async function getSupabaseUser(token) {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+
+  const headers = { apikey: supabaseAnonKey, Authorization: `Bearer ${token}` };
+  const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers });
+  if (!userResponse.ok) return null;
+  const user = await userResponse.json();
+  const profileResponse = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=role`,
+    { headers },
+  );
+  if (!profileResponse.ok) return null;
+  const profiles = await profileResponse.json();
+  return { user, role: profiles[0]?.role || 'user' };
+}
+
 export async function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -35,26 +53,14 @@ export async function authRequired(req, res, next) {
     return next();
   } catch {
     // If local JWT fails, check if supabase is used
-    const authMode = (process.env.VITE_AUTH_MODE || '').trim();
-    if (authMode === 'supabase') {
-      const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
-      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
-      if (supabaseUrl && supabaseAnonKey) {
-        try {
-          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-            headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${token}`
-            }
-          });
-          if (!response.ok) throw new Error('Invalid Supabase token');
-          const user = await response.json();
-          req.user = { id: user.id, email: user.email, role: 'user' }; // fallback role
-          return next();
-        } catch {
-          // Fall through to error
-        }
+    try {
+      const identity = await getSupabaseUser(token);
+      if (identity) {
+        req.user = { id: identity.user.id, email: identity.user.email, role: identity.role };
+        return next();
       }
+    } catch {
+      // Fall through to error
     }
     return res.status(401).json({ error: 'Invalid token' });
   }
@@ -102,26 +108,14 @@ export async function adminRequired(req, res, next) {
     return next();
   } catch (err) {
     // If local JWT fails, and supabase is enabled, try supabase
-    const authMode = (process.env.VITE_AUTH_MODE || '').trim();
-    if (authMode === 'supabase') {
-      const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
-      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
-      if (supabaseUrl && supabaseAnonKey) {
-        try {
-          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-            headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${token}`
-            }
-          });
-          if (!response.ok) throw new Error('Invalid Supabase token');
-          const user = await response.json();
-          req.user = { id: user.id, role: 'admin', email: user.email };
-          return next();
-        } catch {
-          // Fall through to error
-        }
+    try {
+      const identity = await getSupabaseUser(token);
+      if (identity?.role === 'admin') {
+        req.user = { id: identity.user.id, role: 'admin', email: identity.user.email };
+        return next();
       }
+    } catch {
+      // Fall through to error
     }
     
     return res.status(401).json({ error: 'Admin session expired. Please log in again.' });

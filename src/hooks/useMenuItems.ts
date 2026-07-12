@@ -80,6 +80,7 @@ export const useMenuItems = () => {
 
         menuItems = (data || [])
           .filter(isRowActive)
+          .filter((row) => !['chicken burger', 'chinna chicken burger'].includes(String(row.name || '').trim().toLowerCase()))
           .map(mapMenuRow);
 
         if (menuItems.length === 0 && isLocalHost) {
@@ -91,6 +92,7 @@ export const useMenuItems = () => {
           const payload = await response.json();
           menuItems = (payload.items || [])
             .filter(isRowActive)
+            .filter((row: any) => !['chicken burger', 'chinna chicken burger'].includes(String(row.name || '').trim().toLowerCase()))
             .map(mapMenuRow);
         }
       } else {
@@ -100,7 +102,9 @@ export const useMenuItems = () => {
         }
 
         const payload = await response.json();
-        menuItems = (payload.items || []).map(mapMenuRow);
+        menuItems = (payload.items || [])
+          .filter((row: any) => !['chicken burger', 'chinna chicken burger'].includes(String(row.name || '').trim().toLowerCase()))
+          .map(mapMenuRow);
       }
 
       setItems(menuItems);

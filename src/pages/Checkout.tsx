@@ -276,8 +276,6 @@ export default function Checkout({ cartData }: CheckoutProps) {
       `*Order Items*\n${orderItemsText}\n\n` +
       `*Order Summary*${discountText}\n` +
       `Items Total: ₹${totals.itemsTotal}\n` +
-      `Packing Charge: ₹${totals.packingCharge}\n` +
-      `Delivery Charge: ₹${totals.deliveryCharge}\n` +
       (totals.gstEnabled ? `GST (${totals.gstPercentage}%): ₹${totals.gst}\n` : '') +
       `*Grand Total: ₹${totals.grandTotal}*\n\n` +
       `*Note: Delivery charges will be applied (Not for Store Pickup)*\n\n` +

@@ -28,8 +28,8 @@ const DEFAULT_SETTINGS: PublicSettings = {
   gst_enabled: 'false',
   gst_percentage: '0',
   prices_include_gst: 'false',
-  delivery_charge: import.meta.env.VITE_DELIVERY_CHARGE ?? '40',
-  packing_charge: import.meta.env.VITE_PACKING_CHARGE ?? '10',
+  delivery_charge: '0',
+  packing_charge: '0',
   instagram_url: '',
   youtube_url: '',
   swiggy_url: import.meta.env.VITE_SWIGGY_URL || '',
@@ -103,8 +103,9 @@ export function usePublicSettings() {
 
   const gstEnabled = settings.gst_enabled === 'true';
   const gstPercentage = Number(settings.gst_percentage) || 5;
-  const deliveryCharge = Number(settings.delivery_charge) || 0;
-  const packingCharge = Number(settings.packing_charge) || 0;
+  // Delivery and packing are not charged for direct orders.
+  const deliveryCharge = 0;
+  const packingCharge = 0;
   const minOrderValue = Number(settings.min_order_value) || 0;
   const gstActive = gstEnabled;
 

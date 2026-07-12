@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Megaphone, GraduationCap, Handshake, CheckCircle2 } from 'lucide-react';
-import jsPDF from 'jspdf';
 import { franchiseApi } from '../lib/api';
 
 const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
@@ -54,39 +53,7 @@ export default function FranchiseSection() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const generatePdf = () => {
-    const doc = new jsPDF();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text('Shawarma Inn — Franchise Enquiry', 14, 20);
-    doc.setDrawColor(214, 43, 43);
-    doc.setLineWidth(0.8);
-    doc.line(14, 24, 196, 24);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    const lines: [string, string][] = [
-      ['Name', name],
-      ['Phone Number', phone],
-      ['City', city],
-      ['Investment Range', investment],
-      ['Submitted On', new Date().toLocaleString('en-IN')],
-    ];
-
-    let y = 38;
-    lines.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${label}:`, 14, y);
-      doc.setFont('helvetica', 'normal');
-      const wrapped = doc.splitTextToSize(value, 130);
-      doc.text(wrapped, 60, y);
-      y += 10 * wrapped.length;
-    });
-
-    doc.save(`shawarma-inn-franchise-enquiry-${Date.now()}.pdf`);
-  };
-
-  const openWhatsApp = () => {
+  const redirectToWhatsApp = () => {
     const text = [
       `Name: ${name}`,
       `Phone: ${phone}`,
@@ -96,7 +63,7 @@ export default function FranchiseSection() {
       .filter(Boolean)
       .join('\n');
 
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    window.location.assign(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`);
   };
 
   const submitFranchiseLead = async () => {
@@ -115,20 +82,19 @@ export default function FranchiseSection() {
       await franchiseApi.submitLead({
         name: name.trim(),
         phone: phone.trim(),
-        email: 'franchise@shawarmainn.com', // Placeholder since it's removed from form
+        email: 'franchise@shawarmainn.com',
         city: city.trim(),
         message: `Investment range: ${investment.trim()}`,
       });
-      generatePdf();
-      openWhatsApp();
-
-      setSuccess('Thanks! Your franchise enquiry PDF has been downloaded and our WhatsApp chat is opening.');
+      redirectToWhatsApp();
       setName('');
       setPhone('');
       setCity('');
       setInvestment('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not submit your details. Please try again.');
+    } catch {
+      // WhatsApp is the primary handoff. A temporary lead API failure must not
+      // prevent the founder from receiving the enquiry.
+      redirectToWhatsApp();
     } finally {
       setSaving(false);
     }
@@ -183,6 +149,13 @@ export default function FranchiseSection() {
           className="bg-[#151515] border border-white/10 rounded-3xl p-8"
         >
           <h3 className="font-bebas text-2xl tracking-[2px] uppercase text-white mb-5">Why Franchise</h3>
+          <a
+            href="/Shawarma Inn - Franchise Brochure.pdf"
+            download
+            className="mb-6 inline-flex w-full items-center justify-center rounded-2xl border border-[#d62b2b] px-4 py-3 text-center text-xs font-bold uppercase tracking-[2px] text-white transition-colors hover:bg-[#d62b2b]"
+          >
+            Download Franchise Brochure
+          </a>
           <ul className="space-y-4 mb-8">
             {benefits.map((benefit) => (
               <li key={benefit} className="flex items-start gap-3">
@@ -277,7 +250,7 @@ export default function FranchiseSection() {
             {saving ? 'Submitting...' : 'Talk to Founder'}
           </button>
           <p className="mt-3 text-[11px] text-white/40 text-center">
-            Submitting downloads a PDF copy of your enquiry and opens WhatsApp to chat with our franchise team.
+            Submit your details to continue directly to WhatsApp with the founder.
           </p>
         </motion.div>
       </div>
