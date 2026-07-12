@@ -21,6 +21,15 @@ function sanitizeEmail(value) {
   return String(value || '').trim().toLowerCase().slice(0, 254);
 }
 
+function sanitizeReviewText(value) {
+  return String(value || '')
+    .replace(/[<>]/g, '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 300);
+}
+
 // ── Admin Activity Log ────────────────────────────────────────────────────
 
 function logActivity(adminId, action, entityType, entityId, details) {
