@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { useSupabaseAuth } from '../lib/runtime';
+import { useStoreSettings } from '../context/SettingsContext';
 
 export interface PublicSettings {
   restaurant_name: string;
@@ -37,83 +36,27 @@ const DEFAULT_SETTINGS: PublicSettings = {
   min_order_value: '0',
 };
 
-// Module-level cache shared across hook instances
-let cached: PublicSettings | null = null;
-let cacheTime = 0;
-const CACHE_TTL = 60 * 1000; // 1 minute (was 5 min — SSE now handles instant invalidation)
-
-async function fetchSettings(): Promise<PublicSettings | null> {
-  try {
-    const r = await fetch('/api/settings');
-    if (!r.ok) return null;
-    const data = await r.json();
-    if (data?.settings) {
-      return { ...DEFAULT_SETTINGS, ...data.settings } as PublicSettings;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export function usePublicSettings() {
-  const [settings, setSettings] = useState<PublicSettings>(cached ?? DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(!cached);
-  const sseRef = useRef<EventSource | null>(null);
-
-  const load = async () => {
-    const fresh = await fetchSettings();
-    if (fresh) {
-      cached = fresh;
-      cacheTime = Date.now();
-      setSettings(fresh);
-    }
-    setLoading(false);
+  const { settings: storeSettings, loading } = useStoreSettings();
+  const settings: PublicSettings = {
+    ...DEFAULT_SETTINGS,
+    whatsapp_number: storeSettings.whatsapp_number || DEFAULT_SETTINGS.whatsapp_number,
+    instagram_url: storeSettings.social_links.instagram,
+    gst_percentage: String(storeSettings.gst_percentage),
   };
 
-  useEffect(() => {
-    // In Supabase auth mode there is no local Express server — use defaults
-    if (useSupabaseAuth) { setLoading(false); return; }
-
-    const now = Date.now();
-    if (cached && now - cacheTime < CACHE_TTL) {
-      setSettings(cached);
-      setLoading(false);
-    } else {
-      void load();
-    }
-
-    // Subscribe to settings_updated SSE for immediate cache invalidation
-    const es = new EventSource('/api/events');
-    sseRef.current = es;
-
-    es.addEventListener('settings_updated', () => {
-      // Force refresh immediately
-      cached = null;
-      cacheTime = 0;
-      void load();
-    });
-
-    return () => {
-      es.close();
-      sseRef.current = null;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const gstEnabled = settings.gst_enabled === 'true';
-  const gstPercentage = Number(settings.gst_percentage) || 5;
-  // Delivery and packing are not charged for direct orders.
+  // Direct orders never add packing or delivery fees.
   const deliveryCharge = 0;
   const packingCharge = 0;
-  const minOrderValue = Number(settings.min_order_value) || 0;
-  const gstActive = gstEnabled;
+  const gstEnabled = false;
+  const gstPercentage = Number(storeSettings.gst_percentage) || 0;
+  const minOrderValue = 0;
 
   return {
     settings,
     loading,
     gstEnabled,
-    gstActive,
+    gstActive: false,
     gstPercentage,
     deliveryCharge,
     packingCharge,

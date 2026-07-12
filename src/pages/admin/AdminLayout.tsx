@@ -239,7 +239,7 @@ export default function AdminLayout() {
          <h2 className="mt-[6px] truncate text-[22px] font-[800] text-erp-text">{latestIncomingOrder.customer_name || 'Guest customer'}</h2>
          <p className="mt-[4px] text-[13px] text-erp-muted">Order #{latestIncomingOrder.order_number || String(latestIncomingOrder.id).slice(0, 8)} is waiting in Orders.</p>
          <div className="mt-[16px] flex gap-[8px]">
-           <button onClick={() => { dismissIncomingOrder(); navigate('/admin/orders'); }} className="rounded-[12px] bg-erp-primary px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-white">View Order</button>
+           <button onClick={() => { dismissIncomingOrder(); navigate(`/admin/orders?order=${encodeURIComponent(latestIncomingOrder.id)}`); }} className="rounded-[12px] bg-erp-primary px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-white">View Order</button>
            <button onClick={() => { void acknowledgeAlert(latestIncomingOrder.id); dismissIncomingOrder(); }} className="rounded-[12px] border border-erp-border px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-erp-text">Acknowledge</button>
          </div>
        </div>

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Megaphone, GraduationCap, Handshake, CheckCircle2 } from 'lucide-react';
 import { franchiseApi } from '../lib/api';
-
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
+import { useStoreSettings } from '../context/SettingsContext';
 
 const highlights = [
   {
@@ -45,6 +44,8 @@ const branches = [
 ];
 
 export default function FranchiseSection() {
+  const { settings } = useStoreSettings();
+  const whatsappPhone = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
@@ -63,7 +64,7 @@ export default function FranchiseSection() {
       .filter(Boolean)
       .join('\n');
 
-    window.location.assign(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`);
+    window.location.assign(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`);
   };
 
   const submitFranchiseLead = async () => {

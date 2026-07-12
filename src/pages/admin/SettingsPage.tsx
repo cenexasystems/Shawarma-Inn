@@ -3,6 +3,7 @@ import { Save, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { useStoreSettings } from '../../context/SettingsContext';
+import { useAdminContext } from '../../context/AdminContext';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS: SettingsData = {
 export default function SettingsPage() {
  const { isAdmin } = useAuth();
  const { refreshSettings } = useStoreSettings();
+ const { alertSettings, updateAlertSettings, testAlert } = useAdminContext();
  
  const [loading, setLoading] = useState(false);
  const [saving, setSaving] = useState(false);
@@ -228,6 +230,42 @@ export default function SettingsPage() {
  onChange={(e) => updateSetting('gst_percentage', null, Number(e.target.value))}
  />
  </div>
+ </div>
+ </Card>
+
+ {/* Social Links */}
+ <Card className="p-6">
+ <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Order Alert Sound</h3>
+ <div className="space-y-4">
+ <div>
+ <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Sound File URL</label>
+ <Input
+ type="text"
+ value={alertSettings.sound_url}
+ onChange={(e) => { void updateAlertSettings({ sound_url: e.target.value }); }}
+ placeholder="/restaurant-bell.mp3"
+ />
+ </div>
+ <div>
+ <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Volume ({alertSettings.volume}%)</label>
+ <input
+ type="range"
+ min="0"
+ max="100"
+ value={alertSettings.volume}
+ onChange={(e) => { void updateAlertSettings({ volume: Number(e.target.value) }); }}
+ className="w-full accent-erp-primary"
+ />
+ </div>
+ <label className="flex items-center justify-between text-[13px] font-bold text-erp-text">
+  Mute order alerts
+  <input type="checkbox" checked={alertSettings.is_muted} onChange={(e) => { void updateAlertSettings({ is_muted: e.target.checked }); }} className="h-5 w-5 accent-erp-danger" />
+ </label>
+ <label className="flex items-center justify-between text-[13px] font-bold text-erp-text">
+  Browser notifications
+  <input type="checkbox" checked={alertSettings.enable_browser_notifications} onChange={(e) => { void updateAlertSettings({ enable_browser_notifications: e.target.checked }); }} className="h-5 w-5 accent-erp-primary" />
+ </label>
+ <Button variant="outline" onClick={testAlert}>Test Alert Sound</Button>
  </div>
  </Card>
 

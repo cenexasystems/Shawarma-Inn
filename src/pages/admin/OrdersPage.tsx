@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, MapPin, Phone, MessageCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
@@ -27,6 +28,7 @@ function getWhatsAppMsg(order: any): string {
 
 export default function OrdersPage() {
  const { isAdmin } = useAuth();
+ const [searchParams] = useSearchParams();
  
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState('');
@@ -170,6 +172,13 @@ export default function OrdersPage() {
  setDrawerLoading(false);
  }
  };
+
+ useEffect(() => {
+  const target = searchParams.get('order');
+  if (!target || !orders.length || selectedOrder) return;
+  const order = orders.find((item) => String(item.id) === target || String(item.order_number) === target);
+  if (order) void openOrderDrawer(order);
+ }, [orders, searchParams, selectedOrder]);
 
  const closeOrderDrawer = () => {
  setSelectedOrder(null);

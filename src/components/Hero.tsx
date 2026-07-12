@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useStoreSettings } from '../context/SettingsContext';
 
 const RIBBON_ITEMS = [
   { icon: '🔥', text: 'FLAME GRILLED' },
@@ -22,6 +23,8 @@ interface HeroProps {
 }
 
 export default function Hero({ cartCount = 0 }: HeroProps) {
+  const { settings } = useStoreSettings();
+  const whatsappPhone = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(false);
@@ -213,7 +216,7 @@ export default function Hero({ cartCount = 0 }: HeroProps) {
             {/* WhatsApp Order tag — top right of card */}
             <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
               <a
-                href={`https://wa.me/${typeof window !== 'undefined' ? (import.meta.env.VITE_OWNER_WHATSAPP || '916382877479') : '916382877479'}`}
+                href={`https://wa.me/${whatsappPhone}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 bg-[#25D366] text-white text-[10px] font-bold font-body tracking-[1.5px] px-3 py-2 rounded-full shadow-[0_4px_20px_rgba(37,211,102,0.5)] hover:scale-105 transition-transform"

@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 
+function getOrderReference(notification: any): string | null {
+ const direct = notification.order_id || notification.entity_id;
+ if (direct) return String(direct);
+ const link = String(notification.link || '');
+ const linkMatch = link.match(/[?&]order=([^&]+)/);
+ if (linkMatch) return decodeURIComponent(linkMatch[1]);
+ const pathMatch = link.match(/\/admin\/orders\/([^/?#]+)/);
+ if (pathMatch) return decodeURIComponent(pathMatch[1]);
+ const message = `${notification.title || ''} ${notification.message || ''}`;
+ const messageMatch = message.match(/order\s*#?\s*([\w-]+)/i);
+ return messageMatch?.[1] || null;
+}
+
 export default function NotificationsPage() {
  const { isAdmin, user } = useAuth();
+ const navigate = useNavigate();
  
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState('');
@@ -81,6 +96,13 @@ export default function NotificationsPage() {
  }
  };
 
+ const viewOrder = async (notification: any) => {
+  const orderId = getOrderReference(notification);
+  if (!orderId) return;
+  if (!notification.is_read) await markAsRead(notification.id);
+  navigate(`/admin/orders?order=${encodeURIComponent(orderId)}`);
+ };
+
  return (
  <div className="space-y-[24px] animate-in fade-in duration-500 relative z-10 p-[32px] ">
  <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -136,7 +158,13 @@ export default function NotificationsPage() {
  <span className="text-[12px] text-erp-muted">{new Date(notif.created_at).toLocaleString()}</span>
  </div>
  <p className="text-[14px] text-erp-muted mb-3">{notif.message}</p>
- 
+
+ {notif.type === 'order' && getOrderReference(notif) && (
+  <button onClick={() => { void viewOrder(notif); }} className="mr-4 text-[12px] font-[700] uppercase tracking-[0.08em] text-erp-primary hover:text-erp-text transition-colors">
+   View Order
+  </button>
+ )}
+
  {!notif.is_read && (
  <button onClick={() => markAsRead(notif.id)} className="text-[12px] font-[600] uppercase tracking-[0.08em] text-erp-primary hover:text-erp-text transition-colors">
  Mark as Read

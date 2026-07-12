@@ -132,11 +132,9 @@ export default function CartSummary({
         <span className="font-bebas text-4xl text-[var(--red)] tracking-wider leading-none">₹{totals.grandTotal.toFixed(2)}</span>
       </div>
 
-      {totals.deliveryCharge > 0 && (
-        <div className="mb-4 rounded-2xl border border-amber-400/50 bg-amber-400/20 px-4 py-3 text-[14px] leading-relaxed text-amber-100 font-bold">
-          Delivery charges will be applied (Not for Store Pickup)
-        </div>
-      )}
+      <div className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[12px] leading-relaxed text-amber-100/80">
+        Delivery charges apply for home delivery. No delivery charges apply for store pickup.
+      </div>
 
       <button
         onClick={handlePlaceOrder}

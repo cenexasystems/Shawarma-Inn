@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { usePublicSettings } from '../hooks/usePublicSettings';
+import { useStoreSettings } from '../context/SettingsContext';
 import { apiRequest } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../lib/runtime';
@@ -25,12 +26,12 @@ interface CheckoutProps {
   cartData?: CheckoutCartData;
 }
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
-
 export default function Checkout({ cartData }: CheckoutProps) {
   if (!cartData) return null;
   const { cart, subtotal, clearCart } = cartData;
   const { user, login, signup, signInWithGoogle, logout } = useAuth();
+  const { settings } = useStoreSettings();
+  const whatsappPhone = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
   const isCustomerLoggedIn = user?.role === 'user';
@@ -282,7 +283,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
       `Please confirm my order!`;
 
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/${whatsappPhone}?text=${encodedMessage}`, '_blank');
 
     setPlaced(true);
     clearCart();

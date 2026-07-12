@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useStoreSettings } from '../context/SettingsContext';
 
 interface SupportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const SUPPORT_WHATSAPP = import.meta.env.VITE_SUPPORT_WHATSAPP || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
-
 export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
+  const { settings } = useStoreSettings();
+  const supportWhatsapp = settings.whatsapp_number || import.meta.env.VITE_SUPPORT_WHATSAPP || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -40,7 +41,7 @@ export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
       `Message: ${message.trim()}`,
     ].join('\n');
 
-    window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/${supportWhatsapp}?text=${encodeURIComponent(text)}`, '_blank');
 
     setName('');
     setPhone('');

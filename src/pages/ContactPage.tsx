@@ -1,5 +1,6 @@
 import { MapPin, Phone, MessageCircle } from 'lucide-react';
 import Footer from '../components/Footer';
+import { useStoreSettings } from '../context/SettingsContext';
 
 const branches = [
   'Mathur (Pilot)',
@@ -10,10 +11,11 @@ const branches = [
   'Kodungaiyur'
 ];
 
-const WHATSAPP_PHONE = import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
 const CONTACT_PHONE = '6382877479';
 
 export default function ContactPage() {
+  const { settings } = useStoreSettings();
+  const whatsappPhone = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   return (
     <main className="min-h-screen bg-[var(--black)] text-white pt-24 pb-12 flex flex-col">
       <div className="flex-1 max-w-6xl mx-auto px-6 w-full">
@@ -63,7 +65,7 @@ export default function ContactPage() {
               <h3 className="font-bebas text-2xl tracking-[2px] uppercase mb-4">Message Us</h3>
               <p className="text-white/60 text-sm mb-6">Get instant support for your orders on WhatsApp.</p>
               <a
-                href={`https://wa.me/${WHATSAPP_PHONE}?text=Hi%20Shawarma%20Inn!`}
+                href={`https://wa.me/${whatsappPhone}?text=Hi%20Shawarma%20Inn!`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-black font-bebas text-xl tracking-[2px] py-4 rounded-xl uppercase transition-colors"
