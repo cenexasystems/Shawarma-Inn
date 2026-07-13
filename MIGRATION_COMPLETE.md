@@ -105,7 +105,7 @@ console.log(getMigrationDiagnostics());
 
 1. **Set Environment Variables** (in Vercel project settings):
    ```env
-   ADMIN_EMAIL=admin@shawarmainn.local
+   ADMIN_EMAIL=sharath.creator2210@gmail.com
    ADMIN_PASSWORD=Shawarma@2026!Secure
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-anon-key

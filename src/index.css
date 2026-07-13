@@ -4,6 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (max-width: 767px) {
+  .text-7xl { font-size: 3rem !important; }
+  .text-8xl, .text-9xl { font-size: 3.5rem !important; }
+  .admin-app [class*="p-[32px]"] { padding: 16px !important; }
+  .admin-app [class*="px-[32px]"] { padding-left: 16px !important; padding-right: 16px !important; }
+  .admin-app [class*="gap-erp-24"] { gap: 16px !important; }
+  .admin-app table { min-width: 0 !important; }
+  .admin-app th, .admin-app td { padding-left: 10px !important; padding-right: 10px !important; }
+  .admin-app .overflow-x-auto { overflow-x: hidden !important; }
+  .admin-app input, .admin-app select, .admin-app textarea { max-width: 100%; }
+  .admin-app table { table-layout: fixed; word-break: break-word; }
+}
+
 :root {
   --black: #0a0a0a;
   --charcoal: #111111;
@@ -23,11 +36,13 @@
 }
 
 html {
+  overflow-x: hidden;
   /* Prevent iOS text size adjustment on orientation change */
   -webkit-text-size-adjust: 100%;
 }
 
 body {
+  overflow-x: hidden;
   background: var(--black);
   color: var(--white);
   font-family: var(--font-body);

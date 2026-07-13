@@ -1,10 +1,9 @@
 export const ADMIN_ORDER_STATUSES = [
-  'pending', 'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed', 'cancelled',
+  'pending', 'processing', 'completed', 'cancelled',
 ];
 
 export const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pending', accepted: 'Accepted', processing: 'Processing',
-  preparing: 'Preparing', ready: 'Ready', in_transit: 'In Transit',
+  pending: 'Pending', processing: 'Processing',
   completed: 'Completed', cancelled: 'Cancelled',
 };
 

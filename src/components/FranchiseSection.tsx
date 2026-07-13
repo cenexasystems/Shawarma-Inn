@@ -36,11 +36,7 @@ const benefits = [
 
 const branches = [
   'Mathur (Pilot)',
-  'Madhavaram',
-  'Kolathur',
-  'Retteri',
-  'Thirumullaivoyal',
-  'Kodungaiyur'
+  'Mathur'
 ];
 
 export default function FranchiseSection() {
@@ -83,7 +79,7 @@ export default function FranchiseSection() {
       await franchiseApi.submitLead({
         name: name.trim(),
         phone: phone.trim(),
-        email: 'franchise@shawarmainn.com',
+        email: 'sharath.creator2210@gmail.com',
         city: city.trim(),
         message: `Investment range: ${investment.trim()}`,
       });

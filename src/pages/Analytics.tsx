@@ -61,7 +61,7 @@ export default function Analytics() {
       if (err) throw err;
 
       const allOrders = rawOrders || [];
-      const completedOrders = allOrders.filter(o => ['completed', 'ready'].includes(o.status));
+      const completedOrders = allOrders.filter(o => o.status === 'completed');
 
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -477,8 +477,8 @@ export default function Analytics() {
             {analytics.couponAnalytics?.length > 0 && (
               <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 mb-8">
                 <h2 className="font-bebas text-2xl tracking-widest uppercase text-white mb-4">Coupon Performance</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[600px]">
+                <div className="w-full overflow-hidden">
+                  <table className="w-full table-fixed text-sm break-words">
                     <thead className="text-[10px] uppercase tracking-widest text-white/40 border-b border-white/10">
                       <tr>
                         <th className="p-3 text-left">Code</th>

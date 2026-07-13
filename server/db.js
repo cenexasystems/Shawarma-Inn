@@ -137,9 +137,8 @@ function runMigrations() {
       order_number INTEGER NOT NULL UNIQUE,
       user_id INTEGER,
       total REAL NOT NULL,
-      status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN (
-        'generated', 'paid', 'cancelled', 'pending', 'unpaid',
-        'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed'
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
+        'pending', 'processing', 'completed', 'cancelled'
       )),
       customer_name TEXT,
       customer_phone TEXT,
@@ -410,9 +409,7 @@ function migrateOrdersTable() {
 
   // Rebuild if the status check doesn't include the new statuses or missing columns
   const needsRebuild = !tableSql ||
-    !tableSql.sql.includes('completed') ||
-    !tableSql.sql.includes('accepted') ||
-    !tableSql.sql.includes('ready');
+    !tableSql.sql.includes("'pending', 'processing', 'completed', 'cancelled'");
 
   const orderColumns = db.prepare('PRAGMA table_info(orders)').all().map((col) => col.name);
   const requiredColumns = [
@@ -448,9 +445,8 @@ function migrateOrdersTable() {
         order_number INTEGER NOT NULL UNIQUE,
         user_id INTEGER,
         total REAL NOT NULL,
-        status TEXT NOT NULL DEFAULT 'generated' CHECK (status IN (
-          'generated', 'paid', 'cancelled', 'pending', 'unpaid',
-          'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed'
+        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
+          'pending', 'processing', 'completed', 'cancelled'
         )),
         customer_name TEXT,
         customer_phone TEXT,
@@ -484,8 +480,9 @@ function migrateOrdersTable() {
 
     // Sanitize status values to fit new CHECK constraint
     const safeStatus = `CASE
-      WHEN status IN ('generated','paid','cancelled','pending','unpaid','accepted','processing','preparing','ready','in_transit','completed')
-        THEN status
+      WHEN status IN ('generated','paid','pending','unpaid') THEN 'pending'
+      WHEN status IN ('accepted','preparing','ready','in_transit','processing') THEN 'processing'
+      WHEN status IN ('completed','cancelled') THEN status
       ELSE 'pending'
     END`;
 

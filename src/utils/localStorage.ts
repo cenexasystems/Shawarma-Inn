@@ -44,7 +44,7 @@ export const defaultConfig: AppConfig = {
   restaurantName: 'SHAWARMA INN',
   address: 'Mathur, Chennai',
   phone: '+91 XXXXX XXXXX',
-  email: 'hello@shawarmainn.com',
+  email: 'sharath.creator2210@gmail.com',
   gstin: 'GSTIN-PLACEHOLDER',
   logoDataUrl: '',
   taxRate: 5,

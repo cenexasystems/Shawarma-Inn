@@ -188,7 +188,7 @@ function createOrderWithItems({
   });
 }
 
-const ADMIN_ORDER_STATUSES = ['pending', 'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed', 'cancelled'];
+const ADMIN_ORDER_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
 const REVENUE_COUNTED_STATUS = 'completed';
 
 function validateCouponForOrder(rawCode, itemsTotal) {
@@ -687,7 +687,7 @@ app.post('/api/orders/generate', adminRequired, (req, res) => {
     customerPhone: null,
     deliveryAddress: null,
     source: 'pos',
-    status: 'generated',
+    status: 'pending',
     items: normalized,
   });
 
@@ -718,7 +718,7 @@ app.post('/api/orders/:id/mark-paid', adminRequired, (req, res) => {
 
   db.prepare(
     `UPDATE orders
-     SET status = 'paid',
+     SET status = 'completed',
          paid_at = ?
      WHERE id = ?`
   ).run(new Date().toISOString(), orderId);
@@ -925,12 +925,8 @@ app.patch('/api/admin/orders/:id/status', adminRequired, (req, res) => {
   const previousStatus = existing.status;
 
   const ALLOWED_TRANSITIONS = {
-    pending: ['accepted', 'processing', 'preparing', 'cancelled'],
-    accepted: ['processing', 'preparing', 'ready', 'cancelled'],
-    processing: ['preparing', 'ready', 'in_transit', 'cancelled'],
-    preparing: ['ready', 'in_transit', 'cancelled'],
-    ready: ['in_transit', 'completed', 'cancelled'],
-    in_transit: ['completed', 'cancelled'],
+    pending: ['processing', 'cancelled'],
+    processing: ['completed', 'cancelled'],
     completed: [],
     cancelled: [],
   };

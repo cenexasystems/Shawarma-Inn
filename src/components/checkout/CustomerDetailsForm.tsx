@@ -42,21 +42,21 @@ export default function CustomerDetailsForm({
   handleGoogleCheckoutAuth
 }: CustomerDetailsFormProps) {
   return (
-    <div className="bg-[#111111] border border-white/5 rounded-[24px] p-6 shadow-2xl">
+    <div className="bg-[#111111] border border-white/5 rounded-[24px] p-4 sm:p-6 shadow-2xl">
       <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6 flex items-center gap-3">
         <span className="w-8 h-8 rounded-full bg-[var(--red)]/10 flex items-center justify-center text-[var(--red)]">1</span>
         Account
       </h2>
       
       {isCustomerLoggedIn ? (
-        <div className="flex items-center justify-between bg-black/40 border border-white/5 p-4 rounded-2xl">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 justify-between bg-black/40 border border-white/5 p-3 sm:p-4 rounded-2xl">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10">
               <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             </div>
             <div>
               <p className="font-bold text-white font-body">{user.name || 'Customer'}</p>
-              <p className="text-xs text-white/50">{user.email}</p>
+              <p className="text-xs text-white/50 break-all">{user.email}</p>
             </div>
           </div>
           <button onClick={logout} className="text-[10px] font-bold uppercase tracking-[2px] text-white/40 hover:text-[var(--red)] transition-colors">
@@ -102,7 +102,7 @@ export default function CustomerDetailsForm({
                 value={authName} 
                 onChange={(e) => setAuthName(e.target.value)} 
                 placeholder="Full Name" 
-                className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body md:col-span-2" 
+              className="w-full min-h-12 bg-black/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body md:col-span-2"
               />
             )}
             <input 
@@ -110,7 +110,7 @@ export default function CustomerDetailsForm({
               value={authEmail} 
               onChange={(e) => setAuthEmail(e.target.value)} 
               placeholder="Email Address" 
-              className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body" 
+              className="w-full min-h-12 bg-black/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:border-[var(--red)] transition-all font-body"
             />
             <div className="relative">
               <input 
@@ -118,7 +118,7 @@ export default function CustomerDetailsForm({
                 value={authPassword} 
                 onChange={(e) => setAuthPassword(e.target.value)} 
                 placeholder="Password" 
-                className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pr-12 text-sm outline-none focus:border-[var(--red)] transition-all font-body" 
+                className="w-full min-h-12 bg-black/40 border border-white/5 rounded-2xl p-4 pr-12 text-sm outline-none focus:border-[var(--red)] transition-all font-body"
               />
               <button 
                 type="button" 

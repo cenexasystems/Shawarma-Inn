@@ -4,6 +4,8 @@ import FoodCard from '../components/FoodCard';
 import Footer from '../components/Footer';
 import { useMenuItems } from '../hooks/useMenuItems';
 import { useFavorites } from '../context/FavoritesContext';
+import { useStoreSettings } from '../context/SettingsContext';
+import { formatTime, isOrderingAvailable } from '../utils/orderAvailability';
 
 interface MenuProps {
   cartData?: any;
@@ -23,6 +25,8 @@ export default function Menu({ cartData }: MenuProps) {
 
   const { items: menu, loading, categories: hookCategories } = useMenuItems();
   const { favorites } = useFavorites();
+  const { settings } = useStoreSettings();
+  const orderingAvailable = isOrderingAvailable(settings);
 
   const base = showFavoritesOnly ? favorites : menu;
 
@@ -74,7 +78,7 @@ export default function Menu({ cartData }: MenuProps) {
           </h1>
 
           {/* Controls — horizontally scrollable on mobile */}
-          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar shrink-0">
+          <div className="flex items-center justify-end gap-2 flex-wrap shrink-0">
             <div className="flex flex-col gap-0.5 shrink-0">
               <label className="text-[8px] text-white/40 uppercase tracking-[2px] font-bold">Outlet</label>
               <select
@@ -83,12 +87,7 @@ export default function Menu({ cartData }: MenuProps) {
                 className="bg-[var(--charcoal)] border border-[var(--border)] rounded-full px-3 py-1 text-white font-body text-xs focus:outline-none focus:border-[#dc2626] transition-colors cursor-pointer appearance-none"
                 style={{ background: 'var(--charcoal) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23ffffff\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E") no-repeat right 0.5rem center/0.6rem', minWidth: '100px', maxWidth: '130px' }}
               >
-                <option value="Mathur">Mathur</option>
-                <option value="Madhavaram">Madhavaram</option>
-                <option value="Kolathur">Kolathur</option>
-                <option value="Retteri">Retteri</option>
-                <option value="Thirumullaivoyal">T'voyal</option>
-                <option value="Kodungaiyur">Kodungaiyur</option>
+                <option value="Mathur">📍 Mathur</option>
               </select>
             </div>
 
@@ -114,9 +113,9 @@ export default function Menu({ cartData }: MenuProps) {
         </div>
 
         {/* Row 2: Search + Diet filters + Favorites — single scrollable row on mobile */}
-        <div className="mt-2.5 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+        <div className="mt-2.5 flex items-center gap-2 flex-wrap">
           {/* Search */}
-          <div className="relative shrink-0" style={{ width: 'min(100%, 200px)' }}>
+          <div className="relative w-full sm:w-[200px] shrink-0">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
             </svg>
@@ -169,6 +168,13 @@ export default function Menu({ cartData }: MenuProps) {
         </div>
       </header>
 
+      {!orderingAvailable && (
+        <div className="mx-3 sm:mx-4 md:mx-8 mb-5 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          🔴 We're currently closed. Online ordering is unavailable at the moment. We reopen at {formatTime(settings.opening_time)}.
+        </div>
+      )}
+      <p className="mx-3 sm:mx-4 md:mx-8 mb-4 text-[11px] text-white/45">⚠ Images shown below are AI-generated representations. Actual food appearance may slightly vary.</p>
+
       {/* Menu grid */}
       <section className="max-w-[1600px] mx-auto px-2.5 sm:px-4 md:px-8 xl:px-12 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6 pb-32">
         {selectedOutlet !== 'Mathur' && !loading && (
@@ -216,7 +222,7 @@ export default function Menu({ cartData }: MenuProps) {
                           addItem={cartData?.addItem}
                           qty={cartItem?.qty ?? 0}
                           updateQty={cartData?.updateQty}
-                          disabled={selectedOutlet !== 'Mathur'}
+                          disabled={!orderingAvailable || selectedOutlet !== 'Mathur'}
                         />
                       );
                     })}
@@ -235,7 +241,7 @@ export default function Menu({ cartData }: MenuProps) {
                 addItem={cartData?.addItem}
                 qty={cartItem?.qty ?? 0}
                 updateQty={cartData?.updateQty}
-                disabled={selectedOutlet !== 'Mathur'}
+                disabled={!orderingAvailable || selectedOutlet !== 'Mathur'}
               />
             );
           })

@@ -2,7 +2,7 @@ import { db, getNextOrderNumber, recordOrderStatusChange } from '../db.js';
 import { validateCouponForOrder } from './couponService.js';
 import { broadcastSSE } from '../events/sse.js';
 
-export const ADMIN_ORDER_STATUSES = ['pending', 'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed', 'cancelled'];
+export const ADMIN_ORDER_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
 export const REVENUE_COUNTED_STATUS = 'completed';
 
 export function normalizeCheckoutItems(cartItems) {

@@ -1,5 +1,5 @@
 -- ==========================================================
--- One-off: grant admin role to cenexasystems@gmail.com
+-- One-off: grant admin role to sharath.creator2210@gmail.com
 -- Run manually in the Supabase SQL Editor. This user must have
 -- already signed up (created an account) at least once, since
 -- this updates their existing profiles row -- it will not create one.
@@ -7,7 +7,7 @@
 
 UPDATE public.profiles
 SET role = 'admin', updated_at = NOW()
-WHERE id = (SELECT id FROM auth.users WHERE email = 'cenexasystems@gmail.com');
+WHERE id = (SELECT id FROM auth.users WHERE email = 'sharath.creator2210@gmail.com');
 
 -- Verify it took effect:
 -- SELECT p.id, p.name, p.role, u.email

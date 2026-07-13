@@ -17,7 +17,7 @@ export const useBranches = () => {
       setLoading(true);
 
       if (!SUPABASE_READY) {
-        setBranches(localBranchData as Branch[]);
+        setBranches((localBranchData as Branch[]).filter((branch) => branch.name.toLowerCase() === 'mathur'));
         setLoading(false);
         return;
       }
@@ -28,11 +28,11 @@ export const useBranches = () => {
         .order('id', { ascending: true });
 
       if (error || !data?.length) {
-        setBranches(localBranchData as Branch[]);
+        setBranches((localBranchData as Branch[]).filter((branch) => branch.name.toLowerCase() === 'mathur'));
         if (error) setError(error.message);
       } else {
         setBranches(
-          data.map(row => ({
+          data.filter(row => String(row.name).toLowerCase() === 'mathur').map(row => ({
             id: row.id,
             name: row.name,
             address: row.address,

@@ -365,7 +365,7 @@ function OperationsCenterContent() {
  <div className="flex flex-wrap gap-erp-24 mb-erp-32">
  <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" subtitle="All time" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" />
  <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Needs action" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
- <KPICard title="Contacted" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-[#25D366]/12" iconColor="text-[#25D366]" subtitle="In conversation" className="border-[#25D366]/10 bg-[#25D366]/[0.03]" />
+ <KPICard title="Processing" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-[#25D366]/12" iconColor="text-[#25D366]" subtitle="In progress" className="border-[#25D366]/10 bg-[#25D366]/[0.03]" />
  <KPICard title="Completed" value={kpi.completed} icon={CheckCircle} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Successfully done" className="border-erp-success/10 bg-erp-success/[0.03]" />
  </div>
 
@@ -391,7 +391,7 @@ function OperationsCenterContent() {
  </div>
  </div>
 
- <Table>
+ <div className="hidden md:block"><Table>
  <TableHeader>
  <TableRow>
  <TableHead>Order ID</TableHead>
@@ -451,7 +451,15 @@ function OperationsCenterContent() {
  })
  )}
  </TableBody>
- </Table>
+ </Table></div>
+ <div className="space-y-3 p-3 md:hidden">
+  {orders.length === 0 ? <div className="py-10 text-center text-sm text-erp-muted">No requests found matching your filters.</div> : orders.map((order) => (
+   <div key={order.id} className="rounded-2xl border border-erp-border bg-white p-4 shadow-sm">
+    <div className="flex items-start justify-between gap-3"><div><p className="font-bold text-erp-text">{formatOrderId(order)}</p><p className="mt-1 text-sm text-erp-muted">{order.customer_name || 'Guest'}</p><p className="text-xs text-erp-muted">{order.customer_phone || '-'}</p></div><p className="font-bold text-erp-text">{money(order.total)}</p></div>
+    <div className="mt-3 flex items-center justify-between gap-3"><StatusSelect value={order.status.toLowerCase() as OrderStatus} onChange={(val) => updateOrderStatus(order.id, val)} /><Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>View</Button></div>
+   </div>
+  ))}
+ </div>
  </div>
 
  <OrderDrawer

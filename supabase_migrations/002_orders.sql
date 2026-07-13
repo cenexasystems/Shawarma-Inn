@@ -47,7 +47,7 @@ DO $$
 BEGIN
   ALTER TABLE public.orders
     ADD CONSTRAINT orders_status_check
-    CHECK (status IN ('pending','accepted','processing','preparing','ready','in_transit','completed','cancelled'));
+    CHECK (status IN ('pending','processing','completed','cancelled'));
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 

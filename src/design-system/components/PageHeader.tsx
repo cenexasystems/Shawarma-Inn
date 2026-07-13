@@ -8,7 +8,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, rightAction }: PageHeaderProps) {
   return (
-    <div className="pt-[32px] mb-[30px] px-[32px] flex flex-col gap-[24px] lg:flex-row lg:items-start lg:justify-between">
+    <div className="pt-6 lg:pt-[32px] mb-6 lg:mb-[30px] px-4 lg:px-[32px] flex flex-col gap-4 lg:gap-[24px] lg:flex-row lg:items-start lg:justify-between">
       <div className="flex flex-col">
         <h1 className="text-[42px] font-[700] text-erp-text tracking-[-0.03em] leading-[1.05]">
           {title}

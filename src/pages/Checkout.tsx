@@ -15,6 +15,7 @@ import CheckoutLayout from '../components/checkout/CheckoutLayout';
 import CustomerDetailsForm from '../components/checkout/CustomerDetailsForm';
 import AddressSection from '../components/checkout/AddressSection';
 import CartSummary from '../components/checkout/CartSummary';
+import { isOrderingAvailable, formatTime } from '../utils/orderAvailability';
 
 interface CheckoutCartData {
   cart: CartItem[];
@@ -31,6 +32,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
   const { cart, subtotal, clearCart } = cartData;
   const { user, login, signup, signInWithGoogle, logout } = useAuth();
   const { settings } = useStoreSettings();
+  const orderingAvailable = isOrderingAvailable(settings);
   const whatsappPhone = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
@@ -228,6 +230,10 @@ export default function Checkout({ cartData }: CheckoutProps) {
   };
 
   const handlePlaceOrder = async () => {
+    if (!orderingAvailable) {
+      alert(`Online ordering is unavailable. We reopen at ${formatTime(settings.opening_time)}.`);
+      return;
+    }
     if (!isCustomerLoggedIn) {
       alert('Please sign in to place your order.');
       return;
@@ -309,6 +315,10 @@ export default function Checkout({ cartData }: CheckoutProps) {
     );
   }
 
+  if (!orderingAvailable && !placed) {
+    return <main className="pt-32 min-h-screen bg-[var(--black)] text-white px-6 text-center"><h1 className="font-bebas text-5xl">STORE CLOSED</h1><p className="mt-4 text-white/60">Online ordering is unavailable. We reopen at {formatTime(settings.opening_time)}.</p><button onClick={() => navigate('/menu')} className="mt-8 rounded-full bg-[var(--red)] px-8 py-3 font-bold">Back to Menu</button></main>;
+  }
+
   if (placed) {
     return null; // The redirect to /order-confirmation happens instantly
   }
@@ -321,7 +331,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Back to Menu
           </Link>
-          <h1 className="font-bebas text-5xl md:text-6xl tracking-[3px] uppercase leading-none text-white">
+          <h1 className="font-bebas text-4xl sm:text-5xl md:text-6xl tracking-[3px] uppercase leading-none text-white">
             SECURE CHECKOUT
           </h1>
         </div>
@@ -350,7 +360,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
             />
 
             {/* 2. Delivery Method */}
-            <div className={`bg-[#111111] border border-white/5 rounded-[24px] p-6 shadow-2xl transition-opacity duration-300 ${!isCustomerLoggedIn ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div className={`bg-[#111111] border border-white/5 rounded-[24px] p-4 sm:p-6 shadow-2xl transition-opacity duration-300 ${!isCustomerLoggedIn ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
               <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6 flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-[var(--red)]/10 flex items-center justify-center text-[var(--red)]">2</span>
                 Order Type
@@ -420,7 +430,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
 
           {/* Right Column: Summary & Payment */}
           <div className="w-full lg:w-[420px] xl:w-[480px] flex-shrink-0">
-            <div className="sticky top-32 space-y-6">
+            <div className="lg:sticky lg:top-32 space-y-6">
               <CartSummary 
                 cart={cart}
                 totals={totals}

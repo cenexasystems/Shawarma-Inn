@@ -228,7 +228,7 @@ await restoreFromBackup();
 ### Environment Variables for Vercel
 ```env
 # Authentication
-ADMIN_EMAIL=admin@shawarmainn.local
+ADMIN_EMAIL=sharath.creator2210@gmail.com
 ADMIN_PASSWORD=Shawarma@2026!Secure
 JWT_SECRET=shawarma-inn-local-dev-secret
 VITE_AUTH_MODE=local

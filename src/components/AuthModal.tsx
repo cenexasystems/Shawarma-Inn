@@ -231,7 +231,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
+              placeholder="sharath.creator2210@gmail.com"
               className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 text-sm text-white focus:border-[var(--red)] outline-none transition-all placeholder:text-white/10 font-body shadow-inner"
             />
           </div>

@@ -16,7 +16,7 @@ export function PageLayout({ title, subtitle, toolbar, action, statistics, child
     <div className="min-h-screen bg-erp-bg text-erp-text flex flex-col">
       
       {/* Header Area */}
-      <div className="pt-[32px] px-[32px] pb-[24px] max-w-[1440px] w-full mx-auto">
+      <div className="pt-6 md:pt-[32px] px-4 md:px-[32px] pb-5 md:pb-[24px] max-w-[1440px] w-full mx-auto">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <h1 className="text-[42px] font-[700] tracking-[-0.03em] leading-[1.05] text-erp-text">
             {title}
@@ -38,7 +38,7 @@ export function PageLayout({ title, subtitle, toolbar, action, statistics, child
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-[32px] pb-[48px] flex flex-col gap-[32px] max-w-[1440px] w-full mx-auto">
+      <div className="flex-1 px-4 md:px-[32px] pb-8 md:pb-[48px] flex flex-col gap-6 md:gap-[32px] max-w-[1440px] w-full mx-auto">
         {/* Statistics row */}
         {statistics && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: 0.1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">

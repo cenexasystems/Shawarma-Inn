@@ -10,6 +10,9 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 
 interface SettingsData {
+ store_status: 'OPEN' | 'CLOSED';
+ opening_time: string;
+ closing_time: string;
  whatsapp_number: string;
  delivery_charges: number;
  gst_percentage: number;
@@ -31,6 +34,9 @@ interface SettingsData {
 }
 
 const DEFAULT_SETTINGS: SettingsData = {
+ store_status: 'OPEN',
+ opening_time: '17:00',
+ closing_time: '22:00',
  whatsapp_number: '',
  delivery_charges: 0,
  gst_percentage: 5,
@@ -66,6 +72,9 @@ export default function SettingsPage() {
  
  if (data) {
  setSettings({
+ store_status: data.store_status === 'CLOSED' ? 'CLOSED' : 'OPEN',
+ opening_time: data.opening_time || data.business_hours?.openingTime || DEFAULT_SETTINGS.opening_time,
+ closing_time: data.closing_time || data.business_hours?.closingTime || DEFAULT_SETTINGS.closing_time,
  whatsapp_number: data.whatsapp_number || '',
  delivery_charges: Number(data.delivery_charges ?? DEFAULT_SETTINGS.delivery_charges),
  gst_percentage: Number(data.gst_percentage ?? DEFAULT_SETTINGS.gst_percentage),
@@ -95,6 +104,9 @@ export default function SettingsPage() {
  .from('settings')
  .upsert({
  id: 'global',
+ store_status: settings.store_status,
+ opening_time: settings.opening_time,
+ closing_time: settings.closing_time,
  whatsapp_number: settings.whatsapp_number,
  delivery_charges: settings.delivery_charges,
  gst_percentage: settings.gst_percentage,
@@ -161,6 +173,10 @@ export default function SettingsPage() {
  <Card className="p-6">
  <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">General & Contact</h3>
  <div className="space-y-4">
+ <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Store Status</label>
+ <select value={settings.store_status} onChange={(e) => updateSetting('store_status', null, e.target.value as 'OPEN' | 'CLOSED')} className="w-full h-12 rounded-xl border border-erp-border px-4 font-bold text-erp-text">
+  <option value="OPEN">🟢 OPEN</option><option value="CLOSED">🔴 CLOSED</option>
+ </select>
  <div>
  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">WhatsApp Order Number</label>
  <Input
@@ -182,16 +198,16 @@ export default function SettingsPage() {
  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Opening Time</label>
  <Input
  type="time"
- value={settings.business_hours.openingTime}
- onChange={(e) => updateSetting('business_hours', 'openingTime', e.target.value)}
+ value={settings.opening_time}
+ onChange={(e) => updateSetting('opening_time', null, e.target.value)}
  />
  </div>
  <div>
  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Closing Time</label>
  <Input
  type="time"
- value={settings.business_hours.closingTime}
- onChange={(e) => updateSetting('business_hours', 'closingTime', e.target.value)}
+ value={settings.closing_time}
+ onChange={(e) => updateSetting('closing_time', null, e.target.value)}
  />
  </div>
  </div>
@@ -235,16 +251,17 @@ export default function SettingsPage() {
 
  {/* Social Links */}
  <Card className="p-6">
- <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Order Alert Sound</h3>
+ <h3 className="text-[11px] uppercase tracking-[2px] text-erp-muted font-bold mb-6">Notification Settings</h3>
  <div className="space-y-4">
  <div>
- <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Sound File URL</label>
- <Input
- type="text"
- value={alertSettings.sound_url}
- onChange={(e) => { void updateAlertSettings({ sound_url: e.target.value }); }}
- placeholder="/restaurant-bell.mp3"
- />
+ <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Notification Sound</label>
+ <select value={alertSettings.sound_url} onChange={(e) => { void updateAlertSettings({ sound_url: e.target.value }); }} className="w-full h-12 rounded-xl border border-erp-border px-4 font-bold text-erp-text">
+  <option value="/notification-1.mp3">Kitchen Bell</option>
+  <option value="/notification-2.mp3">Restaurant Alarm</option>
+  <option value="/notification-3.mp3">Sharp Bell</option>
+  <option value="/notification-4.mp3">Digital Chime</option>
+  <option value="/notification-5.mp3">Service Bell</option>
+ </select>
  </div>
  <div>
  <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Volume ({alertSettings.volume}%)</label>
@@ -258,9 +275,11 @@ export default function SettingsPage() {
  />
  </div>
  <label className="flex items-center justify-between text-[13px] font-bold text-erp-text">
-  Mute order alerts
-  <input type="checkbox" checked={alertSettings.is_muted} onChange={(e) => { void updateAlertSettings({ is_muted: e.target.checked }); }} className="h-5 w-5 accent-erp-danger" />
+  Enable Sound
+  <input type="checkbox" checked={!alertSettings.is_muted} onChange={(e) => { void updateAlertSettings({ is_muted: !e.target.checked }); }} className="h-5 w-5 accent-erp-primary" />
  </label>
+ <label className="block text-[11px] text-erp-muted uppercase tracking-[1px] mb-2 font-bold">Repeat every {alertSettings.repeat_interval_sec} seconds</label>
+ <input type="range" min="1" max="60" value={alertSettings.repeat_interval_sec} onChange={(e) => { void updateAlertSettings({ repeat_interval_sec: Number(e.target.value) }); }} className="w-full accent-erp-primary" />
  <label className="flex items-center justify-between text-[13px] font-bold text-erp-text">
   Browser notifications
   <input type="checkbox" checked={alertSettings.enable_browser_notifications} onChange={(e) => { void updateAlertSettings({ enable_browser_notifications: e.target.checked }); }} className="h-5 w-5 accent-erp-primary" />

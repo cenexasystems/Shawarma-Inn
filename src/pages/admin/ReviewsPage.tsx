@@ -4,6 +4,8 @@ import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Card } from '../../components/ui/Card';
+import { supabase } from '../../lib/supabaseClient';
+import { useSupabaseAuth } from '../../lib/runtime';
 
 export default function ReviewsPage() {
  const { isAdmin, token } = useAuth();
@@ -18,8 +20,14 @@ export default function ReviewsPage() {
  setLoading(true);
  setError('');
  try {
- const response = await apiRequest<{ reviews: any[] }>('/admin/reviews', { token });
- setReviews(response.reviews || []);
+ if (useSupabaseAuth) {
+  const { data, error: reviewError } = await supabase.from('reviews').select('id, rating, comment, created_at, is_visible, profiles(name, avatar_url)').order('created_at', { ascending: false });
+  if (reviewError) throw reviewError;
+  setReviews((data || []).map((r: any) => ({ ...r, name: r.profiles?.name || 'Customer', avatar_url: r.profiles?.avatar_url, review_text: r.comment || '', is_hidden: r.is_visible === false })));
+ } else {
+  const response = await apiRequest<{ reviews: any[] }>('/admin/reviews', { token });
+  setReviews(response.reviews || []);
+ }
  } catch (err) {
  setError(err instanceof Error ? err.message : 'Failed to load reviews');
  } finally {
@@ -33,7 +41,11 @@ export default function ReviewsPage() {
 
  const handleToggleReviewVisibility = async (id: string) => {
  try {
- await apiRequest(`/admin/reviews/${id}/hide`, { method: 'PATCH', token });
+ if (useSupabaseAuth) {
+  const review = reviews.find((item) => item.id === id);
+  const { error: reviewError } = await supabase.from('reviews').update({ is_visible: review?.is_visible === false }).eq('id', id);
+  if (reviewError) throw reviewError;
+ } else await apiRequest(`/admin/reviews/${id}/hide`, { method: 'PATCH', token });
  void loadData();
  } catch (err) {
  alert(err instanceof Error ? err.message : 'Failed to toggle review visibility');
@@ -43,7 +55,10 @@ export default function ReviewsPage() {
  const handleDeleteReview = async (id: string) => {
  if (!window.confirm('Delete this review?')) return;
  try {
- await apiRequest(`/admin/reviews/${id}`, { method: 'DELETE', token });
+ if (useSupabaseAuth) {
+  const { error: reviewError } = await supabase.from('reviews').delete().eq('id', id);
+  if (reviewError) throw reviewError;
+ } else await apiRequest(`/admin/reviews/${id}`, { method: 'DELETE', token });
  void loadData();
  } catch (err) {
  alert(err instanceof Error ? err.message : 'Failed to delete review');

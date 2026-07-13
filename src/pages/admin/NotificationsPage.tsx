@@ -1,187 +1,52 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCircle, Trash2 } from 'lucide-react';
+import { Bell, CheckCircle, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
-
-function getOrderReference(notification: any): string | null {
- const direct = notification.order_id || notification.entity_id;
- if (direct) return String(direct);
- const link = String(notification.link || '');
- const linkMatch = link.match(/[?&]order=([^&]+)/);
- if (linkMatch) return decodeURIComponent(linkMatch[1]);
- const pathMatch = link.match(/\/admin\/orders\/([^/?#]+)/);
- if (pathMatch) return decodeURIComponent(pathMatch[1]);
- const message = `${notification.title || ''} ${notification.message || ''}`;
- const messageMatch = message.match(/order\s*#?\s*([\w-]+)/i);
- return messageMatch?.[1] || null;
-}
+import { useAdminContext } from '../../context/AdminContext';
 
 export default function NotificationsPage() {
- const { isAdmin, user } = useAuth();
- const navigate = useNavigate();
- 
- const [loading, setLoading] = useState(false);
- const [error, setError] = useState('');
- 
- const [notifications, setNotifications] = useState<any[]>([]);
+  const { isAdmin, user } = useAuth();
+  const { acknowledgeAlert, viewAlert } = useAdminContext();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
- const loadData = async () => {
- if (!isAdmin || !user) return;
- setLoading(true);
- setError('');
- try {
- const { data, error } = await supabase
- .from('notifications')
- .select('*')
- .or(`target_user_id.eq.${user.id},target_user_id.is.null`)
- .order('created_at', { ascending: false })
- .limit(50);
- 
- if (error) throw error;
- setNotifications(data || []);
- } catch (err) {
- setError(err instanceof Error ? err.message : 'Failed to load notifications');
- } finally {
- setLoading(false);
- }
- };
+  const load = async () => {
+    if (!isAdmin) return;
+    const { data, error: fetchError } = await supabase
+      .from('order_notifications')
+      .select('*, order:orders(id, order_number, customer_name, total, status, created_at, source)')
+      .order('created_at', { ascending: false }).limit(50);
+    if (fetchError) setError(fetchError.message);
+    else setNotifications(data || []);
+    setLoading(false);
+  };
 
- useEffect(() => {
- void loadData();
- 
- if (!isAdmin || !user) return;
- const channel = supabase
- .channel('public:notifications')
- .on(
- 'postgres_changes',
- { event: 'INSERT', schema: 'public', table: 'notifications' },
- (payload) => {
- if (!payload.new.target_user_id || payload.new.target_user_id === user.id) {
- setNotifications(prev => [payload.new, ...prev]);
- }
- }
- )
- .subscribe();
- 
- return () => {
- supabase.removeChannel(channel);
- };
- }, [isAdmin, user]);
+  useEffect(() => { void load(); }, [isAdmin, user?.id]);
 
- const markAsRead = async (id: string) => {
- try {
- await supabase.from('notifications').update({ is_read: true }).eq('id', id);
- setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
- } catch (err) {
- console.error(err);
- }
- };
+  const acknowledge = async (id: string) => {
+    await acknowledgeAlert(id);
+    setNotifications((current) => current.map((n) => n.id === id ? { ...n, is_acknowledged: true, acknowledged_at: new Date().toISOString() } : n));
+  };
 
- const markAllAsRead = async () => {
- try {
- await supabase.from('notifications').update({ is_read: true }).in('id', notifications.map(n => n.id));
- setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
- } catch (err) {
- console.error(err);
- }
- };
-
- const deleteNotification = async (id: string) => {
- try {
- await supabase.from('notifications').delete().eq('id', id);
- setNotifications(prev => prev.filter(n => n.id !== id));
- } catch (err) {
- console.error(err);
- }
- };
-
- const viewOrder = async (notification: any) => {
-  const orderId = getOrderReference(notification);
-  if (!orderId) return;
-  if (!notification.is_read) await markAsRead(notification.id);
-  navigate(`/admin/orders?order=${encodeURIComponent(orderId)}`);
- };
-
- return (
- <div className="space-y-[24px] animate-in fade-in duration-500 relative z-10 p-[32px] ">
- <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
- <div>
- <h2 className="font-[700] text-[42px] leading-[1.05] tracking-[-0.03em] text-erp-text">Notifications</h2>
- <p className="text-[#64748B] text-[17px] font-[400] mt-[12px]">System alerts, new orders, and administrative messages.</p>
- </div>
- {notifications.some(n => !n.is_read) && (
- <button 
- onClick={markAllAsRead}
- className="bg-white hover:bg-[#FAFBFC] border border-erp-border text-erp-text px-[16px] h-[42px] rounded-[16px] text-[14px] font-[600] transition-colors flex items-center gap-2 shadow-sm"
- >
- <CheckCircle size={14} /> Mark All Read
- </button>
- )}
- </header>
-
- {error && <div className="text-red-400 bg-red-400/10 p-4 rounded-xl text-sm border border-red-400/20">{error}</div>}
-
- {loading && notifications.length === 0 ? (
- <div className="space-y-3">
- {[...Array(5)].map((_, i) => (
- <div key={i} className="bg-white border border-erp-border rounded-[22px] p-[24px] animate-pulse flex gap-[16px]">
- <div className="w-10 h-10 bg-gray-100 rounded-full" />
- <div className="flex-1 space-y-2">
- <div className="h-4 w-1/4 bg-gray-100 rounded" />
- <div className="h-3 w-1/2 bg-gray-100 rounded" />
- </div>
- </div>
- ))}
- </div>
- ) : notifications.length === 0 ? (
- <div className="bg-white border border-erp-border rounded-[24px] p-[64px] text-center shadow-erp">
- <Bell size={40} className="mx-auto mb-4 text-erp-muted/30" />
- <p className="text-erp-muted text-[13px] uppercase tracking-[0.12em] font-[600]">You're all caught up!</p>
- </div>
- ) : (
- <div className="space-y-3">
- {notifications.map((notif: any) => (
- <div 
- key={notif.id} 
- className={`bg-white border rounded-[22px] p-[24px] transition-all flex items-start gap-[20px] relative overflow-hidden group shadow-erp ${notif.is_read ? 'border-erp-border opacity-70 grayscale' : 'border-erp-border'}`}
- >
- {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-erp-primary" />}
- 
- <div className={`w-[42px] h-[42px] rounded-full flex items-center justify-center shrink-0 border ${notif.type === 'order' ? 'bg-erp-warning/10 text-erp-warning border-erp-warning/20' : notif.type === 'system' ? 'bg-erp-danger/10 text-erp-danger border-erp-danger/20' : 'bg-erp-blue/10 text-erp-blue border-erp-blue/20'}`}>
- <Bell size={20} />
- </div>
- 
- <div className="flex-1 min-w-0 pt-1">
- <div className="flex items-center justify-between mb-1">
- <h4 className="font-[600] text-erp-text text-[15px]">{notif.title}</h4>
- <span className="text-[12px] text-erp-muted">{new Date(notif.created_at).toLocaleString()}</span>
- </div>
- <p className="text-[14px] text-erp-muted mb-3">{notif.message}</p>
-
- {notif.type === 'order' && getOrderReference(notif) && (
-  <button onClick={() => { void viewOrder(notif); }} className="mr-4 text-[12px] font-[700] uppercase tracking-[0.08em] text-erp-primary hover:text-erp-text transition-colors">
-   View Order
-  </button>
- )}
-
- {!notif.is_read && (
- <button onClick={() => markAsRead(notif.id)} className="text-[12px] font-[600] uppercase tracking-[0.08em] text-erp-primary hover:text-erp-text transition-colors">
- Mark as Read
- </button>
- )}
- </div>
-
- <button 
- onClick={() => deleteNotification(notif.id)}
- className="opacity-0 group-hover:opacity-100 p-2 text-erp-muted hover:text-erp-danger hover:bg-erp-danger/10 rounded-[16px] transition-all"
- >
- <Trash2 size={16} />
- </button>
- </div>
- ))}
- </div>
- )}
- </div>
- );
+  return (
+    <div className="space-y-6 p-4 md:p-8">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div><h1 className="text-3xl font-bold text-erp-text">Notifications</h1><p className="mt-2 text-sm text-erp-muted">Persistent KDS order alerts and acknowledgement history.</p></div>
+        <button onClick={() => { void Promise.all(notifications.filter((n) => !n.is_acknowledged).map((n) => acknowledge(n.id))); }} className="inline-flex items-center gap-2 rounded-xl border border-erp-border bg-white px-4 py-3 text-sm font-bold text-erp-text"><CheckCircle size={16} /> Acknowledge all</button>
+      </header>
+      {error && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error}</p>}
+      {loading ? <div className="rounded-2xl bg-white p-10 text-center text-erp-muted">Loading notifications…</div> : notifications.length === 0 ? <div className="rounded-2xl border border-erp-border bg-white p-14 text-center text-erp-muted"><Bell className="mx-auto mb-3" /> No notifications yet.</div> : (
+        <div className="space-y-3">{notifications.map((notification) => {
+          const order = Array.isArray(notification.order) ? notification.order[0] : notification.order;
+          return <div key={notification.id} className={`rounded-2xl border bg-white p-5 shadow-sm ${notification.is_acknowledged ? 'border-erp-border opacity-70' : 'border-erp-danger/40'}`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex gap-3"><div className="mt-1 rounded-full bg-erp-danger/10 p-2 text-erp-danger"><Bell size={18} /></div><div><p className="font-bold text-erp-text">{notification.is_acknowledged ? 'Order acknowledged' : 'New Order Received'}</p><p className="mt-1 text-sm text-erp-muted">{order?.order_number ? `ORD-${order.order_number}` : notification.order_id} · {order?.customer_name || 'Guest'} · ₹{Number(order?.total || 0).toLocaleString('en-IN')}</p><p className="mt-1 text-xs text-erp-muted">Received {new Date(notification.created_at).toLocaleString()} · {order?.source || 'Online'}</p>{notification.is_acknowledged && <p className="mt-1 text-xs text-erp-muted">Acknowledged {notification.acknowledged_at ? new Date(notification.acknowledged_at).toLocaleString() : ''}</p>}</div></div>
+              <div className="flex shrink-0 gap-2"><button onClick={() => { void viewAlert({ ...notification, order_id: notification.order_id }); }} className="inline-flex items-center gap-1 rounded-lg bg-erp-primary px-3 py-2 text-xs font-bold text-white"><ExternalLink size={13} /> View Order</button>{!notification.is_acknowledged && <button onClick={() => { void acknowledge(notification.id); }} className="rounded-lg border border-erp-border px-3 py-2 text-xs font-bold text-erp-text">Acknowledge</button>}</div>
+            </div>
+          </div>;
+        })}</div>
+      )}
+    </div>
+  );
 }

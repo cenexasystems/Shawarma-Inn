@@ -3,12 +3,7 @@ import Footer from '../components/Footer';
 import { useStoreSettings } from '../context/SettingsContext';
 
 const branches = [
-  'Mathur (Pilot)',
-  'Madhavaram',
-  'Kolathur',
-  'Retteri',
-  'Thirumullaivoyal',
-  'Kodungaiyur'
+  '📍 Mathur'
 ];
 
 const CONTACT_PHONE = '6382877479';

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Circle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled' | 'ready';
+export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
 
 interface StatusSelectProps {
   value: OrderStatus;
@@ -26,13 +26,6 @@ const STATUS_CONFIG: Record<OrderStatus, { bg: string; border: string; text: str
     indicator: 'fill-[#B9D4FF] text-[#B9D4FF]',
     label: 'Processing'
   },
-  ready: {
-    bg: 'bg-[#EEF4FF]',
-    border: 'border-[#B9D4FF]',
-    text: 'text-[#2563EB]',
-    indicator: 'fill-[#B9D4FF] text-[#B9D4FF]',
-    label: 'Ready'
-  },
   completed: {
     bg: 'bg-[#ECFDF3]',
     border: 'border-[#B7E8C4]',
@@ -49,7 +42,7 @@ const STATUS_CONFIG: Record<OrderStatus, { bg: string; border: string; text: str
   }
 };
 
-const DEFAULT_OPTIONS: OrderStatus[] = ['pending', 'processing', 'ready', 'completed', 'cancelled'];
+const DEFAULT_OPTIONS: OrderStatus[] = ['pending', 'processing', 'completed', 'cancelled'];
 
 export const StatusSelect: React.FC<StatusSelectProps> = ({ value, onChange, className = '', options = DEFAULT_OPTIONS }) => {
   const [isOpen, setIsOpen] = useState(false);

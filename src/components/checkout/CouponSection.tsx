@@ -34,18 +34,18 @@ export default function CouponSection({
       ) : (
         <div className="bg-[#1a1a1a] p-4 rounded-2xl border border-white/10">
           <label className="block text-xs font-bold text-white/50 uppercase tracking-[2px] mb-3">Have a Coupon?</label>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input 
               type="text" 
               value={couponInput} 
               onChange={(e) => setCouponInput(e.target.value.toUpperCase())} 
               placeholder="ENTER CODE" 
-              className="flex-1 bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-lg font-bold uppercase tracking-widest text-white outline-none focus:border-[var(--red)] focus:bg-black transition-all placeholder:text-white/20" 
+              className="min-w-0 w-full flex-1 min-h-12 bg-black/60 border border-white/20 rounded-xl px-4 py-3 text-base sm:text-lg font-bold uppercase tracking-widest text-white outline-none focus:border-[var(--red)] focus:bg-black transition-all placeholder:text-white/20"
             />
             <button 
               onClick={() => { void handleApplyCoupon(); }} 
               disabled={couponLoading || !couponInput} 
-              className="bg-[var(--red)] hover:bg-red-600 text-white font-bebas text-xl px-6 rounded-xl uppercase tracking-[2px] transition-all disabled:opacity-50 disabled:hover:bg-[var(--red)]"
+              className="w-full sm:w-auto min-h-12 bg-[var(--red)] hover:bg-red-600 text-white font-bebas text-xl px-6 rounded-xl uppercase tracking-[2px] transition-all disabled:opacity-50 disabled:hover:bg-[var(--red)]"
             >
               {couponLoading ? '...' : 'Apply'}
             </button>

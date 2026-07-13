@@ -34,7 +34,7 @@ export default function CartSummary({
   handleRemoveCoupon
 }: CartSummaryProps) {
   return (
-    <div className="bg-[#111111] border border-white/5 rounded-[24px] p-6 shadow-2xl">
+    <div className="w-full min-w-0 bg-[#111111] border border-white/5 rounded-[24px] p-4 sm:p-6 shadow-2xl">
       <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6">Order Summary</h2>
       
       {/* Cart Items */}
@@ -70,7 +70,7 @@ export default function CartSummary({
       <div className="h-px bg-white/5 mb-6" />
 
       <div className="mb-6 rounded-[20px] border border-white/5 overflow-hidden bg-black/20">
-        <div className="grid grid-cols-[1.6fr_.55fr_.8fr_.8fr] gap-3 px-4 py-3 text-[10px] uppercase tracking-[2px] text-white/45 border-b border-white/5">
+        <div className="grid grid-cols-[minmax(0,1.6fr)_auto_auto_auto] gap-1 sm:gap-3 px-2 sm:px-4 py-3 text-[9px] sm:text-[10px] uppercase tracking-[1px] sm:tracking-[2px] text-white/45 border-b border-white/5">
           <span>Item</span>
           <span className="text-center">Qty</span>
           <span className="text-right">Rate</span>
@@ -78,8 +78,8 @@ export default function CartSummary({
         </div>
         <div className="divide-y divide-white/5">
           {cart.map((ci: CartItem) => (
-            <div key={`bill-${ci.id}`} className="grid grid-cols-[1.6fr_.55fr_.8fr_.8fr] gap-3 px-4 py-3 text-sm">
-              <span className="truncate text-white/85">{ci.name}</span>
+            <div key={`bill-${ci.id}`} className="grid grid-cols-[minmax(0,1.6fr)_auto_auto_auto] gap-1 sm:gap-3 px-2 sm:px-4 py-3 text-xs sm:text-sm">
+              <span className="min-w-0 break-words text-white/85">{ci.name}</span>
               <span className="text-center text-white/65">{ci.qty}</span>
               <span className="text-right text-white/65">₹{ci.price.toFixed(2)}</span>
               <span className="text-right text-white font-semibold">₹{(ci.price * ci.qty).toFixed(2)}</span>
@@ -129,7 +129,7 @@ export default function CartSummary({
 
       <div className="flex justify-between items-end pt-5 border-t border-white/5 mb-6">
         <span className="font-bebas text-xl text-white/80 tracking-wide">Total Due</span>
-        <span className="font-bebas text-4xl text-[var(--red)] tracking-wider leading-none">₹{totals.grandTotal.toFixed(2)}</span>
+        <span className="font-bebas text-3xl sm:text-4xl text-[var(--red)] tracking-wider leading-none text-right">₹{totals.grandTotal.toFixed(2)}</span>
       </div>
 
       <div className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[12px] leading-relaxed text-amber-100/80">
@@ -139,7 +139,7 @@ export default function CartSummary({
       <button
         onClick={handlePlaceOrder}
         disabled={saving}
-        className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-black font-bebas text-2xl lg:text-3xl py-4 lg:py-6 rounded-2xl flex items-center justify-center gap-3 lg:gap-4 tracking-[2px] transition-all shadow-[0_10px_30px_rgba(37,211,102,0.2)] hover:shadow-[0_10px_40px_rgba(37,211,102,0.35)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 uppercase"
+        className="w-full min-h-12 bg-[#25D366] hover:bg-[#20bd5a] text-black font-bebas text-xl sm:text-2xl lg:text-3xl py-3 lg:py-6 rounded-2xl flex items-center justify-center gap-2 sm:gap-3 lg:gap-4 tracking-[1px] sm:tracking-[2px] transition-all shadow-[0_10px_30px_rgba(37,211,102,0.2)] hover:shadow-[0_10px_40px_rgba(37,211,102,0.35)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 uppercase"
       >
         {saving ? (
           <span className="animate-pulse">Processing...</span>

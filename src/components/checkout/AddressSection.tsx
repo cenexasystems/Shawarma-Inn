@@ -39,7 +39,7 @@ export default function AddressSection({
     setFieldErrors(prev => ({ ...prev, [field]: '' }));
   };
   return (
-    <div className={`bg-[#111111] border border-white/5 rounded-[24px] p-6 shadow-2xl transition-opacity duration-300 ${!isCustomerLoggedIn ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+    <div className={`bg-[#111111] border border-white/5 rounded-[24px] p-4 sm:p-6 shadow-2xl transition-opacity duration-300 ${!isCustomerLoggedIn ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
       <h2 className="font-bebas text-2xl uppercase tracking-[2px] text-[var(--red)] mb-6 flex items-center gap-3">
         <span className="w-8 h-8 rounded-full bg-[var(--red)]/10 flex items-center justify-center text-[var(--red)]">3</span>
         {deliveryMethod === 'we_arrange' ? 'Delivery Details' : 'Contact Info'}

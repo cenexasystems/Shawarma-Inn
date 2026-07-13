@@ -6,7 +6,7 @@ import { useStoreSettings } from '../context/SettingsContext';
 
 const branches: Branch[] = branchesData as Branch[];
 const flagship = branches.find((branch) => branch.isFlagship) || branches[0];
-const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@shawarmainn.in';
+const supportEmail = 'sharath.creator2210@gmail.com';
 
 export default function Footer() {
   const { settings } = useStoreSettings();

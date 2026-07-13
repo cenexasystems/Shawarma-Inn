@@ -19,7 +19,7 @@ const PRESETS: { label: string; value: DatePreset }[] = [
 
 export function UniversalFilter({ currentPreset, onPresetChange }: UniversalFilterProps) {
   return (
-    <div className="bg-erp-bg p-[4px] rounded-[12px] flex gap-[4px] overflow-x-auto">
+    <div className="bg-erp-bg p-[4px] rounded-[12px] flex flex-wrap gap-[4px]">
       {PRESETS.map(p => {
         const isActive = currentPreset === p.value;
         return (

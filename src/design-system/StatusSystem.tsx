@@ -1,6 +1,6 @@
 
 
-export type StatusType = 'pending' | 'preparing' | 'processing' | 'ready' | 'completed' | 'cancelled' | 'active' | 'expired';
+export type StatusType = 'pending' | 'processing' | 'completed' | 'cancelled' | 'active' | 'expired';
 
 export function StatusPill({ status, label }: { status: StatusType | string; label?: string }) {
   const normalizedStatus = status.toLowerCase();
@@ -11,12 +11,8 @@ export function StatusPill({ status, label }: { status: StatusType | string; lab
     case 'pending':
       colorClass = 'bg-erp-warning/10 text-erp-warning border-erp-warning/20';
       break;
-    case 'preparing':
     case 'processing':
       colorClass = 'bg-erp-blue/10 text-erp-blue border-erp-blue/20';
-      break;
-    case 'ready':
-      colorClass = 'bg-purple-500/10 text-purple-600';
       break;
     case 'completed':
     case 'active':

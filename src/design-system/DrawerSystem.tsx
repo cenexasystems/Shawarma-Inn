@@ -30,10 +30,10 @@ export function RightDrawer({ isOpen, onClose, title, subtitle, children, footer
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
-            className="fixed right-0 top-0 h-full bg-white border-l border-erp-border z-[90] flex flex-col shadow-[0_10px_30px_rgba(15,23,42,0.10)] rounded-l-[22px] overflow-hidden"
+            className="fixed right-0 top-0 h-[100dvh] w-full md:w-auto bg-white border-l border-erp-border z-[90] flex flex-col shadow-[0_10px_30px_rgba(15,23,42,0.10)] rounded-l-[22px] overflow-hidden"
             style={{ width, maxWidth: '100vw' }}
           >
-            <div className="flex items-center justify-between px-[32px] py-[24px] border-b border-erp-border bg-white shrink-0">
+            <div className="flex items-center justify-between px-4 md:px-[32px] py-4 md:py-[24px] border-b border-erp-border bg-white shrink-0">
               <div>
                 <h3 className="font-[700] text-[28px] text-erp-text leading-none tracking-[-0.03em]">{title}</h3>
                 {subtitle && <p className="font-inter text-[14px] text-erp-muted font-[500] mt-[8px]">{subtitle}</p>}
@@ -46,7 +46,7 @@ export function RightDrawer({ isOpen, onClose, title, subtitle, children, footer
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-[32px] font-inter">
+            <div className="flex-1 overflow-y-auto p-4 md:p-[32px] font-inter">
               {children}
             </div>
 

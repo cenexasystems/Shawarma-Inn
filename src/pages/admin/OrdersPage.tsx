@@ -14,10 +14,9 @@ import { RightDrawer } from '../../design-system/DrawerSystem';
 
 import { formatOrderId } from '../../context/OperationsFilterContext';
 
-const ADMIN_ORDER_STATUSES = ['pending', 'accepted', 'processing', 'preparing', 'ready', 'in_transit', 'completed', 'cancelled'];
+const ADMIN_ORDER_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
 const STATUS_LABELS: Record<string, string> = {
- pending: 'Pending', accepted: 'Accepted', processing: 'Processing',
- preparing: 'Preparing', ready: 'Ready', in_transit: 'In Transit',
+ pending: 'Pending', processing: 'Processing',
  completed: 'Completed', cancelled: 'Cancelled',
 };
 
@@ -260,7 +259,7 @@ export default function OrdersPage() {
  className="w-full bg-white border border-erp-border rounded-[12px] pl-[40px] pr-[16px] h-[46px] text-[15px] font-inter text-erp-text focus:outline-none focus:border-erp-primary shadow-sm"
  />
  </div>
- <select value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)} className="bg-white border border-erp-border rounded-[12px] px-[16px] h-[46px] text-[14px] font-[600] text-erp-text focus:outline-none focus:border-erp-primary shadow-sm appearance-none min-w-[200px]">
+<select value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)} className="w-full md:w-auto bg-white border border-erp-border rounded-[12px] px-[16px] h-[46px] text-[14px] font-[600] text-erp-text focus:outline-none focus:border-erp-primary shadow-sm appearance-none min-w-0 md:min-w-[200px]">
  <option value="">All Statuses</option>
  {ADMIN_ORDER_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
  </select>
@@ -271,7 +270,7 @@ export default function OrdersPage() {
  <>
  <StatCard title="Total Archive" value={orders.length} />
  <StatCard title="Pending" value={orders.filter(o => o.status === 'pending').length} valueColor="text-erp-warning" />
- <StatCard title="Processing" value={orders.filter(o => o.status === 'processing' || o.status === 'preparing').length} valueColor="text-erp-blue" />
+ <StatCard title="Processing" value={orders.filter(o => o.status === 'processing').length} valueColor="text-erp-blue" />
  <StatCard title="Completed" value={orders.filter(o => o.status === 'completed').length} valueColor="text-erp-success" />
  </>
  }

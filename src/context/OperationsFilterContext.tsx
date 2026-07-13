@@ -13,8 +13,8 @@ interface DateRange {
 export interface KpiData {
   total: number;
   pending: number;
-  contacted: number; // preparing, processing, accepted
-  completed: number; // ready, completed
+  contacted: number; // processing
+  completed: number; // completed
   revenue: number;
   aov: number;
 }
@@ -195,8 +195,8 @@ export function OperationsFilterProvider({ children }: { children: ReactNode }) 
 
   // Compute KPI directly from the filtered orders list
   const pendingCount = orders.filter(o => o.status === 'pending').length;
-  const contactedCount = orders.filter(o => ['preparing', 'processing', 'accepted'].includes(o.status)).length;
-  const completedOrders = orders.filter(o => ['ready', 'completed'].includes(o.status));
+  const contactedCount = orders.filter(o => o.status === 'processing').length;
+  const completedOrders = orders.filter(o => o.status === 'completed');
   const completedCount = completedOrders.length;
   
   const revenue = completedOrders.reduce((s, o) => s + (Number(o.total) || 0), 0);

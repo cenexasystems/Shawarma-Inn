@@ -115,20 +115,13 @@ export default function Profile() {
 
   const STATUS_COLORS: Record<string, string> = {
     pending:     'text-amber-400 bg-amber-400/10 border-amber-400/20',
-    accepted:    'text-blue-400 bg-blue-400/10 border-blue-400/20',
     processing:  'text-blue-400 bg-blue-400/10 border-blue-400/20',
-    preparing:   'text-orange-400 bg-orange-400/10 border-orange-400/20',
-    ready:       'text-[#ef8f2f] bg-[#ef8f2f]/10 border-[#ef8f2f]/20',
-    in_transit:  'text-purple-400 bg-purple-400/10 border-purple-400/20',
     completed:   'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-    delivered:   'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
     cancelled:   'text-[var(--red)] bg-[var(--red)]/10 border-[var(--red)]/20',
   };
 
   const STATUS_LABELS: Record<string, string> = {
-    pending: 'Pending', accepted: 'Accepted', processing: 'Processing',
-    preparing: 'Preparing', ready: 'Ready for Pickup',
-    in_transit: 'Out for Delivery', completed: 'Delivered', cancelled: 'Cancelled',
+    pending: 'Pending', processing: 'Processing', completed: 'Completed', cancelled: 'Cancelled',
   };
 
   return (

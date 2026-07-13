@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   gst              NUMERIC(10,2) DEFAULT 0,
   packing_charge   NUMERIC(10,2) NOT NULL DEFAULT 0,
   total            NUMERIC(10,2) NOT NULL,
-  status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','processing','preparing','ready','in_transit','completed','cancelled')),
+  status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','completed','cancelled')),
   notes            TEXT,
   payment_method   TEXT DEFAULT 'cash',
   created_at       TIMESTAMPTZ DEFAULT NOW(),

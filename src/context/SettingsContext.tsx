@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '../lib/supabaseClient';
 
 export interface SettingsData {
+  store_status: 'OPEN' | 'CLOSED';
+  opening_time: string;
+  closing_time: string;
   whatsapp_number: string;
   delivery_charges: number;
   gst_percentage: number;
@@ -23,6 +26,9 @@ export interface SettingsData {
 }
 
 export const DEFAULT_SETTINGS: SettingsData = {
+  store_status: 'OPEN',
+  opening_time: '17:00',
+  closing_time: '22:00',
   whatsapp_number: '',
   delivery_charges: 0,
   gst_percentage: 5,
@@ -60,6 +66,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSettings({
           ...DEFAULT_SETTINGS,
           ...data,
+          store_status: data.store_status === 'CLOSED' ? 'CLOSED' : 'OPEN',
+          opening_time: data.opening_time || data.business_hours?.openingTime || DEFAULT_SETTINGS.opening_time,
+          closing_time: data.closing_time || data.business_hours?.closingTime || DEFAULT_SETTINGS.closing_time,
           business_hours: { ...DEFAULT_SETTINGS.business_hours, ...(data.business_hours || {}) },
           social_links: { ...DEFAULT_SETTINGS.social_links, ...(data.social_links || {}) },
           seo: { ...DEFAULT_SETTINGS.seo, ...(data.seo || {}) },
@@ -88,6 +97,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
               ...DEFAULT_SETTINGS,
               ...current,
               ...next,
+              store_status: next.store_status === 'CLOSED' ? 'CLOSED' : (next.store_status ? 'OPEN' : current.store_status),
+              opening_time: next.opening_time || current.opening_time,
+              closing_time: next.closing_time || current.closing_time,
               business_hours: { ...DEFAULT_SETTINGS.business_hours, ...current.business_hours, ...(next.business_hours || {}) },
               social_links: { ...DEFAULT_SETTINGS.social_links, ...current.social_links, ...(next.social_links || {}) },
               seo: { ...DEFAULT_SETTINGS.seo, ...current.seo, ...(next.seo || {}) },

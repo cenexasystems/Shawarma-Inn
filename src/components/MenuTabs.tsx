@@ -28,7 +28,7 @@ export default function MenuTabs({ categories, active, onChange, counts }: MenuT
       <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8">
         <div
           ref={scrollRef}
-          className="flex flex-wrap gap-2"
+          className="flex flex-wrap justify-center gap-2"
           style={{ paddingBlock: '10px' }}
         >
           {categories.map(cat => {
@@ -39,7 +39,7 @@ export default function MenuTabs({ categories, active, onChange, counts }: MenuT
                 data-active={isActive}
                 onClick={() => onChange(cat)}
                 style={{ 
-                  fontSize: 'clamp(13px, 3.5vw, 18px)',
+                  fontSize: 'clamp(14px, 3.5vw, 18px)',
                   minHeight: '44px',
                 }}
                 className={`whitespace-nowrap shrink-0 px-4 sm:px-5 rounded-full font-bebas tracking-wider transition-all ${

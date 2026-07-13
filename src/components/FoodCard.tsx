@@ -108,10 +108,10 @@ export default function FoodCard({ item, addItem, qty = 0, updateQty, disabled =
             <button
               onClick={() => !disabled && addItem(item)}
               disabled={disabled}
-              className={`bg-white text-black text-xs font-bold px-3 sm:px-5 rounded-full uppercase tracking-wider shadow-md transition-all ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-white/90 active:scale-95'}`}
+              className={`min-w-0 max-w-[52%] bg-white text-black text-[10px] sm:text-xs font-bold px-2 sm:px-5 py-1 rounded-full uppercase tracking-wider leading-tight text-center whitespace-normal shadow-md transition-all ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-white/90 active:scale-95'}`}
               style={{ minHeight: '36px' }}
             >
-              Add
+              {disabled ? 'Unavailable — Store Closed' : 'Add'}
             </button>
           )}
         </div>

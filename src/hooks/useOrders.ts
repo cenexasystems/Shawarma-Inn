@@ -238,6 +238,12 @@ export const useOrders = () => {
           return { success: false, error: 'Please sign in before placing an order.' };
         }
 
+        const { data: storeSettings } = await supabase.from('settings').select('store_status, opening_time, closing_time').eq('id', 'global').maybeSingle();
+        const { isOrderingAvailable } = await import('../utils/orderAvailability');
+        if (!isOrderingAvailable(storeSettings || {})) {
+          return { success: false, error: 'Online ordering is currently unavailable.' };
+        }
+
         const randomOrderNumber = Math.floor(Math.random() * 900000) + 100000;
 
         const { data: insertedOrder, error: insertOrderError } = await supabase

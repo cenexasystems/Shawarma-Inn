@@ -4,11 +4,7 @@ import type { Order } from './useOrders';
 
 export const ADMIN_ORDER_STATUSES = [
   'pending',
-  'accepted',
   'processing',
-  'preparing',
-  'ready',
-  'in_transit',
   'completed',
   'cancelled',
 ] as const;

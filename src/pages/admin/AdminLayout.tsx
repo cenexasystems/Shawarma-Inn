@@ -12,7 +12,7 @@ import { useAdminContext } from '../../context/AdminContext';
 
 export default function AdminLayout() {
  const { user, logout } = useAuth();
- const { unacknowledgedAlerts, acknowledgeAlert, latestIncomingOrder, dismissIncomingOrder } = useAdminContext();
+ const { unacknowledgedAlerts, acknowledgeAlert, viewAlert, latestIncomingOrder } = useAdminContext();
  const navigate = useNavigate();
  const location = useLocation();
  
@@ -23,12 +23,6 @@ export default function AdminLayout() {
  useEffect(() => {
  setSidebarOpen(false);
  }, [location]);
-
- useEffect(() => {
-   if (!latestIncomingOrder) return;
-   const timer = window.setTimeout(dismissIncomingOrder, 15000);
-   return () => window.clearTimeout(timer);
- }, [latestIncomingOrder, dismissIncomingOrder]);
 
  const NAV_ITEMS = [
  { key: 'overview', path: '/admin', icon: Store, label: 'Operations Center' },
@@ -153,7 +147,7 @@ export default function AdminLayout() {
 
  <div className="flex-1 flex flex-col min-w-0 h-screen">
  {/* Top Toolbar */}
- <header className="h-[76px] flex items-center justify-between px-[32px] bg-white border-b border-[#EEF2F6] shrink-0 z-50">
+<header className="min-h-[76px] flex items-center justify-between px-4 md:px-[32px] py-3 md:py-0 bg-white border-b border-[#EEF2F6] shrink-0 z-50">
  <div className="flex items-center gap-[12px] lg:hidden">
  <button onClick={() => setSidebarOpen(true)} className="p-[8px] -ml-[8px] text-erp-muted hover:text-erp-text">
  <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +171,7 @@ export default function AdminLayout() {
  >
  <Bell size={20} className={unacknowledgedAlerts.length > 0 ? 'animate-pulse' : ''} />
  {unacknowledgedAlerts.length > 0 && (
- <span className="absolute top-[2px] right-[2px] w-[8px] h-[8px] bg-erp-danger rounded-full border-[2px] border-white" />
+ <span className="absolute -top-[3px] -right-[3px] min-w-[18px] h-[18px] px-1 bg-erp-danger text-white rounded-full border-[2px] border-white text-[10px] font-bold flex items-center justify-center">{unacknowledgedAlerts.length}</span>
  )}
  </button>
  
@@ -185,7 +179,7 @@ export default function AdminLayout() {
  {showNotifications && (
  <motion.div 
  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
- className="absolute top-[calc(100%+12px)] right-0 w-[360px] bg-white border border-[#EEF2F6] rounded-[22px] shadow-erp overflow-hidden z-50"
+ className="absolute top-[calc(100%+12px)] right-0 w-[min(360px,calc(100vw-24px))] bg-white border border-[#EEF2F6] rounded-[22px] shadow-erp overflow-hidden z-50"
  >
  <div className="px-[24px] py-[16px] border-b border-erp-border bg-erp-bg flex justify-between items-center">
  <span className="text-[12px] font-[700] uppercase tracking-[1px] text-erp-muted">Live Alerts</span>
@@ -198,17 +192,14 @@ export default function AdminLayout() {
  <p className="text-erp-muted text-[14px] font-[500]">System operational.</p>
  </div>
  ) : unacknowledgedAlerts.map((n) => (
- <div
- key={n.id}
- onClick={() => acknowledgeAlert(n.id)}
- className="p-[16px] border-b border-erp-border cursor-pointer hover:bg-erp-bg transition-colors"
- >
+ <div key={n.id} className="p-[16px] border-b border-erp-border hover:bg-erp-bg transition-colors">
  <div className="flex items-start gap-[12px]">
  <div className="mt-[6px] shrink-0 w-[8px] h-[8px] rounded-full bg-erp-danger animate-pulse" />
  <div className="flex-1">
- <p className="text-[14px] text-erp-text font-[600]">New Order: {n.customer_name || 'Guest'}</p>
- <p className="text-[12px] text-erp-muted mt-[4px] capitalize">{n.status}</p>
- <button className="text-[12px] font-[700] text-erp-primary mt-[8px] uppercase tracking-[1px]">Acknowledge</button>
+ <p className="text-[14px] text-erp-text font-[600]">🔔 New Order</p>
+ <p className="text-[12px] text-erp-muted mt-[4px]">{n.order?.order_number ? `ORD-${n.order.order_number}` : n.order_id} · {n.order?.customer_name || 'Guest'}</p>
+ <p className="text-[12px] text-erp-muted mt-[2px]">₹{Number(n.order?.total || 0).toLocaleString('en-IN')} · {n.order?.status || 'pending'} · {new Date(n.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+ <div className="flex gap-2 mt-2"><button onClick={() => { void viewAlert(n); }} className="text-[11px] font-[700] text-erp-primary uppercase tracking-[1px]">View Order</button><button onClick={() => { void acknowledgeAlert(n.id); }} className="text-[11px] font-[700] text-erp-muted uppercase tracking-[1px]">Acknowledge</button></div>
  </div>
  </div>
  </div>
@@ -236,14 +227,14 @@ export default function AdminLayout() {
        </div>
        <div className="min-w-0 flex-1">
          <p className="text-[11px] font-[800] uppercase tracking-[0.16em] text-erp-danger">New order received</p>
-         <h2 className="mt-[6px] truncate text-[22px] font-[800] text-erp-text">{latestIncomingOrder.customer_name || 'Guest customer'}</h2>
-         <p className="mt-[4px] text-[13px] text-erp-muted">Order #{latestIncomingOrder.order_number || String(latestIncomingOrder.id).slice(0, 8)} is waiting in Orders.</p>
+         <h2 className="mt-[6px] truncate text-[22px] font-[800] text-erp-text">{latestIncomingOrder.order?.customer_name || 'Guest customer'}</h2>
+         <p className="mt-[4px] text-[13px] text-erp-muted">Order #{latestIncomingOrder.order?.order_number || String(latestIncomingOrder.order_id).slice(0, 8)} · ₹{Number(latestIncomingOrder.order?.total || 0).toLocaleString('en-IN')} is waiting in Orders.</p>
          <div className="mt-[16px] flex gap-[8px]">
-           <button onClick={() => { dismissIncomingOrder(); navigate(`/admin/orders?order=${encodeURIComponent(latestIncomingOrder.id)}`); }} className="rounded-[12px] bg-erp-primary px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-white">View Order</button>
-           <button onClick={() => { void acknowledgeAlert(latestIncomingOrder.id); dismissIncomingOrder(); }} className="rounded-[12px] border border-erp-border px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-erp-text">Acknowledge</button>
+           <button onClick={() => { void viewAlert(latestIncomingOrder); }} className="rounded-[12px] bg-erp-primary px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-white">View Order</button>
+           <button onClick={() => { void acknowledgeAlert(latestIncomingOrder.id); }} className="rounded-[12px] border border-erp-border px-[14px] py-[10px] text-[12px] font-[800] uppercase tracking-[0.08em] text-erp-text">Acknowledge</button>
          </div>
        </div>
-       <button aria-label="Dismiss new order notification" onClick={dismissIncomingOrder} className="text-erp-muted hover:text-erp-text">×</button>
+       <button aria-label="View new order" onClick={() => { if (latestIncomingOrder) void viewAlert(latestIncomingOrder); }} className="text-erp-muted hover:text-erp-text">→</button>
      </div>
    </motion.div>
  )}
