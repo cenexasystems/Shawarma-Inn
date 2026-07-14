@@ -61,8 +61,13 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
       <nav className={`fixed top-0 w-full z-50 h-[64px] border-b-[0.5px] flex justify-between items-center px-4 md:px-8 xl:px-12 transition-all ${navClass}`}>
 
         {/* Logo LEFT */}
-        <Link to="/" className="flex items-baseline gap-2 z-50 shrink-0">
-          <span className="font-black uppercase logo-shimmer">SHAWARMA INN</span>
+        <Link to="/" className="flex items-center gap-2 z-50 shrink-0 min-w-0">
+          <img
+            src="/Shawarma-inn logo.jpeg"
+            alt="Shawarma Inn"
+            className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-full object-cover bg-white shadow-[0_2px_12px_rgba(0,0,0,0.22)]"
+          />
+          <span className="font-black uppercase logo-shimmer whitespace-nowrap">SHAWARMA INN</span>
           {/* "Mathur Branch" badge — hidden on smallest screens to prevent overflow */}
           <span className="hidden sm:inline text-[9px] font-bold tracking-[2px] uppercase text-[var(--red)] border border-[var(--red)]/40 rounded-full px-2 py-0.5 shrink-0">
             Mathur
