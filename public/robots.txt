@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /pos/
+Disallow: /profile/
+Disallow: /checkout/
+
+Sitemap: https://shawarmainn.in/sitemap.xml

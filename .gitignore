@@ -1,0 +1,40 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.vercel.production
+data/*.sqlite
+data/*.sqlite-*
+
+# Local multer upload output (dev only; production storage is Supabase)
+# public/images/menu/
+public/images/videos/
+public/videos/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.vercel
+
+# Source menu PDF and intermediate page extraction artifacts (large, not needed in repo)
+docs/*.pdf
+docs/pages/
+docs/menu-extracted.txt
