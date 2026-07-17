@@ -136,7 +136,7 @@ export default function MenuPage() {
  />
 
  {/* KPI Cards */}
- <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:mb-erp-32 xl:flex xl:flex-wrap xl:gap-erp-24">
+ <div className="mb-6 grid grid-cols-2 xl:grid-cols-4 gap-4">
  <KPICard title="Total Products" value={items.length} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" subtitle="Catalog size" />
  <KPICard title="Active" value={items.filter(i => i.is_active).length} icon={CheckSquare} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" className="border-erp-success/10 bg-erp-success/[0.03]" subtitle="Visible now" />
  <KPICard title="Bestsellers" value={items.filter(i => i.is_bestseller).length} icon={Star} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" className="border-erp-warning/10 bg-erp-warning/[0.03]" subtitle="Highlighted items" />
