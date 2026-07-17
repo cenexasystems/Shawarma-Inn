@@ -158,26 +158,26 @@ export default function CategoriesPage() {
  </div>
  ) : (
  filteredCategories.map((cat) => (
- <article key={cat.id} className="rounded-[20px] border border-erp-border bg-white p-4 shadow-sm">
- <div className="flex items-start gap-3">
+ <article key={cat.id} className="rounded-[20px] border border-erp-border bg-white p-3 shadow-sm sm:p-4">
+ <div className="flex flex-col gap-3 min-[360px]:flex-row min-[360px]:items-start">
  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] border border-erp-border bg-[#F8FAFC] text-erp-primary">
  <FolderTree size={18} />
  </div>
  <div className="min-w-0 flex-1">
- <div className="flex items-start justify-between gap-3">
+ <div className="flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-start min-[380px]:justify-between">
  <div className="min-w-0">
- <h3 className="truncate text-[15px] font-[700] text-erp-text">{cat.name}</h3>
+ <h3 className="text-[15px] font-[700] leading-tight text-erp-text break-words">{cat.name}</h3>
  <p className="mt-1 text-[12px] text-erp-muted">Display order: {cat.display_order}</p>
  </div>
- <span className={`inline-flex min-h-[28px] items-center rounded-full border px-[10px] text-[10px] font-[700] uppercase tracking-[0.08em] ${cat.is_active ? 'border-erp-success/20 bg-erp-success/8 text-erp-success' : 'border-gray-200 bg-gray-100 text-erp-muted'}`}>
+ <span className={`inline-flex min-h-[28px] w-fit items-center rounded-full border px-[10px] text-[10px] font-[700] uppercase tracking-[0.08em] ${cat.is_active ? 'border-erp-success/20 bg-erp-success/8 text-erp-success' : 'border-gray-200 bg-gray-100 text-erp-muted'}`}>
  {cat.is_active ? 'Active' : 'Hidden'}
  </span>
  </div>
- <div className="mt-4 flex gap-2">
- <button onClick={() => openModal(cat)} className="flex flex-1 items-center justify-center rounded-[12px] border border-erp-blue/20 bg-white px-3 py-2 text-[12px] font-[700] text-erp-blue transition-colors hover:bg-erp-blue/5">
+ <div className="mt-4 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+ <button onClick={() => openModal(cat)} className="flex min-h-[40px] w-full min-w-0 items-center justify-center rounded-[12px] border border-erp-blue/20 bg-white px-3 py-2 text-center text-[12px] font-[700] text-erp-blue transition-colors hover:bg-erp-blue/5">
  Edit
  </button>
- <button onClick={() => handleDelete(cat.id, cat.name)} className="flex flex-1 items-center justify-center rounded-[12px] border border-erp-danger/20 bg-white px-3 py-2 text-[12px] font-[700] text-erp-danger transition-colors hover:bg-erp-danger/5">
+ <button onClick={() => handleDelete(cat.id, cat.name)} className="flex min-h-[40px] w-full min-w-0 items-center justify-center rounded-[12px] border border-erp-danger/20 bg-white px-3 py-2 text-center text-[12px] font-[700] text-erp-danger transition-colors hover:bg-erp-danger/5">
  Delete
  </button>
  </div>
