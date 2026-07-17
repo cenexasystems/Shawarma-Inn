@@ -36,6 +36,16 @@ interface AdminNotification {
   order?: any;
 }
 
+interface NotificationRow {
+  id: string;
+  order_id: string;
+  created_at: string;
+  is_acknowledged: boolean;
+  acknowledged_by?: string | null;
+  acknowledged_at?: string | null;
+  notification_sound?: string | null;
+}
+
 interface AdminContextValue {
   dateRangeType: DateRangeType;
   dateRange: DateRange;
@@ -59,6 +69,24 @@ function mapNotification(row: any): AdminNotification {
   return { ...row, order: Array.isArray(row.order) ? row.order[0] : row.order };
 }
 
+function isSupabaseFeatureMissing(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  const message = String((error as { message?: string }).message || '').toLowerCase();
+  const details = String((error as { details?: string }).details || '').toLowerCase();
+  const code = String((error as { code?: string }).code || '').toLowerCase();
+
+  return (
+    code === 'pgrst205' ||
+    code === 'pgrst200' ||
+    message.includes('could not find the table') ||
+    message.includes('relation') ||
+    message.includes('schema cache') ||
+    message.includes('not found') ||
+    details.includes('schema cache')
+  );
+}
+
 export function AdminProvider({ children }: { children: ReactNode }) {
   const { isAdmin, user } = useAuth();
   const [dateRangeType, setDateRangeTypeState] = useState<DateRangeType>(() => (localStorage.getItem(STORAGE_KEY_TYPE) as DateRangeType | null) || 'today');
@@ -78,6 +106,47 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const loopIntervalRef = useRef<number | null>(null);
   const skipInitialAlarmRef = useRef(false);
+  const missingFeaturesRef = useRef<{ kdsSettings: boolean; orderNotifications: boolean }>({ kdsSettings: false, orderNotifications: false });
+
+  const fetchOrdersByIds = useCallback(async (orderIds: string[]) => {
+    if (orderIds.length === 0) return new Map<string, any>();
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, order_number, customer_name, total, status, created_at, source')
+      .in('id', orderIds);
+
+    if (error) {
+      console.error('Failed to load orders for notifications:', error);
+      return new Map<string, any>();
+    }
+
+    return new Map((data || []).map((order) => [String(order.id), order]));
+  }, []);
+
+  const attachOrdersToNotifications = useCallback(async (rows: NotificationRow[]) => {
+    const ordersById = await fetchOrdersByIds(rows.map((row) => String(row.order_id)));
+    return rows.map((row) => mapNotification({ ...row, order: ordersById.get(String(row.order_id)) || null }));
+  }, [fetchOrdersByIds]);
+
+  const fetchNotificationById = useCallback(async (notificationId: string) => {
+    const { data, error } = await supabase
+      .from('order_notifications')
+      .select('id, order_id, created_at, is_acknowledged, acknowledged_by, acknowledged_at, notification_sound')
+      .eq('id', notificationId)
+      .maybeSingle();
+
+    if (error) {
+      if (!isSupabaseFeatureMissing(error)) {
+        console.error('Failed to load notification details:', error);
+      }
+      return null;
+    }
+
+    if (!data) return null;
+    const [notification] = await attachOrdersToNotifications([data as NotificationRow]);
+    return notification || null;
+  }, [attachOrdersToNotifications]);
 
   const setDateRangeType = useCallback((type: DateRangeType, customRange?: DateRange) => {
     setDateRangeTypeState(type);
@@ -90,7 +159,23 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const fetchAlertSettings = useCallback(async () => {
     if (!user?.id) return;
-    const { data } = await supabase.from('kds_settings').select('*').eq('user_id', String(user.id)).maybeSingle();
+    if (missingFeaturesRef.current.kdsSettings) {
+      setAlertSettings(DEFAULT_SETTINGS);
+      alertSettingsRef.current = DEFAULT_SETTINGS;
+      return;
+    }
+
+    const { data, error } = await supabase.from('kds_settings').select('*').eq('user_id', String(user.id)).maybeSingle();
+    if (error) {
+      if (isSupabaseFeatureMissing(error)) {
+        missingFeaturesRef.current.kdsSettings = true;
+      } else {
+        console.error('Failed to load KDS settings:', error);
+      }
+      setAlertSettings(DEFAULT_SETTINGS);
+      alertSettingsRef.current = DEFAULT_SETTINGS;
+      return;
+    }
     const stored = data ? { ...DEFAULT_SETTINGS, ...data, sound_url: data.sound_url || DEFAULT_SETTINGS.sound_url } : DEFAULT_SETTINGS;
     skipInitialAlarmRef.current = true;
     setAlertSettings(stored);
@@ -101,19 +186,47 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     const updated = { ...alertSettingsRef.current, ...newSettings, volume: Math.max(0, Math.min(100, Number(newSettings.volume ?? alertSettingsRef.current.volume))), repeat_interval_sec: Math.max(1, Number(newSettings.repeat_interval_sec ?? alertSettingsRef.current.repeat_interval_sec)) };
     setAlertSettings(updated);
     alertSettingsRef.current = updated;
-    if (user?.id) {
+    if (user?.id && !missingFeaturesRef.current.kdsSettings) {
       const { error } = await supabase.from('kds_settings').upsert({ user_id: String(user.id), ...updated, updated_at: new Date().toISOString() });
-      if (error) console.error('Failed to save KDS settings:', error);
+      if (error) {
+        if (isSupabaseFeatureMissing(error)) {
+          missingFeaturesRef.current.kdsSettings = true;
+        } else {
+          console.error('Failed to save KDS settings:', error);
+        }
+      }
     }
   }, [user?.id]);
 
   const loadNotifications = useCallback(async () => {
     if (!isAdmin) return;
-    const { data: notifications } = await supabase.from('order_notifications').select('*, order:orders(id, order_number, customer_name, total, status, created_at, source)').eq('is_acknowledged', false).order('created_at', { ascending: false });
-    const next = (notifications || []).map(mapNotification);
+    if (missingFeaturesRef.current.orderNotifications) {
+      setUnacknowledgedAlerts([]);
+      setPendingOrdersCount(0);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('order_notifications')
+      .select('id, order_id, created_at, is_acknowledged, acknowledged_by, acknowledged_at, notification_sound')
+      .eq('is_acknowledged', false)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (isSupabaseFeatureMissing(error)) {
+        missingFeaturesRef.current.orderNotifications = true;
+      } else {
+        console.error('Failed to load order notifications:', error);
+      }
+      setUnacknowledgedAlerts([]);
+      setPendingOrdersCount(0);
+      return;
+    }
+
+    const next = await attachOrdersToNotifications((data || []) as NotificationRow[]);
     setUnacknowledgedAlerts(next);
     setPendingOrdersCount(next.filter((n) => n.order?.status === 'pending').length);
-  }, [isAdmin]);
+  }, [attachOrdersToNotifications, isAdmin]);
 
   const playSingleAlert = useCallback(() => {
     const settings = alertSettingsRef.current;
@@ -157,10 +270,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isAdmin) return;
+    if (missingFeaturesRef.current.orderNotifications) return;
     const channel = supabase.channel('admin-order-notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_notifications' }, async (payload) => {
-        const { data } = await supabase.from('order_notifications').select('*, order:orders(id, order_number, customer_name, total, status, created_at, source)').eq('id', payload.new.id).single();
-        const notification = mapNotification(data || payload.new);
+        const notification = await fetchNotificationById(String(payload.new.id));
+        if (!notification) return;
         setUnacknowledgedAlerts((prev) => prev.some((n) => n.id === notification.id) ? prev : [notification, ...prev]);
         setLatestIncomingOrder(notification);
         setRefreshSignal((prev) => prev + 1);
@@ -176,7 +290,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setRefreshSignal((prev) => prev + 1);
       }).subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [isAdmin, loadNotifications, notifyBrowser, startAlertLoop]);
+  }, [fetchNotificationById, isAdmin, loadNotifications, notifyBrowser, startAlertLoop]);
 
   useEffect(() => {
     if (skipInitialAlarmRef.current) {

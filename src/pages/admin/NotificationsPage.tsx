@@ -13,12 +13,39 @@ export default function NotificationsPage() {
 
   const load = async () => {
     if (!isAdmin) return;
+    setLoading(true);
     const { data, error: fetchError } = await supabase
       .from('order_notifications')
-      .select('*, order:orders(id, order_number, customer_name, total, status, created_at, source)')
+      .select('id, order_id, created_at, is_acknowledged, acknowledged_by, acknowledged_at, notification_sound')
       .order('created_at', { ascending: false }).limit(50);
-    if (fetchError) setError(fetchError.message);
-    else setNotifications(data || []);
+
+    if (fetchError) {
+      setError(fetchError.message);
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
+
+    const orderIds = Array.from(new Set((data || []).map((notification) => String(notification.order_id)).filter(Boolean)));
+    const { data: orders, error: orderError } = orderIds.length === 0
+      ? { data: [], error: null }
+      : await supabase
+          .from('orders')
+          .select('id, order_number, customer_name, total, status, created_at, source')
+          .in('id', orderIds);
+
+    if (orderError) {
+      setError(orderError.message);
+      setNotifications((data || []).map((notification) => ({ ...notification, order: null })));
+      setLoading(false);
+      return;
+    }
+
+    const ordersById = new Map((orders || []).map((order) => [String(order.id), order]));
+    setNotifications((data || []).map((notification) => ({
+      ...notification,
+      order: ordersById.get(String(notification.order_id)) || null,
+    })));
     setLoading(false);
   };
 
