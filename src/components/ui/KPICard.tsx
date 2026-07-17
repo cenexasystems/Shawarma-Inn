@@ -28,7 +28,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   const mutedText = dark ? 'text-gray-400' : 'text-erp-muted';
 
   return (
-    <div className={`min-h-[112px] w-full min-w-0 sm:min-w-[240px] sm:max-w-[340px] sm:flex-1 ${baseBg} border ${baseBorder} flex items-center justify-between gap-[16px] p-[18px] sm:p-[20px] rounded-[22px] shadow-erp ${className}`}>
+    <div className={`min-h-[112px] w-full min-w-0 ${baseBg} border ${baseBorder} flex items-center justify-between gap-[16px] p-[16px] sm:p-[20px] rounded-[22px] shadow-erp ${className}`}>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <p className={`text-[12px] font-[600] ${mutedText} uppercase tracking-[0.12em] truncate mb-[8px]`}>
           {title}

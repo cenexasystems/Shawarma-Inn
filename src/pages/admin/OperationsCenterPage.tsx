@@ -308,7 +308,7 @@ function OperationsCenterContent() {
  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
  return (
- <div className="min-h-screen bg-erp-bg p-[32px] ">
+ <div className="min-h-screen bg-erp-bg p-4 md:p-6 xl:p-[32px]">
  <PageHeader
  title={
  <div className="flex items-center gap-[14px]">
@@ -321,21 +321,21 @@ function OperationsCenterContent() {
  subtitle="Manage and respond to customer requests in real time"
  action={
  <>
- <div className="flex flex-wrap items-center gap-[8px] bg-transparent w-full sm:w-auto">
- {(['all', 'today', 'week', 'month', 'year', 'custom'] as const).map(preset => (
- <button
- key={preset}
- onClick={() => setDatePreset(preset)}
- className={`h-[42px] px-[16px] rounded-full text-[12px] font-[600] uppercase transition-all border ${
- datePreset === preset
- ? 'bg-erp-primary text-white border-erp-primary shadow-sm'
- : 'bg-white text-erp-muted border-erp-border hover:text-erp-text'
- }`}
- >
- {preset}
- </button>
- ))}
- </div>
+  <div className="flex flex-wrap items-center gap-[6px] bg-transparent w-full sm:w-auto">
+  {(['all', 'today', 'week', 'month', 'year', 'custom'] as const).map(preset => (
+  <button
+  key={preset}
+  onClick={() => setDatePreset(preset)}
+  className={`h-[34px] px-[12px] rounded-full text-[11px] font-[600] uppercase transition-all border ${
+  datePreset === preset
+  ? 'bg-erp-primary text-white border-erp-primary shadow-sm'
+  : 'bg-white text-erp-muted border-erp-border hover:text-erp-text'
+  }`}
+  >
+  {preset}
+  </button>
+  ))}
+  </div>
 
  {datePreset === 'custom' && (
  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -355,19 +355,19 @@ function OperationsCenterContent() {
  </div>
  )}
 
- <Button variant="secondary" onClick={() => fetchOrders(true)} icon={RefreshCw} isLoading={refreshing} className="w-full sm:w-auto mt-2 sm:mt-0">
- Refresh
- </Button>
+  <Button variant="secondary" onClick={() => fetchOrders(true)} icon={RefreshCw} isLoading={refreshing} className="w-full sm:w-auto" size="sm">
+  Refresh
+  </Button>
  </>
  }
  />
 
- <div className="flex flex-wrap gap-erp-24 mb-erp-32">
- <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" subtitle="All time" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" />
- <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Needs action" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
- <KPICard title="Processing" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-[#25D366]/12" iconColor="text-[#25D366]" subtitle="In progress" className="border-[#25D366]/10 bg-[#25D366]/[0.03]" />
- <KPICard title="Completed" value={kpi.completed} icon={CheckCircle} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Successfully done" className="border-erp-success/10 bg-erp-success/[0.03]" />
- </div>
+  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <KPICard title="Total Requests" value={kpi.total} icon={Package} iconBgColor="bg-[#173F2E]/10" iconColor="text-[#173F2E]" subtitle="All time" className="border-[#173F2E]/10 bg-[#173F2E]/[0.03]" />
+  <KPICard title="Pending" value={kpi.pending} icon={Clock} iconBgColor="bg-erp-danger/10" iconColor="text-erp-danger" subtitle="Needs action" className="border-erp-danger/10 bg-erp-danger/[0.03]" />
+  <KPICard title="Processing" value={kpi.contacted} icon={MessageCircle} iconBgColor="bg-[#25D366]/12" iconColor="text-[#25D366]" subtitle="In progress" className="border-[#25D366]/10 bg-[#25D366]/[0.03]" />
+  <KPICard title="Completed" value={kpi.completed} icon={CheckCircle} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Successfully done" className="border-erp-success/10 bg-erp-success/[0.03]" />
+  </div>
 
  <div className="bg-erp-card rounded-[24px] shadow-erp border border-erp-border overflow-hidden flex flex-col">
  <div className="px-erp-24 py-erp-16 border-b border-erp-border flex flex-wrap items-center justify-between gap-4 bg-erp-card">
@@ -381,7 +381,7 @@ function OperationsCenterContent() {
  </span>
  </div>
 
- <div className="w-full sm:max-w-[280px]">
+  <div className="w-full sm:w-[200px]">
  <Input
  icon={Search}
  placeholder="Search requests..."
