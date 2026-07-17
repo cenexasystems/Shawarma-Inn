@@ -422,7 +422,7 @@ function OperationsCenterContent() {
  <TableCell>{order.customer_name || 'Guest'}</TableCell>
  <TableCell>{order.customer_phone || '-'}</TableCell>
  <TableCell>
- <div className="max-w-[200px] truncate" title={order.delivery_address || '-'}>
+ <div className="max-w-[120px] truncate text-erp-muted" title={order.delivery_address || '-'}>
  {order.delivery_address || '-'}
  </div>
  </TableCell>

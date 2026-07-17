@@ -5,7 +5,7 @@ export const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTM
     <div className="w-full overflow-x-auto overflow-y-hidden">
       <table
         ref={ref}
-        className={`w-full min-w-[640px] caption-bottom text-[15px] md:min-w-[860px] ${className}`}
+        className={`w-full min-w-[640px] caption-bottom text-[14px] ${className}`}
         {...props}
       />
     </div>
@@ -46,7 +46,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttr
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={`h-[48px] px-[16px] text-left align-middle font-[600] text-[13px] uppercase tracking-[0.08em] text-erp-muted [&:has([role=checkbox])]:pr-0 ${className}`}
+      className={`h-[44px] px-[10px] text-left align-middle font-[600] text-[11px] uppercase tracking-[0.08em] text-erp-muted [&:has([role=checkbox])]:pr-0 ${className}`}
       {...props}
     />
   )
@@ -57,7 +57,7 @@ export const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttr
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={`px-[16px] py-[12px] align-middle text-[15px] font-[500] text-erp-text [&:has([role=checkbox])]:pr-0 ${className}`}
+      className={`px-[10px] py-[10px] align-middle text-[13px] font-[500] text-erp-text [&:has([role=checkbox])]:pr-0 ${className}`}
       {...props}
     />
   )
