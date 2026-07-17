@@ -310,50 +310,51 @@ export default function ReportsPage() {
  </Button>
  }
  >
- <div className="mb-[24px] rounded-[22px] border border-erp-border bg-white p-[12px] shadow-erp">
-  <div className="flex overflow-x-auto items-center gap-[6px]">
-  <span className="px-[8px] text-[12px] font-[700] uppercase tracking-[0.12em] text-erp-muted whitespace-nowrap">Period</span>
-  {PERIODS.map(item => (
-  <button
-  key={item.value}
-  onClick={() => setPeriod(item.value)}
-  className={`h-[34px] rounded-full border px-[12px] text-[11px] font-[700] transition-colors whitespace-nowrap ${
-  period === item.value
-  ? 'border-erp-primary bg-erp-primary text-white'
-  : 'border-erp-border bg-white text-erp-text hover:bg-[#FAFBFC]'
-  }`}
-  >
-  {item.label}
-  </button>
-  ))}
+   <div className="mb-4 rounded-[16px] border border-erp-border bg-white p-3 shadow-sm">
+  {/* Scrollable period pill row */}
+  <div className="flex overflow-x-auto pb-1 items-center gap-[6px] scrollbar-hide">
+   <span className="px-[6px] text-[11px] font-[700] uppercase tracking-[0.1em] text-erp-muted whitespace-nowrap">Period</span>
+   {PERIODS.map(item => (
+   <button
+   key={item.value}
+   onClick={() => setPeriod(item.value)}
+   className={`h-[32px] rounded-full border px-[10px] text-[11px] font-[700] transition-colors whitespace-nowrap flex-shrink-0 ${
+   period === item.value
+   ? 'border-erp-primary bg-erp-primary text-white'
+   : 'border-erp-border bg-white text-erp-text hover:bg-[#FAFBFC]'
+   }`}
+   >
+   {item.label}
+   </button>
+   ))}
+   </div>
+  {/* Custom date range — shown below on its own row */}
+  {period === 'custom' && (
+  <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-erp-border">
+  <input
+  type="date"
+  value={customRange.from}
+  onChange={(event) => setCustomRange((prev) => ({ ...prev, from: event.target.value }))}
+  className="flex-1 min-w-[130px] h-[38px] rounded-xl border border-erp-border bg-white px-3 text-[12px] font-[600] text-erp-text outline-none focus:border-erp-primary"
+  />
+  <span className="text-[12px] text-erp-muted">to</span>
+  <input
+  type="date"
+  value={customRange.to}
+  onChange={(event) => setCustomRange((prev) => ({ ...prev, to: event.target.value }))}
+  className="flex-1 min-w-[130px] h-[38px] rounded-xl border border-erp-border bg-white px-3 text-[12px] font-[600] text-erp-text outline-none focus:border-erp-primary"
+  />
+  </div>
+  )}
+  </div>
 
- {period === 'custom' && (
- <div className="flex flex-wrap items-center gap-[8px] pl-[4px]">
- <input
- type="date"
- value={customRange.from}
- onChange={(event) => setCustomRange((prev) => ({ ...prev, from: event.target.value }))}
- className="h-[42px] rounded-full border border-erp-border bg-white px-[14px] text-[13px] font-[600] text-erp-text outline-none focus:border-erp-primary"
- />
- <span className="text-[13px] text-erp-muted">to</span>
- <input
- type="date"
- value={customRange.to}
- onChange={(event) => setCustomRange((prev) => ({ ...prev, to: event.target.value }))}
- className="h-[42px] rounded-full border border-erp-border bg-white px-[14px] text-[13px] font-[600] text-erp-text outline-none focus:border-erp-primary"
- />
- </div>
- )}
- </div>
- </div>
+  {error && <div className="text-erp-danger bg-erp-danger/10 p-3 rounded-[12px] text-sm border border-erp-danger/20 mb-4 font-medium">{error}</div>}
 
- {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[16px] text-sm border border-erp-danger/20 mb-8 font-medium">{error}</div>}
-
-  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-  <KPICard title="Completed Revenue" value={money(analytics.revenue)} icon={IndianRupee} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Completed orders only" />
-  <KPICard title="Completed Orders" value={analytics.completed.length.toLocaleString()} icon={ShoppingBag} iconBgColor="bg-erp-primary/10" iconColor="text-erp-primary" subtitle="Revenue source" />
-  <KPICard title="Products Sold" value={analytics.totalItemsSold.toLocaleString()} icon={PackageCheck} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="From completed orders" />
-  <KPICard title="Avg Order Value" value={money(Math.round(analytics.avgOrder))} icon={TrendingUp} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="Per completed order" />
+  <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+  <KPICard title="Revenue" value={money(analytics.revenue)} icon={IndianRupee} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Completed orders" />
+  <KPICard title="Orders" value={analytics.completed.length.toLocaleString()} icon={ShoppingBag} iconBgColor="bg-erp-primary/10" iconColor="text-erp-primary" subtitle="Revenue source" />
+  <KPICard title="Items Sold" value={analytics.totalItemsSold.toLocaleString()} icon={PackageCheck} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="Completed orders" />
+  <KPICard title="Avg Order" value={money(Math.round(analytics.avgOrder))} icon={TrendingUp} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="Per order" />
   </div>
 
  {loading ? (

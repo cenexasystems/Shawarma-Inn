@@ -33,7 +33,7 @@ export const KPICard: React.FC<KPICardProps> = ({
         <p className={`text-[11px] font-[700] ${mutedText} uppercase tracking-[0.1em] truncate mb-1`}>
           {title}
         </p>
-        <h3 className={`text-[26px] font-[700] ${baseText} leading-none tracking-[-0.02em] truncate`}>
+        <h3 className={`text-[22px] font-[700] ${baseText} leading-none tracking-[-0.02em] break-all`}>
           {value}
         </h3>
         {subtitle && (
