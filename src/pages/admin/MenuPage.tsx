@@ -221,10 +221,10 @@ export default function MenuPage() {
  </div>
  ) : (
  filteredItems.map((row) => (
- <article key={row.id} className="rounded-[20px] border border-erp-border bg-white p-4 shadow-sm">
+ <article key={row.id} className="overflow-hidden rounded-[20px] border border-erp-border bg-white p-3 shadow-sm sm:p-4">
  <div className="flex items-start gap-3">
- <img 
- src={resolveMenuImage({ image_url: row.image_url, image: row.image, name: row.name, category: row.category })} 
+ <img
+ src={resolveMenuImage({ image_url: row.image_url, image: row.image, name: row.name, category: row.category })}
  alt={row.name}
  className="h-[64px] w-[64px] shrink-0 rounded-[14px] border border-erp-border bg-gray-100 object-cover"
  />
@@ -246,14 +246,14 @@ export default function MenuPage() {
  {row.large_price && <span className="text-[11px] font-[700] uppercase tracking-[0.06em] text-erp-muted">Large: Rs. {row.large_price}</span>}
  {row.is_bestseller && <Star className="h-4 w-4 fill-erp-warning text-erp-warning" />}
  </div>
- <div className="mt-4 flex flex-wrap gap-2">
- <Button variant="outline" size="sm" onClick={() => openDrawer(row)} className="flex-1 min-w-[120px]">
+ <div className="mt-4 grid grid-cols-1 gap-2">
+ <Button variant="outline" size="sm" onClick={() => openDrawer(row)} className="h-auto min-h-[40px] w-full whitespace-normal px-3 py-2 text-center leading-tight">
  Edit
  </Button>
  <button
  type="button"
  onClick={(e) => { void handleAvailabilityToggle(row, e); }}
- className={`flex-1 min-w-[120px] rounded-[12px] border px-3 py-2 text-[12px] font-[700] ${row.is_active ? 'border-erp-success/20 bg-erp-success/10 text-erp-success' : 'border-gray-200 bg-gray-100 text-erp-muted'}`}
+ className={`min-h-[40px] w-full rounded-[12px] border px-3 py-2 text-center text-[12px] font-[700] leading-tight ${row.is_active ? 'border-erp-success/20 bg-erp-success/10 text-erp-success' : 'border-gray-200 bg-gray-100 text-erp-muted'}`}
  >
  {row.is_active ? 'Available' : 'Hidden'}
  </button>

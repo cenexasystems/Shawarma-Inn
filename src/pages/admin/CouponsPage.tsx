@@ -157,7 +157,7 @@ export default function CouponsPage() {
  onChange={e => setCouponForm({...couponForm, code: e.target.value.toUpperCase()})} 
  className="flex-1 bg-white border border-gray-200 rounded-[12px] px-[16px] h-[48px] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900 transition-all uppercase placeholder:text-gray-300 font-[700] tracking-wider" 
  />
- <button onClick={generateCode} className="h-[48px] shrink-0 rounded-[12px] bg-[#2b4236] px-6 text-[11px] font-[800] uppercase tracking-widest text-white transition-colors hover:bg-[#1a2921]">
+ <button onClick={generateCode} className="h-[48px] w-full shrink-0 rounded-[12px] bg-[#2b4236] px-4 text-[11px] font-[800] uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#1a2921] sm:w-auto sm:px-6">
  Generate
  </button>
  </div>
@@ -219,7 +219,7 @@ export default function CouponsPage() {
  <h3 className="text-[13px] font-bold text-gray-900 uppercase tracking-widest">
  ALL COUPONS ({coupons.length})
  </h3>
- <button onClick={() => loadData()} className="text-[11px] font-[800] text-gray-500 hover:text-gray-900 uppercase tracking-widest flex items-center gap-2 transition-colors">
+ <button onClick={() => loadData()} className="flex w-full items-center justify-center gap-2 text-[11px] font-[800] uppercase tracking-widest text-gray-500 transition-colors hover:text-gray-900 sm:w-auto sm:justify-start">
  <RefreshCw size={14} strokeWidth={2.5} /> Refresh
  </button>
  </div>
@@ -235,7 +235,7 @@ export default function CouponsPage() {
  coupons.map(row => (
  <div key={row.id} className="flex flex-col gap-3 rounded-[16px] border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
  <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3">
- <h4 className="font-manrope text-[18px] font-[800] leading-none tracking-[-0.02em] text-gray-900 sm:text-[22px]">{row.code}</h4>
+ <h4 className="max-w-full break-all font-manrope text-[18px] font-[800] leading-tight tracking-[-0.02em] text-gray-900 sm:text-[22px]">{row.code}</h4>
  {row.is_active && (
  <span className="px-2.5 py-1 rounded-[6px] text-[9px] font-[800] tracking-[1.5px] uppercase bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]">
  Active
@@ -248,22 +248,22 @@ export default function CouponsPage() {
  )}
  </div>
  
- <div className="flex flex-wrap items-center gap-2 text-[14px] font-[700] text-gray-900">
+ <div className="flex flex-wrap items-center gap-2 break-words text-[14px] font-[700] text-gray-900">
  <span>{row.discount_type === 'percentage' ? `${row.discount_value}% off` : `₹${row.discount_value} off`}</span>
  {Number(row.min_order_value) > 0 && (
  <span className="text-gray-400 font-normal">&bull; min ₹{row.min_order_value}</span>
  )}
  </div>
  
- <div className="flex flex-wrap items-center gap-2 text-[12px] font-[500] text-gray-500">
+ <div className="flex flex-wrap items-center gap-2 break-words text-[12px] font-[500] text-gray-500">
  Used {row.used_count || 0} times
  {row.valid_to && (
  <span className="text-gray-400 font-normal">&bull; expires {new Date(row.valid_to).toLocaleDateString('en-GB')}</span>
  )}
  </div>
  <div className="mt-2 flex w-full flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row">
-   <button onClick={() => handleEdit(row)} className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 h-[36px] rounded-lg text-[12px] font-bold transition-colors">Edit</button>
-   <button onClick={() => handleDeleteCoupon(row.id)} className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 h-[36px] rounded-lg text-[12px] font-bold transition-colors">Delete</button>
+   <button onClick={() => handleEdit(row)} className="flex-1 rounded-lg bg-blue-50 px-3 py-2 text-[12px] font-bold leading-tight text-blue-600 transition-colors hover:bg-blue-100">Edit</button>
+   <button onClick={() => handleDeleteCoupon(row.id)} className="flex-1 rounded-lg bg-red-50 px-3 py-2 text-[12px] font-bold leading-tight text-red-600 transition-colors hover:bg-red-100">Delete</button>
  </div>
  </div>
  ))

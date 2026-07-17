@@ -1,7 +1,6 @@
 -- Backfill image_url for the categories that previously relied only on the
 -- local imageMap, which is not stored in Supabase.
 UPDATE public.menu_items
-SET image_url = CASE slug
   WHEN 'veg-loaded-french-fries' THEN '/images/menu/generated/veg-loaded-french-fries.png'
   WHEN 'paneer-loaded-french-fries' THEN '/images/menu/generated/loaded_fries.png'
   WHEN 'chicken-loaded-french-fries' THEN '/images/menu/generated/chicken-loaded-french-fries.png'
