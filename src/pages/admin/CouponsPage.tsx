@@ -122,9 +122,9 @@ export default function CouponsPage() {
  <div className="min-h-screen bg-[#fafafa] px-4 py-5 font-inter sm:px-6 sm:py-6 lg:p-8">
  {/* Header Area */}
  <div className="mb-6">
- <h1 className="mb-4 font-manrope text-[30px] font-[800] leading-[1.05] tracking-[-0.03em] text-[#111827] sm:mb-6 sm:text-[38px] lg:text-[46px]">
- Coupon Management
- </h1>
+  <h1 className="mb-4 text-[22px] font-[700] leading-tight tracking-[-0.02em] text-[#111827]">
+  Coupon Management
+  </h1>
  <div className="rounded-[12px] border border-[#bfdbfe] bg-[#eff6ff] px-4 py-4 text-[13px] font-medium text-[#1d4ed8] sm:px-5">
  Coupon discount applies to product subtotal only — not delivery charge.
  </div>

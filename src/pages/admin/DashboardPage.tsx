@@ -27,19 +27,19 @@ function DashboardContent() {
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
  <div className="bg-white p-6 rounded-2xl border border-erp-border shadow-sm flex flex-col justify-center text-center">
  <span className="text-xs font-[700] text-erp-muted uppercase tracking-[1.5px] mb-2">Today's Revenue</span>
- <span className="text-4xl font-[800] text-erp-primary">₹{kpi.revenue.toLocaleString()}</span>
+ <span className="text-[26px] font-[800] text-erp-primary">₹{kpi.revenue.toLocaleString()}</span>
  </div>
  <div className="bg-white p-6 rounded-2xl border border-erp-border shadow-sm flex flex-col justify-center text-center">
  <span className="text-xs font-[700] text-erp-muted uppercase tracking-[1.5px] mb-2">Today's Orders</span>
- <span className="text-4xl font-[800] text-erp-text">{kpi.completed + kpi.pending + kpi.contacted}</span>
+ <span className="text-[26px] font-[800] text-erp-text">{kpi.completed + kpi.pending + kpi.contacted}</span>
  </div>
  <div className="bg-[#FFFDF6] p-6 rounded-2xl border border-[#FEF3C7] shadow-sm flex flex-col justify-center text-center">
  <span className="text-xs font-[700] text-[#D97706] uppercase tracking-[1.5px] mb-2">Pending</span>
- <span className="text-4xl font-[800] text-[#D97706]">{pendingOrdersCount}</span>
+ <span className="text-[26px] font-[800] text-[#D97706]">{pendingOrdersCount}</span>
  </div>
  <div className="bg-[#F4F8FF] p-6 rounded-2xl border border-[#DBEAFE] shadow-sm flex flex-col justify-center text-center">
  <span className="text-xs font-[700] text-[#2563EB] uppercase tracking-[1.5px] mb-2">Live Alerts</span>
- <span className="text-4xl font-[800] text-[#2563EB]">{unacknowledgedAlerts.length}</span>
+ <span className="text-[26px] font-[800] text-[#2563EB]">{unacknowledgedAlerts.length}</span>
  </div>
  </div>
 

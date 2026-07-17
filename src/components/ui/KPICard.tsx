@@ -28,22 +28,20 @@ export const KPICard: React.FC<KPICardProps> = ({
   const mutedText = dark ? 'text-gray-400' : 'text-erp-muted';
 
   return (
-    <div className={`min-h-[112px] w-full min-w-0 ${baseBg} border ${baseBorder} flex items-center justify-between gap-[16px] p-[16px] sm:p-[20px] rounded-[22px] shadow-erp ${className}`}>
+    <div className={`w-full min-w-0 ${baseBg} border ${baseBorder} flex items-center justify-between gap-3 p-4 rounded-2xl shadow-sm ${className}`}>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className={`text-[12px] font-[600] ${mutedText} uppercase tracking-[0.12em] truncate mb-[8px]`}>
+        <p className={`text-[11px] font-[700] ${mutedText} uppercase tracking-[0.1em] truncate mb-1`}>
           {title}
         </p>
-        <div className="flex items-baseline gap-2 min-w-0">
-          <h3 className={`max-w-full truncate text-[clamp(30px,2.6vw,44px)] font-[700] ${baseText} leading-none tracking-[-0.03em]`}>
-            {value}
-          </h3>
-        </div>
+        <h3 className={`text-[26px] font-[700] ${baseText} leading-none tracking-[-0.02em] truncate`}>
+          {value}
+        </h3>
         {subtitle && (
-          <p className={`text-[12px] ${mutedText} mt-[8px] font-[500]`}>{subtitle}</p>
+          <p className={`text-[11px] ${mutedText} mt-1 font-[500]`}>{subtitle}</p>
         )}
       </div>
-      <div className={`w-[42px] h-[42px] rounded-full flex items-center justify-center shrink-0 ${iconBgColor}`}>
-        <Icon size={20} className={iconColor} strokeWidth={1.8} />
+      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${iconBgColor}`}>
+        <Icon size={17} className={iconColor} strokeWidth={1.8} />
       </div>
     </div>
   );
