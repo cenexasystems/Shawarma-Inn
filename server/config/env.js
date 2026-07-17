@@ -9,11 +9,18 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-export const allowedOrigins = String(process.env.CORS_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://shawarma-inn-react.vercel.app',
+  'https://shawarmainn.in',
+  'https://www.shawarmainn.in',
+];
 
-if (allowedOrigins.length === 0) {
-  allowedOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
-}
+export const allowedOrigins = Array.from(new Set([
+  ...String(process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  ...defaultAllowedOrigins,
+]));

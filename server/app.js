@@ -10,7 +10,8 @@ app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const normalizedOrigin = String(origin || '').trim();
+      if (!normalizedOrigin || allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'));
