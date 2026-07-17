@@ -5,6 +5,7 @@ import { PageHeader } from './../ui/PageHeader';
 import { Button } from './../ui/Button';
 import { Input } from './../ui/Input';
 import { Card } from './../ui/Card';
+import { resolveTestimonialMediaUrl } from '../../lib/testimonialMedia';
 
 const STORAGE_BUCKET = 'testimonial-videos';
 
@@ -194,7 +195,7 @@ export default function VideoManager() {
                 </div>
                 {formData.url && (
                   <div className="mt-4 p-2 bg-erp-bg rounded-[14px] inline-block border border-erp-border">
-                    <video src={formData.url} className="h-[120px] rounded-[8px] object-cover" muted />
+                    <video src={resolveTestimonialMediaUrl(formData.url)} className="h-[120px] rounded-[8px] object-cover" muted controls />
                   </div>
                 )}
               </div>
@@ -219,7 +220,7 @@ export default function VideoManager() {
                 </div>
                 {formData.thumbnail_url && (
                   <div className="mt-4 p-2 bg-erp-bg rounded-[14px] inline-block border border-erp-border">
-                    <img src={formData.thumbnail_url} alt="Thumbnail preview" className="h-[120px] rounded-[8px] object-cover" />
+                    <img src={resolveTestimonialMediaUrl(formData.thumbnail_url)} alt="Thumbnail preview" className="h-[120px] rounded-[8px] object-cover" />
                   </div>
                 )}
               </div>
@@ -256,7 +257,7 @@ export default function VideoManager() {
             {vid.thumbnail_url ? (
               <div
                 className="w-full h-[180px] rounded-[10px] bg-cover bg-center border border-erp-border"
-                style={{ backgroundImage: `url(${vid.thumbnail_url})` }}
+                style={{ backgroundImage: `url(${resolveTestimonialMediaUrl(vid.thumbnail_url)})` }}
               />
             ) : (
               <div className="w-full h-[180px] bg-gray-100 rounded-[10px] flex items-center justify-center border border-erp-border">
@@ -266,8 +267,8 @@ export default function VideoManager() {
             
             <div className="flex-1">
               <h3 className="font-bold text-erp-text text-[15px] truncate">{vid.title}</h3>
-              <a href={vid.url} target="_blank" rel="noreferrer" className="text-[12px] text-erp-muted hover:text-erp-primary hover:underline truncate block mt-1">
-                {vid.url}
+              <a href={resolveTestimonialMediaUrl(vid.url)} target="_blank" rel="noreferrer" className="text-[12px] text-erp-muted hover:text-erp-primary hover:underline truncate block mt-1">
+                {resolveTestimonialMediaUrl(vid.url)}
               </a>
             </div>
 
