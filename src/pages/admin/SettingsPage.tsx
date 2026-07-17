@@ -144,7 +144,7 @@ export default function SettingsPage() {
  };
 
  return (
- <div className="min-h-screen bg-erp-bg font-inter p-8 ">
+ <div className="min-h-screen bg-erp-bg font-inter p-4 md:p-6 xl:p-8">
  <PageHeader 
  title="Settings"
  subtitle="Configure restaurant details, pricing, and operating hours."

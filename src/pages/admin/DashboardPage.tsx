@@ -13,7 +13,7 @@ function DashboardContent() {
  }, [fetchOrders]);
 
  return (
- <div className="p-8 font-inter">
+ <div className="p-4 md:p-6 xl:p-8 font-inter">
  <div className="mb-8 flex items-center justify-between">
  <div>
  <h1 className="text-2xl font-[800] text-erp-text flex items-center gap-3">

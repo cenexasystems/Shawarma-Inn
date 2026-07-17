@@ -68,7 +68,7 @@ export default function ReviewsPage() {
  };
 
  return (
- <div className="min-h-screen bg-erp-bg font-inter p-8 ">
+ <div className="min-h-screen bg-erp-bg font-inter p-4 md:p-6 xl:p-8">
  <PageHeader 
  title="Customer Reviews"
  subtitle="Manage and moderate customer feedback across your menu items."

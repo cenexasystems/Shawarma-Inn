@@ -311,21 +311,21 @@ export default function ReportsPage() {
  }
  >
  <div className="mb-[24px] rounded-[22px] border border-erp-border bg-white p-[12px] shadow-erp">
- <div className="flex flex-wrap items-center gap-[8px]">
- <span className="px-[8px] text-[12px] font-[700] uppercase tracking-[0.12em] text-erp-muted">Period</span>
- {PERIODS.map(item => (
- <button
- key={item.value}
- onClick={() => setPeriod(item.value)}
- className={`h-[42px] rounded-full border px-[18px] text-[13px] font-[700] transition-colors ${
- period === item.value
- ? 'border-erp-primary bg-erp-primary text-white'
- : 'border-erp-border bg-white text-erp-text hover:bg-[#FAFBFC]'
- }`}
- >
- {item.label}
- </button>
- ))}
+  <div className="flex overflow-x-auto items-center gap-[6px]">
+  <span className="px-[8px] text-[12px] font-[700] uppercase tracking-[0.12em] text-erp-muted whitespace-nowrap">Period</span>
+  {PERIODS.map(item => (
+  <button
+  key={item.value}
+  onClick={() => setPeriod(item.value)}
+  className={`h-[34px] rounded-full border px-[12px] text-[11px] font-[700] transition-colors whitespace-nowrap ${
+  period === item.value
+  ? 'border-erp-primary bg-erp-primary text-white'
+  : 'border-erp-border bg-white text-erp-text hover:bg-[#FAFBFC]'
+  }`}
+  >
+  {item.label}
+  </button>
+  ))}
 
  {period === 'custom' && (
  <div className="flex flex-wrap items-center gap-[8px] pl-[4px]">
@@ -349,12 +349,12 @@ export default function ReportsPage() {
 
  {error && <div className="text-erp-danger bg-erp-danger/10 p-4 rounded-[16px] text-sm border border-erp-danger/20 mb-8 font-medium">{error}</div>}
 
- <div className="flex flex-wrap gap-erp-24 mb-erp-32">
- <KPICard title="Completed Revenue" value={money(analytics.revenue)} icon={IndianRupee} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Completed orders only" />
- <KPICard title="Completed Orders" value={analytics.completed.length.toLocaleString()} icon={ShoppingBag} iconBgColor="bg-erp-primary/10" iconColor="text-erp-primary" subtitle="Revenue source" />
- <KPICard title="Products Sold" value={analytics.totalItemsSold.toLocaleString()} icon={PackageCheck} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="From completed orders" />
- <KPICard title="Avg Order Value" value={money(Math.round(analytics.avgOrder))} icon={TrendingUp} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="Per completed order" />
- </div>
+  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <KPICard title="Completed Revenue" value={money(analytics.revenue)} icon={IndianRupee} iconBgColor="bg-erp-success/10" iconColor="text-erp-success" subtitle="Completed orders only" />
+  <KPICard title="Completed Orders" value={analytics.completed.length.toLocaleString()} icon={ShoppingBag} iconBgColor="bg-erp-primary/10" iconColor="text-erp-primary" subtitle="Revenue source" />
+  <KPICard title="Products Sold" value={analytics.totalItemsSold.toLocaleString()} icon={PackageCheck} iconBgColor="bg-erp-blue/10" iconColor="text-erp-blue" subtitle="From completed orders" />
+  <KPICard title="Avg Order Value" value={money(Math.round(analytics.avgOrder))} icon={TrendingUp} iconBgColor="bg-erp-warning/10" iconColor="text-erp-warning" subtitle="Per completed order" />
+  </div>
 
  {loading ? (
  <Card className="h-96 flex items-center justify-center">
