@@ -321,7 +321,7 @@ function OperationsCenterContent() {
  subtitle="Manage and respond to customer requests in real time"
  action={
  <>
- <div className="flex items-center gap-[8px] bg-transparent">
+ <div className="flex flex-wrap items-center gap-[8px] bg-transparent w-full sm:w-auto">
  {(['all', 'today', 'week', 'month', 'year', 'custom'] as const).map(preset => (
  <button
  key={preset}
@@ -338,7 +338,7 @@ function OperationsCenterContent() {
  </div>
 
  {datePreset === 'custom' && (
- <div className="flex items-center gap-2">
+ <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
  <input
  type="date"
  className="bg-white border border-erp-border rounded-full px-3 py-1.5 text-xs text-erp-text focus:outline-none focus:border-erp-primary"
@@ -355,7 +355,7 @@ function OperationsCenterContent() {
  </div>
  )}
 
- <Button variant="secondary" onClick={() => fetchOrders(true)} icon={RefreshCw} isLoading={refreshing}>
+ <Button variant="secondary" onClick={() => fetchOrders(true)} icon={RefreshCw} isLoading={refreshing} className="w-full sm:w-auto mt-2 sm:mt-0">
  Refresh
  </Button>
  </>
@@ -370,7 +370,7 @@ function OperationsCenterContent() {
  </div>
 
  <div className="bg-erp-card rounded-[24px] shadow-erp border border-erp-border overflow-hidden flex flex-col">
- <div className="px-erp-24 py-erp-16 border-b border-erp-border flex items-center justify-between bg-erp-card">
+ <div className="px-erp-24 py-erp-16 border-b border-erp-border flex flex-wrap items-center justify-between gap-4 bg-erp-card">
  <div className="flex items-center gap-3">
  <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#25D366]/12 text-[#25D366]">
  <WhatsAppLogo className="h-[18px] w-[18px]" />
@@ -381,7 +381,7 @@ function OperationsCenterContent() {
  </span>
  </div>
 
- <div className="w-full max-w-[280px]">
+ <div className="w-full sm:max-w-[280px]">
  <Input
  icon={Search}
  placeholder="Search requests..."
