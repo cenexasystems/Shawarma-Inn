@@ -234,7 +234,7 @@ export const useOrders = () => {
       }
 
       if (useSupabaseAuth) {
-        if (!user?.id || user.role !== 'user') {
+        if (!user?.id || (user.role !== 'user' && user.role !== 'admin')) {
           return { success: false, error: 'Please sign in before placing an order.' };
         }
 
