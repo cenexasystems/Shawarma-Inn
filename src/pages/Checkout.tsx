@@ -37,7 +37,7 @@ export default function Checkout({ cartData }: CheckoutProps) {
   const whatsappPhone = settings.whatsapp_number || import.meta.env.VITE_OWNER_WHATSAPP || '916382877479';
   const { placeOrder } = useOrders();
   const navigate = useNavigate();
-  const isCustomerLoggedIn = user?.role === 'user';
+  const isCustomerLoggedIn = user?.role === 'user' || user?.role === 'admin';
   const { deliveryCharge: liveDeliveryCharge, packingCharge: livePackingCharge, gstActive, gstPercentage } = usePublicSettings();
   
   const [name, setName] = useState(user?.name || '');
