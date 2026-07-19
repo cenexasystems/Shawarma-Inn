@@ -214,7 +214,7 @@ export default function Navbar({ onCartClick, onAuthClick, onSupportClick, cartC
       {/* ─── Mobile Menu Full-Screen Overlay ─────────────────────── */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-[rgba(10,10,10,0.98)] backdrop-blur-lg flex flex-col lg:hidden"
+          className="fixed inset-0 z-[45] bg-[rgba(10,10,10,0.98)] backdrop-blur-lg flex flex-col lg:hidden"
           style={{ paddingTop: '64px', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
         >
           {/* Nav links — large touch targets */}

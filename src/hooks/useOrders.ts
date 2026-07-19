@@ -241,7 +241,7 @@ export const useOrders = () => {
         const { data: storeSettings } = await supabase.from('settings').select('store_status, opening_time, closing_time').eq('id', 'global').maybeSingle();
         const { isOrderingAvailable } = await import('../utils/orderAvailability');
         if (!isOrderingAvailable(storeSettings || {})) {
-          return { success: false, error: 'Online ordering is currently unavailable.' };
+          return { success: false, error: `Online ordering is currently unavailable. Debug: ${JSON.stringify(storeSettings)}, time: ${new Date().toLocaleTimeString()}` };
         }
 
         const randomOrderNumber = Math.floor(Math.random() * 900000) + 100000;

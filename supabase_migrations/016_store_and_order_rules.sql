@@ -17,7 +17,7 @@ RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE s TEXT; open_at TIME; close_at TIME; now_at TIME;
 BEGIN
   SELECT store_status, opening_time, closing_time INTO s, open_at, close_at FROM public.settings WHERE id = 'global';
-  now_at := LOCALTIME;
+  now_at := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::time;
   IF COALESCE(s, 'OPEN') <> 'OPEN' OR (open_at <= close_at AND (now_at < open_at OR now_at > close_at)) OR (open_at > close_at AND now_at < open_at AND now_at > close_at) THEN
     RAISE EXCEPTION 'Online ordering is currently unavailable.' USING ERRCODE = 'P0001';
   END IF;
